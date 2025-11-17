@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="@dimen/small_icon_size"
+    android:height="@dimen/small_icon_size"
+    android:viewportWidth="16"
+    android:viewportHeight="16">
+
+    <group
+        android:strokeWidth="2"
+        android:strokeColor="@color/white">
+        <path
+            android:pathData="M4,0 H0 V4"
+            android:strokeWidth="2"
+            android:strokeColor="@color/white"/>
+
+        <path
+            android:pathData="M12,0 H16 V4"
+            android:strokeWidth="2"
+            android:strokeColor="@color/white"/>
+
+        <path
+            android:pathData="M0,12 V16 H 4"
+            android:strokeWidth="2"
+            android:strokeColor="@color/white"/>
+
+        <path
+            android:pathData="M12,16 H16 V12"
+            android:strokeWidth="2"
+            android:strokeColor="@color/white"/>
+    </group>
+
+    <path
+        android:pathData="m4,5 H12 V11 H4 Z"
+        android:strokeColor="@color/white"
+        android:strokeWidth="1"
+        android:strokeLineJoin="round" />
+
+    <group>
+        <path
+            android:pathData="m8,3 V6"
+            android:strokeColor="@color/white"
+            android:strokeWidth="1"
+            android:strokeLineCap="round"/>
+        <path
+            android:pathData="m8,10 V13"
+            android:strokeColor="@color/white"
+            android:strokeWidth="1"
+            android:strokeLineCap="round"/>
+        <path
+            android:pathData="m2,8 H6"
+            android:strokeColor="@color/white"
+            android:strokeWidth="1"
+            android:strokeLineCap="round"/>
+        <path
+            android:pathData="m10,8 H14"
+            android:strokeColor="@color/white"
+            android:strokeWidth="1"
+            android:strokeLineCap="round"/>
+    </group>
+
+</vector>

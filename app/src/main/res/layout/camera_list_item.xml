@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.appcompat.widget.AppCompatButton xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/camera_label"
+    android:layout_width="@dimen/settings_list_wrapper_height"
+    android:layout_height="@dimen/settings_list_wrapper_height"
+    android:background="@drawable/camera_list_item_selector"
+    android:textColor="@color/white"
+    android:gravity="center"
+    android:layout_gravity="center"
+    android:textStyle="bold"/>

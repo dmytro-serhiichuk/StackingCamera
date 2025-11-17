@@ -1,0 +1,95 @@
+package com.sedv.stackingcamera
+
+import android.app.Application
+import android.util.Size
+import android.view.Surface
+import androidx.lifecycle.AndroidViewModel
+import com.sedv.stackingcamera.camera.CameraController
+import com.sedv.stackingcamera.camera.CameraState
+import com.sedv.stackingcamera.settings.BaseProperty
+import com.sedv.stackingcamera.settings.FrameSize
+import com.sedv.stackingcamera.settings.GeneralPropertyType
+import com.sedv.stackingcamera.settings.GeneralSettings
+
+class CameraViewModel(private val application: Application) : AndroidViewModel(application) {
+    private lateinit var _cameraController: CameraController
+    val cameraController get() = _cameraController
+    val activeCamera get() = _cameraController.activeCamera
+    private var _previewSurface: Surface? = null
+    val previewSurface get() = _previewSurface
+
+    lateinit var permissionHelper: PermissionHelper
+    val onCameraSwitched = Event<() -> Unit>()
+    val onProgramReady = Event<() -> Unit>()
+
+    fun init(permissionHelper: PermissionHelper) {
+        this.permissionHelper = permissionHelper
+        _cameraController = CameraController(application)
+
+        GeneralSettings.onChanged += ::handleGeneralSettingsChanged
+
+        onCameraSwitched.clear()
+        onProgramReady.clear()
+    }
+
+    fun onPreviewSurfaceReady(surface: Surface) {
+        _previewSurface?.release()
+        _previewSurface = surface
+
+        onProgramReady.invokeAll { it.invoke() }
+        previewSurface?.let { _cameraController.setPreviewSurface(it) }
+        activeCamera.open()
+    }
+
+    fun getPreviewSizeWithAspectRation(ratio: Double? = null): Size {
+        val r = ratio
+            ?: if (GeneralSettings.frameSize.value == FrameSize.FRAME_SIZE_4_3.value) 4.0/3.0
+            else 16.0/9.0
+        return cameraController.activeCamera.cameraInfo.getPreviewSizeByAspectRatio(r)
+    }
+
+    fun selectCamera(id: String) {
+        if (activeCamera.cameraInfo.cameraId == id) return
+        if (!_cameraController.selectCamera(id)) return
+
+        activeCamera.cameraSettings.zoomProperty?.value = 1.0f
+
+        onCameraSwitched.invokeAll { it.invoke() }
+        activeCamera.open()
+    }
+
+    fun pause() {
+        if (_previewSurface?.isValid == true) {
+            cameraController.activeCamera.close()
+        }
+    }
+
+    fun resume() {
+        if (cameraController.activeCamera.cameraDevice == null &&
+            cameraController.activeCamera.currentState == CameraState.CLOSED &&
+            _previewSurface?.isValid == true
+        ) {
+            onProgramReady.invokeAll { it.invoke() }
+            cameraController.activeCamera.open()
+        }
+    }
+
+    fun destroy() {
+        _previewSurface?.release()
+        _previewSurface = null
+        cameraController.destroy()
+
+        onCameraSwitched.clear()
+        onProgramReady.clear()
+    }
+
+    private fun handleGeneralSettingsChanged(prop: BaseProperty<*>) {
+        if (prop.type == GeneralPropertyType.FRAME_SIZE) {
+            if (activeCamera.currentState != CameraState.BUSY) {
+                activeCamera.close()
+                onCameraSwitched.invokeAll { it.invoke() }
+                activeCamera.open()
+            }
+        }
+    }
+}

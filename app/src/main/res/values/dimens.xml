@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="round_block_size">35dp</dimen>
+    <dimen name="round_block_size_extended">40dp</dimen>
+    <dimen name="small_margin">3dp</dimen>
+    <dimen name="medium_margin">5dp</dimen>
+    <dimen name="big_margin">10dp</dimen>
+
+    <dimen name="controls_side_margin">50dp</dimen>
+
+    <dimen name="shutter_button_size">64dp</dimen>
+    <dimen name="shutter_margin_top">20dp</dimen>
+
+    <dimen name="settings_list_wrapper_height">40dp</dimen>
+    <dimen name="settings_list_height">30dp</dimen>
+    <dimen name="settings_list_margin_horizontal">10dp</dimen>
+    <dimen name="settings_bottom_margin">30dp</dimen>
+
+    <dimen name="settings_small_text">10dp</dimen>
+
+    <dimen name="settings_item_padding_horizontal">10dp</dimen>
+    <dimen name="settings_item_padding_vertical">7dp</dimen>
+
+    <dimen name="settings_item_text_left_padding">5dp</dimen>
+
+<!--    Slider Default Values-->
+    <dimen name="slider_view_height">60dp</dimen>
+    <dimen name="slider_view_padding_horizontal">50dp</dimen>
+    <dimen name="slider_step_spacing">9dp</dimen>
+    <dimen name="slider_minor_tick_width">1dp</dimen>
+    <dimen name="slider_major_tick_width">2dp</dimen>
+    <dimen name="slider_selected_tick_width">2dp</dimen>
+
+    <dimen name="slider_value_label_margin_top">10dp</dimen>
+
+<!--    Histogram-->
+    <dimen name="histogram_margin">10dp</dimen>
+    <dimen name="histogram_border_width">0.5dp</dimen>
+
+<!--    Grid-->
+    <dimen name="grid_line_width">2dp</dimen>
+
+<!--    Timer-->
+    <dimen name="timer_text_size">80dp</dimen>
+
+<!--    Preview-->
+    <dimen name="zoom_indicator_margin_top">50dp</dimen>
+    <dimen name="zoom_indicator_size">45dp</dimen>
+    <dimen name="metering_area_stroke_width">3dp</dimen>
+
+<!--    General Settings-->
+    <dimen name="general_settings_height">40dp</dimen>
+    <dimen name="general_settings_item_height">32dp</dimen>
+
+<!--    Icons-->
+    <dimen name="big_icon_size">32dp</dimen>
+    <dimen name="regular_icon_size">22dp</dimen>
+    <dimen name="small_icon_size">18dp</dimen>
+</resources>

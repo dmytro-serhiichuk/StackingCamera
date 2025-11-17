@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity"
+    android:theme="@style/Base.Theme.Camera"
+    android:fitsSystemWindows="true">
+
+<!--    Preview-->
+    <FrameLayout
+        android:id="@+id/surface_container"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/general_settings">
+        <com.sedv.stackingcamera.ui.preview.GridView
+            android:id="@+id/grid_view"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:background="@color/transparent"
+            app:layout_constraintStart_toStartOf="@+id/surface_container"
+            app:layout_constraintEnd_toEndOf="@+id/surface_container"
+            app:layout_constraintTop_toTopOf="@+id/surface_container"
+            app:layout_constraintBottom_toBottomOf="@+id/surface_container"
+            android:visibility="gone"/>
+
+        <TextView
+            android:id="@+id/screen_indicator"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:background="@color/transparent"
+            app:layout_constraintStart_toStartOf="@+id/surface_container"
+            app:layout_constraintEnd_toEndOf="@+id/surface_container"
+            app:layout_constraintTop_toTopOf="@+id/surface_container"
+            app:layout_constraintBottom_toBottomOf="@+id/surface_container"
+            android:textColor="@color/white"
+            android:textSize="@dimen/timer_text_size"
+            android:gravity="center" />
+    </FrameLayout>
+
+    <com.sedv.stackingcamera.ui.preview.HistogramView
+        android:id="@+id/histogram_view"
+        android:layout_width="150dp"
+        android:layout_height="80dp"
+        android:layout_gravity="end"
+        android:background="@drawable/histogram_background"
+        android:layout_margin="@dimen/histogram_margin"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/general_settings_bottom_container"
+        android:visibility="gone"/>
+
+    <androidx.appcompat.widget.AppCompatImageButton
+        android:id="@+id/nav_to_stacking_button"
+        android:layout_width="@dimen/round_block_size_extended"
+        android:layout_height="@dimen/round_block_size_extended"
+        android:background="@drawable/round_block_primary"
+        android:src="@drawable/icon_stack_nav_btn"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/general_settings_bottom_container"
+        android:layout_margin="@dimen/histogram_margin"/>
+
+    <com.sedv.stackingcamera.ui.preview.PreviewReferenceFrame
+        android:id="@+id/surface_reference_frame"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/general_settings">
+
+        <com.sedv.stackingcamera.ui.preview.PreviewMeteringAreaIndicator
+            android:id="@+id/metering_area"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/transparent"
+            app:layout_constraintStart_toStartOf="@+id/surface_container"
+            app:layout_constraintEnd_toEndOf="@+id/surface_container"
+            app:layout_constraintTop_toTopOf="@+id/surface_container"
+            app:layout_constraintBottom_toBottomOf="@+id/surface_container"/>
+    </com.sedv.stackingcamera.ui.preview.PreviewReferenceFrame>
+
+<!--    General Settings-->
+    <HorizontalScrollView
+        android:id="@+id/general_settings"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/general_settings_height"
+        android:paddingHorizontal="@dimen/settings_list_margin_horizontal"
+        android:background="@color/black"
+        app:layout_constraintTop_toTopOf="parent"/>
+
+    <HorizontalScrollView
+        android:id="@+id/general_settings_bottom_container"
+        android:layout_width="wrap_content"
+        android:layout_height="@dimen/general_settings_height"
+        android:paddingHorizontal="@dimen/settings_list_margin_horizontal"
+        android:layout_marginTop="@dimen/small_margin"
+        android:background="@drawable/round_block_background_20"
+        app:layout_constraintTop_toBottomOf="@+id/general_settings"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constrainedWidth="true"
+        android:visibility="gone"/>
+
+<!--    Camera Controls-->
+    <!--    Camera Settings-->
+    <FrameLayout
+        android:id="@+id/on_preview_bottom_container"
+        android:layout_width="wrap_content"
+        android:layout_height="@dimen/settings_list_wrapper_height"
+        app:layout_constraintBottom_toBottomOf="@+id/surface_reference_frame"
+        android:visibility="gone"
+        android:background="@drawable/round_block_background_20"
+        android:layout_marginHorizontal="@dimen/settings_list_margin_horizontal"
+        android:layout_marginBottom="@dimen/medium_margin"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constrainedWidth="true">
+        <LinearLayout
+            android:id="@+id/camera_list"
+            android:layout_width="wrap_content"
+            android:layout_height="@dimen/settings_list_wrapper_height"
+            android:layout_gravity="center_vertical"
+            android:orientation="horizontal" />
+    </FrameLayout>
+
+    <HorizontalScrollView
+        android:id="@+id/settings_list_wrapper"
+        android:layout_width="wrap_content"
+        android:layout_height="@dimen/settings_list_wrapper_height"
+        android:scrollbars="none"
+        android:paddingHorizontal="@dimen/settings_list_margin_horizontal"
+        android:layout_marginHorizontal="@dimen/settings_list_margin_horizontal"
+        android:layout_marginTop="@dimen/big_margin"
+        android:background="@drawable/round_block_background"
+        app:layout_constraintTop_toBottomOf="@+id/surface_reference_frame"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constrainedWidth="true">
+        <LinearLayout
+            android:id="@+id/settings_list"
+            android:layout_width="wrap_content"
+            android:layout_height="@dimen/settings_list_height"
+            android:layout_gravity="center_vertical"
+            android:orientation="horizontal"/>
+    </HorizontalScrollView>
+
+    <FrameLayout
+        android:id="@+id/slider_view_wrapper"
+        android:layout_width="wrap_content"
+        android:layout_height="@dimen/slider_view_height"
+        app:layout_constraintTop_toBottomOf="@+id/settings_list_wrapper"
+        android:background="@drawable/round_block_background_20"
+        android:paddingHorizontal="@dimen/settings_list_margin_horizontal"
+        android:layout_marginHorizontal="@dimen/settings_list_margin_horizontal"
+        android:layout_marginTop="@dimen/medium_margin"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constrainedWidth="true"
+        android:visibility="invisible"/>
+
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/auto_mode_toggle"
+        android:layout_width="@dimen/round_block_size_extended"
+        android:layout_height="@dimen/round_block_size_extended"
+        android:background="@drawable/auto_mode_toggle_selector"
+        app:layout_constraintTop_toTopOf="@id/shutter_button"
+        app:layout_constraintBottom_toBottomOf="@id/shutter_button"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginStart="@dimen/controls_side_margin"
+        android:textColor="@color/white"
+        android:visibility="gone"
+        android:text="Ⓐ"/>
+
+    <!--    Zoom Indicator-->
+    <TextView
+        android:id="@+id/zoom_indicator"
+        android:layout_width="@dimen/zoom_indicator_size"
+        android:layout_height="@dimen/zoom_indicator_size"
+        android:layout_gravity="center_horizontal|bottom"
+        android:textColor="@color/white"
+        android:layout_marginTop="@dimen/zoom_indicator_margin_top"
+        android:background="@drawable/zoom_background"
+        android:gravity="center"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/general_settings_bottom_container"
+        android:visibility="gone"/>
+
+    <!--        Camera Switcher-->
+    <androidx.appcompat.widget.AppCompatImageButton
+        android:id="@+id/camera_switcher"
+        android:layout_width="@dimen/round_block_size_extended"
+        android:layout_height="@dimen/round_block_size_extended"
+        android:layout_gravity="bottom"
+        android:background="@drawable/round_block_background"
+        android:textColor="@color/white"
+        app:layout_constraintTop_toTopOf="@+id/shutter_button"
+        app:layout_constraintBottom_toBottomOf="@+id/shutter_button"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginEnd="@dimen/controls_side_margin"
+        android:src="@drawable/icon_camera_switch"/>
+
+    <!--    Shutter-->
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/shutter_button"
+        android:layout_width="@dimen/shutter_button_size"
+        android:layout_height="@dimen/shutter_button_size"
+        android:background="@drawable/shutter_button"
+        android:layout_marginTop="@dimen/shutter_margin_top"
+        app:layout_constraintTop_toBottomOf="@+id/slider_view_wrapper"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:textColor="@color/white"/>
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/shutter_button_additional"
+        android:layout_width="@dimen/shutter_button_size"
+        android:layout_height="@dimen/shutter_button_size"
+        android:background="@drawable/shutter_button_additional"
+        app:layout_constraintTop_toTopOf="@+id/shutter_button"
+        app:layout_constraintBottom_toBottomOf="@+id/shutter_button"
+        app:layout_constraintStart_toStartOf="@+id/shutter_button"
+        app:layout_constraintEnd_toEndOf="@+id/shutter_button"
+        android:visibility="invisible"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

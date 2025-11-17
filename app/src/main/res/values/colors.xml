@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="black_20">#33000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="white_disabled">#969696</color>
+    <color name="transparent">#0000</color>
+
+    <color name="primary">#766EC3</color>
+    <color name="primary_20">#33766EC3</color>
+
+    <color name="secondary">#4C4C6F</color>
+    <color name="background">#1F1F1F</color>
+    <color name="background_20">#331F1F1F</color>
+
+    <color name="grid_line_color">#BFDEDEDE</color>
+</resources>
