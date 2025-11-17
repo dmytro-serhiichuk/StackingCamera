@@ -56,4 +56,9 @@
     <dimen name="big_icon_size">32dp</dimen>
     <dimen name="regular_icon_size">22dp</dimen>
     <dimen name="small_icon_size">18dp</dimen>
+
+<!--    Nav Panel-->
+    <dimen name="nav_panel_height">50dp</dimen>
+    <dimen name="nav_panel_padding">10dp</dimen>
+    <dimen name="nav_title_size">20dp</dimen>
 </resources>

@@ -29,6 +29,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.StackingCamera">
         <activity
+            android:name=".stacking.settings.StackingSettingsActivity"
+            android:exported="false" />
+        <activity
             android:name=".stacking.StackingActivity"
             android:exported="false" />
 
