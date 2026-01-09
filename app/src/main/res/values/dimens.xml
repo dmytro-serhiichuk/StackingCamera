@@ -34,6 +34,8 @@
     <dimen name="slider_value_label_margin_top">10dp</dimen>
 
 <!--    Histogram-->
+    <dimen name="histogram_width">150dp</dimen>
+    <dimen name="histogram_height">80dp</dimen>
     <dimen name="histogram_margin">10dp</dimen>
     <dimen name="histogram_border_width">0.5dp</dimen>
 

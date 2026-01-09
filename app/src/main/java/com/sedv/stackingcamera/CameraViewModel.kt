@@ -19,6 +19,9 @@ class CameraViewModel(private val application: Application) : AndroidViewModel(a
     private var _previewSurface: Surface? = null
     val previewSurface get() = _previewSurface
 
+    private var _deviceOrientation: Int = 0
+    val deviceOrientation get() = _deviceOrientation
+
     lateinit var permissionHelper: PermissionHelper
     val onCameraSwitched = Event<() -> Unit>()
     val onProgramReady = Event<() -> Unit>()
@@ -62,14 +65,14 @@ class CameraViewModel(private val application: Application) : AndroidViewModel(a
     fun updateOrientation(newOrientation: Int) {
         if (newOrientation == ORIENTATION_UNKNOWN) return
 
-        val orientation = when {
-            newOrientation in 45..134 -> 270
-            newOrientation in 135..224 -> 180
-            newOrientation in 225..314 -> 90
+        _deviceOrientation = when (newOrientation) {
+            in 45..134 -> 270
+            in 135..224 -> 180
+            in 225..314 -> 90
             else -> 0
         }
 
-        _cameraController.updateDeviceOrientation(orientation)
+        _cameraController.updateDeviceOrientation(_deviceOrientation)
     }
 
     fun pause() {

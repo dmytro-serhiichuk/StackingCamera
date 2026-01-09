@@ -71,4 +71,19 @@ class HistogramView @JvmOverloads constructor(
 
         canvas.restoreToCount(layerId)
     }
+
+    fun rotate(deviceOrientation: Int) {
+        rotation = deviceOrientation.toFloat()
+        when (deviceOrientation) {
+            90, 270 -> {
+                val offset = (width - height) / 2f
+                translationX = offset
+                translationY = offset
+            }
+            else -> {
+                translationX = 0f
+                translationY = 0f
+            }
+        }
+    }
 }

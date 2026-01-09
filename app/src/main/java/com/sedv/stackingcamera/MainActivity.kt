@@ -139,7 +139,11 @@ class MainActivity : AppCompatActivity() {
 
             val orientationListener = object : OrientationEventListener(this) {
                 override fun onOrientationChanged(orientation: Int) {
+                    val oldDeviceOrientation = viewModel.deviceOrientation
                     viewModel.updateOrientation(orientation)
+                    if (viewModel.deviceOrientation != oldDeviceOrientation) {
+                        binding.histogramView.rotate(viewModel.deviceOrientation)
+                    }
                 }
             }
 
