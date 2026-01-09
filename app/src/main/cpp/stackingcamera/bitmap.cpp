@@ -19,7 +19,11 @@ Bitmap::~Bitmap() {
 }
 
 cl_mem Bitmap::createCLBuffer() {
-    return OpenCL::createBuffer(buffer, bufferLength * sizeof(uint16_t));
+    cl_mem b = clCreateBuffer(
+            OpenCL::context, CL_MEM_HOST_NO_ACCESS | CL_MEM_COPY_HOST_PTR | CL_MEM_READ_ONLY,
+            bufferLength * sizeof(uint16_t), buffer, nullptr
+    );
+    return b;
 }
 
 Bitmap8* Bitmap::toGray8(cl_mem &inputBuffer) {
@@ -28,7 +32,36 @@ Bitmap8* Bitmap::toGray8(cl_mem &inputBuffer) {
     }
 
     size_t outputDataLength = width * height;
-    uint8_t* outputData = new uint8_t[outputDataLength] { 0 };
+
+    cl_mem outputBuffer = clCreateBuffer(
+            OpenCL::context, CL_MEM_HOST_NO_ACCESS | CL_MEM_READ_WRITE,
+            outputDataLength, nullptr, nullptr
+    );
+
+    cl_kernel kernel = OpenCL::createKernel("to_grayscale_8");
+
+    clSetKernelArg(kernel, 0, sizeof(cl_mem), &inputBuffer);
+    clSetKernelArg(kernel, 1, sizeof(cl_mem), &outputBuffer);
+    clSetKernelArg(kernel, 2, sizeof(int32_t), &width);
+
+    size_t global [2] { (size_t)width, (size_t)height };
+    OpenCL::enqueueNDRangeKernel(kernel, 2, nullptr, global, nullptr);
+    clFinish(OpenCL::commandQueue);
+
+    clReleaseKernel(kernel);
+    clReleaseMemObject(inputBuffer);
+
+    inputBuffer = outputBuffer;
+    return new Bitmap8(width, height, nullptr);
+}
+
+Bitmap8 *Bitmap::toGray8WithBufferReading(cl_mem &inputBuffer) {
+    if (colorType == ColorType::Grayscale) {
+        return nullptr;
+    }
+
+    size_t outputDataLength = width * height;
+    uint8_t* outputData = new uint8_t[outputDataLength]();
 
     cl_mem outputBuffer = OpenCL::createBuffer(outputData, outputDataLength);
 
@@ -38,11 +71,9 @@ Bitmap8* Bitmap::toGray8(cl_mem &inputBuffer) {
     clSetKernelArg(kernel, 1, sizeof(cl_mem), &outputBuffer);
     clSetKernelArg(kernel, 2, sizeof(int32_t), &width);
 
-    size_t* global = new size_t[2] { (size_t)width, (size_t)height };
+    size_t global[2] { (size_t)width, (size_t)height };
     OpenCL::enqueueNDRangeKernel(kernel, 2, nullptr, global, nullptr);
     OpenCL::readBuffer(outputBuffer, outputData, outputDataLength);
-
-    delete[] global;
 
     clReleaseKernel(kernel);
     clReleaseMemObject(inputBuffer);

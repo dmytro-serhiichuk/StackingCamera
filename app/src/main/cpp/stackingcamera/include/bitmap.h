@@ -26,6 +26,7 @@ public:
 
     cl_mem createCLBuffer();
     Bitmap8* toGray8(cl_mem &inputBuffer);
+    Bitmap8* toGray8WithBufferReading(cl_mem &inputBuffer);
 };
 
 #endif //IMAGESTACKER_BITMAP_H

@@ -158,8 +158,8 @@ void BRISK::subpixelRefine(Bitmap &bitmap, cl_mem buffer, Buffer<KeyPoint> &keyp
     clSetKernelArg(kernel, 2, sizeof(int), &bitmap.width);
     clSetKernelArg(kernel, 3, sizeof(int), &bitmap.height);
 
-    size_t global[1] { keypoints.size };
-    OpenCL::enqueueNDRangeKernel(kernel, 1, nullptr, global, nullptr);
+    size_t global = keypoints.size;
+    OpenCL::enqueueNDRangeKernel(kernel, 1, nullptr, &global, nullptr);
     OpenCL::readBuffer(kpsBuffer, keypoints.buffer, keypoints.size * sizeof(KeyPoint));
 
     clReleaseKernel(kernel);
@@ -173,7 +173,14 @@ Buffer<KeyPoint> *BRISK::detect(Bitmap &inputBitmap) {
 
     size_t kpsLen = inputBitmap.bufferLength;
     Buffer<KeyPoint>* keyPoints = new Buffer<KeyPoint>(kpsLen);
-    cl_mem kpsBuffer = OpenCL::createBuffer(nullptr, kpsLen * sizeof(KeyPoint));
+    cl_mem kpsBuffer = clCreateBuffer(
+            OpenCL::context, CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR,
+            kpsLen * sizeof(KeyPoint), nullptr, nullptr
+    );
+    cl_mem kpsCounterBuffer = clCreateBuffer(
+            OpenCL::context, CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR,
+            sizeof(int32_t), nullptr, nullptr
+    );
 
     float lastScaleFactor = 1.0f;
     cl_mem clonedBuffer;
@@ -191,10 +198,11 @@ Buffer<KeyPoint> *BRISK::detect(Bitmap &inputBitmap) {
             clonedBuffer = OpenCL::cloneBuffer(buffer, bitmap->bufferSize);
         }
 
-        FAST::detect(*bitmap, buffer, *keyPoints, kpsBuffer, FAST_PADDING, i, lastScaleFactor);
+        FAST::detect(*bitmap, buffer, *keyPoints, kpsBuffer, kpsCounterBuffer, FAST_PADDING, i, lastScaleFactor);
         delete gk;
     }
 
+    clReleaseMemObject(kpsCounterBuffer);
     clReleaseMemObject(kpsBuffer);
     clReleaseMemObject(buffer);
     delete bitmap;
@@ -264,25 +272,40 @@ Buffer<KeyPoint> *BRISK::detect(Bitmap &inputBitmap) {
 
 Descriptors *BRISK::compute(Bitmap &inputBitmap, Buffer<KeyPoint> &keyPoints) {
     cl_mem buffer = inputBitmap.createCLBuffer();
-    Bitmap8* bitmap = inputBitmap.toGray8(buffer);
+    Bitmap8* bitmap = inputBitmap.toGray8WithBufferReading(buffer);
 
     int32_t* integral = bitmap->integral();
     size_t integralSize = (bitmap->width + 1) * (bitmap->height + 1) * sizeof(int32_t);
-    cl_mem integralBuffer = OpenCL::createBuffer(integral, integralSize);
+    cl_mem integralBuffer = clCreateBuffer(
+            OpenCL::context, CL_MEM_HOST_NO_ACCESS | CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+            integralSize, integral, nullptr
+    );
 
-    cl_mem kpBuffer = OpenCL::createBuffer(keyPoints.buffer, keyPoints.size * sizeof(KeyPoint));
+    cl_mem kpBuffer = clCreateBuffer(
+            OpenCL::context, CL_MEM_HOST_NO_ACCESS | CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+            keyPoints.size * sizeof(KeyPoint), keyPoints.buffer, nullptr
+    );
 
     Descriptors* descriptors = new Descriptors();
     descriptors->count = keyPoints.size;
-    descriptors->buffer = new uint64_t[descriptors->count * Descriptors::DESCRIPTOR_LENGTH] { 0 };
+    descriptors->buffer = new uint64_t[descriptors->count * Descriptors::DESCRIPTOR_LENGTH]();
     size_t descriptorsSize = descriptors->count * Descriptors::DESCRIPTOR_LENGTH * sizeof(uint64_t);
     cl_mem descBuffer = OpenCL::createBuffer(descriptors->buffer, descriptorsSize);
 
     size_t patternSize = nPoints * nRotations * nOctaves * sizeof(BriskPatternPoint);
-    cl_mem patternBuffer = OpenCL::createBuffer(patternPoints, patternSize);
+    cl_mem patternBuffer = clCreateBuffer(
+            OpenCL::context, CL_MEM_HOST_NO_ACCESS | CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+            patternSize, patternPoints, nullptr
+    );
 
-    cl_mem sp = OpenCL::createBuffer(shortPairs->buffer, shortPairs->size * sizeof(BriskShortPair));
-    cl_mem lp = OpenCL::createBuffer(longPairs->buffer, longPairs->size * sizeof(BriskLongPair));
+    cl_mem sp = clCreateBuffer(
+            OpenCL::context, CL_MEM_HOST_NO_ACCESS | CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+            shortPairs->size * sizeof(BriskShortPair), shortPairs->buffer, nullptr
+    );
+    cl_mem lp = clCreateBuffer(
+            OpenCL::context, CL_MEM_HOST_NO_ACCESS | CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+            longPairs->size * sizeof(BriskLongPair), longPairs->buffer, nullptr
+    );
 
     cl_kernel kernel = OpenCL::createKernel("brisk");
 
@@ -295,11 +318,10 @@ Descriptors *BRISK::compute(Bitmap &inputBitmap, Buffer<KeyPoint> &keyPoints) {
     clSetKernelArg(kernel, 6, sizeof(cl_mem), &sp);
     clSetKernelArg(kernel, 7, sizeof(cl_mem), &lp);
 
-    size_t* global = new size_t[1] { keyPoints.size };
-    OpenCL::enqueueNDRangeKernel(kernel, 1, nullptr, global, nullptr);
+    size_t global = keyPoints.size;
+    OpenCL::enqueueNDRangeKernel(kernel, 1, nullptr, &global, nullptr);
     OpenCL::readBuffer(descBuffer, descriptors->buffer, descriptorsSize);
 
-    delete[] global;
     clReleaseKernel(kernel);
     clReleaseMemObject(buffer);
     clReleaseMemObject(integralBuffer);

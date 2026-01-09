@@ -16,6 +16,7 @@ namespace OpenCL {
     extern cl_context context;
     extern cl_command_queue commandQueue;
     extern cl_program program;
+    extern size_t maxGroupSize;
 
     void initCL(AAssetManager* gAssetManager);
     void releaseResources();

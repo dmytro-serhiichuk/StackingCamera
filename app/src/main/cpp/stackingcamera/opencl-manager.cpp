@@ -11,6 +11,7 @@ namespace OpenCL {
     cl_context context = nullptr;
     cl_command_queue commandQueue = nullptr;
     cl_program program = nullptr;
+    size_t maxGroupSize = 0;
 
     char* readProgramSource(AAssetManager *assetManager) {
         AAsset* asset = AAssetManager_open(assetManager, "program.cl", AASSET_MODE_BUFFER);
@@ -86,6 +87,14 @@ namespace OpenCL {
 
             throw std::runtime_error(build_log);
         }
+
+        status = clGetDeviceInfo(
+                device,
+                CL_DEVICE_MAX_WORK_GROUP_SIZE,
+                sizeof(size_t),
+                &maxGroupSize,
+                nullptr
+        );
     }
     void releaseResources() {
         clReleaseProgram(program);
@@ -135,7 +144,10 @@ namespace OpenCL {
     }
 
     cl_mem cloneBuffer(cl_mem src_buffer, size_t size) {
-        cl_mem dst_buffer = createBuffer(nullptr, size);
+        cl_mem dst_buffer = clCreateBuffer(
+                context, CL_MEM_READ_WRITE | CL_MEM_HOST_NO_ACCESS,
+                size, nullptr, nullptr
+        );
         cl_int status = clEnqueueCopyBuffer(commandQueue, src_buffer, dst_buffer, 0, 0, size, 0, nullptr, nullptr);
         if (status != CL_SUCCESS) {
             __android_log_print(ANDROID_LOG_INFO, "__NATIVE__", "CL CopyBuffer failed: %d", status);

@@ -23,9 +23,14 @@ void Bitmap8::CLAHE(cl_mem &inputBuffer, uint32_t tileCount, float fClipLimit) {
     uint64_t clipLimit = (uint64_t)(fClipLimit * (tileWidth * tileHeight) / BINS_COUNT);
     size_t mapLength = tileCount * tileCount * BINS_COUNT;
     size_t mapSize = mapLength * sizeof(uint64_t);
-    uint64_t* map = new uint64_t[mapLength] { 0 };
 
-    cl_mem mapBuffer = OpenCL::createBuffer(map, mapSize);
+    cl_mem mapBuffer = clCreateBuffer(
+            OpenCL::context, CL_MEM_HOST_NO_ACCESS | CL_MEM_READ_WRITE,
+            mapSize, nullptr, nullptr
+    );
+    cl_int zero = 0;
+    clEnqueueFillBuffer(OpenCL::commandQueue, mapBuffer, &zero, sizeof(zero),
+                        0, mapSize, 0, nullptr,nullptr);
 
     cl_kernel kernel = OpenCL::createKernel("clahe_make_lut");
 
@@ -38,11 +43,10 @@ void Bitmap8::CLAHE(cl_mem &inputBuffer, uint32_t tileCount, float fClipLimit) {
     status = clSetKernelArg(kernel, 6, sizeof(uint32_t), &tileWidth);
     status = clSetKernelArg(kernel, 7, sizeof(uint32_t), &tileHeight);
 
-    size_t* global = new size_t[2] { tileCount, tileCount };
+    size_t global[2] { tileCount, tileCount };
     OpenCL::enqueueNDRangeKernel(kernel, 2, nullptr, global, nullptr);
-    OpenCL::readBuffer(mapBuffer, map, mapSize);
+    clFinish(OpenCL::commandQueue);
 
-    delete [] global;
     clReleaseKernel(kernel);
 
     kernel = OpenCL::createKernel("clahe_interpolate");
@@ -55,19 +59,24 @@ void Bitmap8::CLAHE(cl_mem &inputBuffer, uint32_t tileCount, float fClipLimit) {
     clSetKernelArg(kernel, 5, sizeof(uint32_t), &tileWidth);
     clSetKernelArg(kernel, 6, sizeof(uint32_t), &tileHeight);
 
-    global = new size_t[2] { (size_t)width, (size_t)height };
+    global[0] = width;
+    global[1] = height;
     OpenCL::enqueueNDRangeKernel(kernel, 2, nullptr, global, nullptr);
-    OpenCL::readBuffer(inputBuffer, buffer, bufferSize);
+    clFinish(OpenCL::commandQueue);
 
-    delete [] global;
     clReleaseKernel(kernel);
     clReleaseMemObject(mapBuffer);
 }
 
 void Bitmap8::blur(cl_mem &inputBuffer, GaussianKernel &gk) {
-    cl_mem outputBuffer = OpenCL::createBuffer(buffer, bufferSize);
-
-    cl_mem gaussianBuffer = OpenCL::createBuffer(gk.buffer, gk.sizeOf);
+    cl_mem outputBuffer = clCreateBuffer(
+            OpenCL::context, CL_MEM_HOST_NO_ACCESS | CL_MEM_READ_WRITE,
+            bufferSize, nullptr, nullptr
+    );
+    cl_mem gaussianBuffer = clCreateBuffer(
+            OpenCL::context, CL_MEM_HOST_NO_ACCESS | CL_MEM_COPY_HOST_PTR | CL_MEM_READ_ONLY,
+            gk.sizeOf, gk.buffer, nullptr
+    );
 
     cl_kernel kernel = OpenCL::createKernel("gaussian_blur");
 
@@ -78,11 +87,10 @@ void Bitmap8::blur(cl_mem &inputBuffer, GaussianKernel &gk) {
     clSetKernelArg(kernel, 4, sizeof(cl_mem), &gaussianBuffer);
     clSetKernelArg(kernel, 5, sizeof(int32_t), &gk.radius);
 
-    size_t* global = new size_t[2] { (size_t)width, (size_t)height };
+    size_t global[2] { (size_t)width, (size_t)height };
     OpenCL::enqueueNDRangeKernel(kernel, 2, nullptr, global, nullptr);
-    OpenCL::readBuffer(outputBuffer, buffer, bufferSize);
+    clFinish(OpenCL::commandQueue);
 
-    delete [] global;
     clReleaseKernel(kernel);
     clReleaseMemObject(inputBuffer);
     clReleaseMemObject(gaussianBuffer);
@@ -99,9 +107,11 @@ void Bitmap8::resize(cl_mem &inputBuffer, float scaleFactor) {
     int32_t rHeight = height * scaleFactor;
 
     size_t rBufferLength = rWidth * rHeight;
-    uint8_t* rBuffer = new uint8_t[rBufferLength] { 0 };
 
-    cl_mem outputBuffer = OpenCL::createBuffer(rBuffer, rBufferLength);
+    cl_mem outputBuffer = clCreateBuffer(
+            OpenCL::context, CL_MEM_HOST_NO_ACCESS | CL_MEM_READ_WRITE,
+            rBufferLength, nullptr, nullptr
+    );
 
     cl_kernel kernel = OpenCL::createKernel("resize");
 
@@ -112,18 +122,16 @@ void Bitmap8::resize(cl_mem &inputBuffer, float scaleFactor) {
     clSetKernelArg(kernel, 4, sizeof(int32_t), &rWidth);
     clSetKernelArg(kernel, 5, sizeof(float), &scaleFactor);
 
-    size_t* global = new size_t[2] { (size_t)rWidth, (size_t)rHeight };
+    size_t global[2] { (size_t)rWidth, (size_t)rHeight };
     OpenCL::enqueueNDRangeKernel(kernel, 2, nullptr, global, nullptr);
-    OpenCL::readBuffer(outputBuffer, rBuffer, rBufferLength);
+    clFinish(OpenCL::commandQueue);
 
-    delete [] global;
     clReleaseKernel(kernel);
     clReleaseMemObject(inputBuffer);
 
     inputBuffer = outputBuffer;
 
     delete [] buffer;
-    buffer = rBuffer;
     width = rWidth;
     height = rHeight;
     bufferSize = rBufferLength;

@@ -8,7 +8,8 @@
 #include "brisk.h"
 
 namespace FAST {
-    void detect(Bitmap8 &bitmap, cl_mem &imBuffer, Buffer<KeyPoint> &keyPoints, cl_mem &kpsBuffer, uint32_t padding, uint32_t octave, float scaleFactor);
+    void detect(Bitmap8 &bitmap, cl_mem &imBuffer, Buffer<KeyPoint> &keyPoints, cl_mem &kpsBuffer,
+                cl_mem &kpsCounterBuffer, uint32_t padding, uint32_t octave, float scaleFactor);
 }
 
 #endif //IMAGESTACKER_FAST_H
