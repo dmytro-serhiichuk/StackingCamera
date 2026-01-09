@@ -278,6 +278,9 @@ class CameraController(private val context: Context) {
         _cameras.values.forEach { it.updatePreviewSurface(surface) }
     }
 
+    fun updateDeviceOrientation(orientation: Int) {
+        _cameras.values.forEach { it.updateDeviceOrientation(orientation) }
+    }
     fun destroy() {
         _activeCamera.close()
         _cameras.values.forEach { it.close() }

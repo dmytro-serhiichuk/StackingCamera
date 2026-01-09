@@ -2,6 +2,7 @@ package com.sedv.stackingcamera
 
 import android.app.Application
 import android.util.Size
+import android.view.OrientationEventListener.ORIENTATION_UNKNOWN
 import android.view.Surface
 import androidx.lifecycle.AndroidViewModel
 import com.sedv.stackingcamera.camera.CameraController
@@ -56,6 +57,19 @@ class CameraViewModel(private val application: Application) : AndroidViewModel(a
 
         onCameraSwitched.invokeAll { it.invoke() }
         activeCamera.open()
+    }
+
+    fun updateOrientation(newOrientation: Int) {
+        if (newOrientation == ORIENTATION_UNKNOWN) return
+
+        val orientation = when {
+            newOrientation in 45..134 -> 270
+            newOrientation in 135..224 -> 180
+            newOrientation in 225..314 -> 90
+            else -> 0
+        }
+
+        _cameraController.updateDeviceOrientation(orientation)
     }
 
     fun pause() {

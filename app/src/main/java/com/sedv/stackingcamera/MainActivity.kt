@@ -12,6 +12,7 @@ import android.os.Environment
 import android.provider.MediaStore
 import android.util.Log
 import android.view.MotionEvent
+import android.view.OrientationEventListener
 import android.view.View
 import android.view.WindowManager
 import android.widget.Toast
@@ -135,6 +136,14 @@ class MainActivity : AppCompatActivity() {
                 val intent = Intent(this, StackingActivity::class.java)
                 startActivity(intent)
             }
+
+            val orientationListener = object : OrientationEventListener(this) {
+                override fun onOrientationChanged(orientation: Int) {
+                    viewModel.updateOrientation(orientation)
+                }
+            }
+
+            orientationListener.enable()
 
             isSuccessfullyInitialized = true
         }

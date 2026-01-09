@@ -31,13 +31,15 @@ import com.sedv.stackingcamera.settings.GeneralSettings
 import java.io.ByteArrayOutputStream
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.rem
 
 class Camera(
     val cameraInfo: CameraInfo,
     private val context: Context,
     private var previewSurface: Surface?,
     private val backgroundHandler: Handler,
-    private val cameraManager: CameraManager
+    private val cameraManager: CameraManager,
+    private var deviceOrientation: Int = 0
 ) {
     val cameraSettings = CameraSettings(cameraInfo, ::onSettingsChangedManually)
     private var _cameraDevice: CameraDevice? = null
@@ -64,6 +66,9 @@ class Camera(
         if (cameraDevice != null && currentState == CameraState.OPENED) {
             recreateSession()
         }
+    }
+    fun updateDeviceOrientation(orientation: Int) {
+        deviceOrientation = orientation
     }
 
     fun open() {
@@ -376,19 +381,6 @@ class Camera(
     }
 
     private fun getOrientation(): Int {
-        val deviceRotation = when (context.getSystemService(Context.WINDOW_SERVICE) as WindowManager) {
-            else -> (context.getSystemService(Context.WINDOW_SERVICE) as WindowManager)
-                .defaultDisplay.rotation
-        }
-
-        val deviceOrientation = when (deviceRotation) {
-            Surface.ROTATION_0 -> 0
-            Surface.ROTATION_90 -> 90
-            Surface.ROTATION_180 -> 180
-            Surface.ROTATION_270 -> 270
-            else -> 0
-        }
-
         val sensorOrientation = cameraInfo.sensorOrientation
 
         return if (cameraInfo.facing == CameraCharacteristics.LENS_FACING_FRONT) {
