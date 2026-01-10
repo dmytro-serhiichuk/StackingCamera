@@ -62,26 +62,9 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}
 # Including project lib
 include_directories(${CMAKE_SOURCE_DIR}/${CMAKE_PROJECT_NAME}/include)
 file(GLOB SOURCES "${CMAKE_SOURCE_DIR}/${CMAKE_PROJECT_NAME}/*.cpp")
-add_library(${CMAKE_PROJECT_NAME} SHARED
+add_library(${CMAKE_PROJECT_NAME} SHARED ${SOURCES}
         # List C/C++ source files with relative paths to this CMakeLists.txt.
-        "${CMAKE_SOURCE_DIR}/${CMAKE_PROJECT_NAME}/bitmap.cpp"
-        "${CMAKE_SOURCE_DIR}/${CMAKE_PROJECT_NAME}/bitmap-8.cpp"
-        "${CMAKE_SOURCE_DIR}/${CMAKE_PROJECT_NAME}/bitmap-pointer.cpp"
-        "${CMAKE_SOURCE_DIR}/${CMAKE_PROJECT_NAME}/brisk.cpp"
-        "${CMAKE_SOURCE_DIR}/${CMAKE_PROJECT_NAME}/core.cpp"
-        "${CMAKE_SOURCE_DIR}/${CMAKE_PROJECT_NAME}/fast.cpp"
-        "${CMAKE_SOURCE_DIR}/${CMAKE_PROJECT_NAME}/gaussian-kernel.cpp"
-        "${CMAKE_SOURCE_DIR}/${CMAKE_PROJECT_NAME}/imageio.cpp"
-        "${CMAKE_SOURCE_DIR}/${CMAKE_PROJECT_NAME}/jniHelper.cpp"
-        "${CMAKE_SOURCE_DIR}/${CMAKE_PROJECT_NAME}/jpegio.cpp"
-        "${CMAKE_SOURCE_DIR}/${CMAKE_PROJECT_NAME}/matcher.cpp"
-        "${CMAKE_SOURCE_DIR}/${CMAKE_PROJECT_NAME}/native-lib.cpp"
-        "${CMAKE_SOURCE_DIR}/${CMAKE_PROJECT_NAME}/opencl-manager.cpp"
-        "${CMAKE_SOURCE_DIR}/${CMAKE_PROJECT_NAME}/pngio.cpp"
-        "${CMAKE_SOURCE_DIR}/${CMAKE_PROJECT_NAME}/ransac.cpp"
-        "${CMAKE_SOURCE_DIR}/${CMAKE_PROJECT_NAME}/tiff-io.cpp"
-        "${CMAKE_SOURCE_DIR}/${CMAKE_PROJECT_NAME}/warp.cpp"
-        "${CMAKE_SOURCE_DIR}/${CMAKE_PROJECT_NAME}/utils.cpp")
+        ${SOURCES})
 
 # Specifies libraries CMake should link to your target library. You
 # can link libraries from various origins, such as libraries defined in this

@@ -1,0 +1,110 @@
+//
+// Created by sedv2 on 10.01.2026.
+//
+
+#include "tiff-io.h"
+#include <tiffio.h>
+#include <stdexcept>
+
+namespace ImageIO {
+    BitmapPtr* loadTIFF(int fd, ColorSpace colorSpace, Depth depth) {
+        TIFF* tiff = TIFFFdOpen(fd, "IMAGE", "r");
+        if (!tiff) {
+            throw std::runtime_error("Failed to open file");
+        }
+
+        uint32_t width, height;
+        uint16_t bitsPerSample, samplesPerPixel, photometric;
+
+        TIFFGetField(tiff, TIFFTAG_IMAGEWIDTH, &width);
+        TIFFGetField(tiff, TIFFTAG_IMAGELENGTH, &height);
+        TIFFGetField(tiff, TIFFTAG_BITSPERSAMPLE, &bitsPerSample);
+        TIFFGetField(tiff, TIFFTAG_SAMPLESPERPIXEL, &samplesPerPixel);
+        TIFFGetField(tiff, TIFFTAG_PHOTOMETRIC, &photometric);
+
+        if (bitsPerSample != 16 && bitsPerSample != 8) {
+            TIFFClose(tiff);
+            throw std::runtime_error("Only 8/16 bits per sample tiff supported");
+        }
+        if (samplesPerPixel != 1 && samplesPerPixel != 3 && samplesPerPixel != 4) {
+            TIFFClose(tiff);
+            throw std::runtime_error("Only grayscale/rgb/rgba tiff supported");
+        }
+
+        tsize_t scanlineSize = TIFFScanlineSize(tiff);
+        uint8_t* scanline = new uint8_t[scanlineSize]();
+
+        size_t bytesPerSample = bitsPerSample / 8;
+        uint8_t* data = new uint8_t[width * height * bytesPerSample * samplesPerPixel];
+
+        for (uint32_t row = 0; row < height; row++) {
+            if (TIFFReadScanline(tiff, scanline, row) < 0) {
+                TIFFClose(tiff);
+                delete [] scanline;
+                delete [] data;
+                throw std::runtime_error("Failed read scanline");
+            }
+
+            for (uint32_t col = 0; col < width; col++) {
+                size_t dataIndex = (row * width + col) * samplesPerPixel;
+                size_t scanlineIndex = col * samplesPerPixel;
+
+                if (bytesPerSample == 1) {
+                    if (samplesPerPixel == 1) {
+                        data[dataIndex] = scanline[scanlineIndex];
+                    }
+                    else if (samplesPerPixel == 3) {
+                        data[dataIndex] = scanline[scanlineIndex];
+                        data[dataIndex + 1] = scanline[scanlineIndex + 1];
+                        data[dataIndex + 2] = scanline[scanlineIndex + 2];
+                    }
+                    else if (samplesPerPixel == 4) {
+                        data[dataIndex] = scanline[scanlineIndex];
+                        data[dataIndex + 1] = scanline[scanlineIndex + 1];
+                        data[dataIndex + 2] = scanline[scanlineIndex + 2];
+                        data[dataIndex + 3] = scanline[scanlineIndex + 3];
+                    }
+                }
+                else {
+                    uint16_t* data16 = (uint16_t*)data;
+                    uint16_t* scanline16 = (uint16_t*)scanline;
+
+                    if (samplesPerPixel == 1) {
+                        data16[dataIndex] = scanline16[scanlineIndex];
+                    }
+                    else if (samplesPerPixel == 3) {
+                        data16[dataIndex] = scanline16[scanlineIndex];
+                        data16[dataIndex + 1] = scanline16[scanlineIndex + 1];
+                        data16[dataIndex + 2] = scanline16[scanlineIndex + 2];
+                    }
+                    else if (samplesPerPixel == 4) {
+                        data16[dataIndex] = scanline16[scanlineIndex];
+                        data16[dataIndex + 1] = scanline16[scanlineIndex + 1];
+                        data16[dataIndex + 2] = scanline16[scanlineIndex + 2];
+                        data16[dataIndex + 3] = scanline16[scanlineIndex + 3];
+                    }
+                }
+            }
+        }
+
+        TIFFClose(tiff);
+        delete [] scanline;
+
+        ColorSpace decodedColorSpace =
+                samplesPerPixel == 1 ? ColorSpace::Grayscale :
+                samplesPerPixel == 3 ? ColorSpace::RGB :
+                ColorSpace::RGBA;
+
+        Depth decodedDepth = bytesPerSample == 1 ? Depth::U8 : Depth::U16;
+
+        Bitmap* bmp = new Bitmap(width, height, data, decodedColorSpace, decodedDepth);
+        if (bmp->colorSpace != colorSpace || bmp->depth != depth) {
+            Bitmap* tmp = bmp;
+            bmp = tmp->convertTo(depth, colorSpace);
+            delete tmp;
+        }
+        BitmapPtr* bitmapPtr = new BitmapPtr(*bmp);
+        delete bmp;
+        return bitmapPtr;
+    }
+}
