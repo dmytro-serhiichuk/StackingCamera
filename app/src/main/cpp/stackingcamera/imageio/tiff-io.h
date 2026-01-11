@@ -10,7 +10,7 @@
 namespace ImageIO {
     BitmapPtr* loadTIFF(int fd, ColorSpace colorSpace, Depth depth);
 
-    void savePNG(int fd, Bitmap &bmp, SaveProperties prop);
+    void saveTIFF(int fd, Bitmap &bmp, SaveProperties props);
 }
 
 #endif //STACKINGCAMERA_TIFF_IO_H

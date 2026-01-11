@@ -10,7 +10,7 @@
 namespace ImageIO {
     BitmapPtr* loadPNG(uint8_t* fileData, size_t fileSize, ColorSpace colorSpace, Depth depth);
 
-    void savePNG(int fd, Bitmap &bmp, SaveProperties prop);
+    void savePNG(int fd, Bitmap &bmp, SaveProperties props);
 }
 
 #endif //STACKINGCAMERA_PNG_IO_H

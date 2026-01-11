@@ -108,6 +108,20 @@ namespace ImageIO {
 
         return bitmapPtr;
     }
+
+    void save(int fd, Bitmap &bitmap, SaveProperties props) {
+        switch (props.outputFormat) {
+            case OutputFormat::JPEG:
+                saveJPEG(fd, bitmap, props);
+                break;
+            case OutputFormat::PNG:
+                savePNG(fd, bitmap, props);
+                break;
+            default:
+                saveTIFF(fd, bitmap, props);
+                break;
+        }
+    }
 }
 
 

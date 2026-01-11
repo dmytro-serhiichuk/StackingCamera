@@ -5,6 +5,7 @@
 #include "jpeg-io.h"
 #include <turbojpeg.h>
 #include <stdexcept>
+#include <unistd.h>
 
 namespace ImageIO {
     BitmapPtr *loadJPEG(uint8_t *fileData, size_t fileSize, ColorSpace colorSpace, Depth depth) {
@@ -44,6 +45,50 @@ namespace ImageIO {
         BitmapPtr* bitmapPtr = new BitmapPtr(*bmp);
         delete bmp;
         return bitmapPtr;
+    }
+
+    void saveJPEG(int fd, Bitmap &bmp, SaveProperties props) {
+        Bitmap* bp = &bmp;
+        if (bp->depth != Depth::U8) {
+            bp = bp->convertDepth(Depth::U8);
+        }
+
+        unsigned long jpegSize = 0;
+        uint8_t* jpegBuf = nullptr;
+
+        tjhandle jpegCompressor = tjInitCompress();
+        if (!jpegCompressor) {
+            throw std::runtime_error("Failed to init jpeg compressor");
+        }
+
+        jpegSize = 0;
+        jpegBuf = nullptr;
+
+        int pixelFormat = bp->colorSpace == ColorSpace::RGB ? TJPF_RGB :
+                          bp->colorSpace == ColorSpace::RGBA ? TJPF_RGBA :
+                          TJPF_GRAY;
+
+        int subsamp = (bp->colorSpace == ColorSpace::RGB ||
+                       bp->colorSpace == ColorSpace::RGBA)
+                       ? TJSAMP_444
+                       : TJSAMP_GRAY;
+
+        if (tjCompress2(
+                jpegCompressor, bp->buffer, bp->width, 0, bp->height,
+                pixelFormat, &jpegBuf, &jpegSize, subsamp, props.jpegQuality, TJFLAG_FASTDCT) < 0)
+        {
+            tjDestroy(jpegCompressor);
+            throw std::runtime_error("Failed to compress jpeg");
+        }
+
+        write(fd, jpegBuf, jpegSize);
+
+        tjDestroy(jpegCompressor);
+        tjFree(jpegBuf);
+
+        if (bp->depth != bmp.depth) {
+            delete bp;
+        }
     }
 }
 

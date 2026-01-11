@@ -107,4 +107,44 @@ namespace ImageIO {
         delete bmp;
         return bitmapPtr;
     }
+
+    void saveTIFF(int fd, Bitmap &bmp, SaveProperties props) {
+        TIFF* tiff = TIFFFdOpen(fd, "IMAGE", "w");
+        if (!tiff) {
+            throw std::runtime_error("Failed to open file");
+        }
+
+        uint16_t samplesPerPixel = bmp.colorSpace == ColorSpace::Grayscale ? 1 :
+                                   bmp.colorSpace == ColorSpace::RGB ? 3 :
+                                   4;
+
+        uint16_t depthSize = (uint16_t)bmp.depth;
+        uint16_t bitsPerSample = depthSize * 8;
+
+        TIFFSetField(tiff, TIFFTAG_IMAGEWIDTH,      bmp.width);
+        TIFFSetField(tiff, TIFFTAG_IMAGELENGTH,     bmp.height);
+        TIFFSetField(tiff, TIFFTAG_SAMPLESPERPIXEL, samplesPerPixel);
+        TIFFSetField(tiff, TIFFTAG_BITSPERSAMPLE,   bitsPerSample);
+        TIFFSetField(tiff, TIFFTAG_ORIENTATION,     ORIENTATION_TOPLEFT);
+        TIFFSetField(tiff, TIFFTAG_PLANARCONFIG,    PLANARCONFIG_CONTIG);
+
+        uint16_t photometric = (samplesPerPixel == 1
+                                ? PHOTOMETRIC_MINISBLACK
+                                : PHOTOMETRIC_RGB);
+        TIFFSetField(tiff, TIFFTAG_PHOTOMETRIC, photometric);
+
+        if (samplesPerPixel == 4) {
+            uint16_t extraSamples = EXTRASAMPLE_ASSOCALPHA;
+            TIFFSetField(tiff, TIFFTAG_EXTRASAMPLES, 1, &extraSamples);
+        }
+
+        for (uint32_t row = 0; row < bmp.height; row++) {
+            if (TIFFWriteScanline(tiff, bmp.buffer + row * bmp.stride * depthSize, row, 0) < 0) {
+                TIFFClose(tiff);
+                throw std::runtime_error("Failed to write tiff");
+            }
+        }
+
+        TIFFClose(tiff);
+    }
 }
