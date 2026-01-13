@@ -35,6 +35,9 @@ namespace CL {
     void init(AAssetManager* gAssetManager);
     cl_mem createBuffer(cl_mem_flags flags, size_t size, void* data);
     cl_kernel createKernel(const char* name);
+    void enqueueNDRangeKernel(cl_kernel kernel, cl_uint ND, size_t* offset, size_t* global, size_t* local);
+    void readBuffer(cl_mem cl_buffer, void* buffer, size_t bufferSize, cl_bool block);
+    void copyBuffer(cl_mem src, cl_mem dst, size_t size);
 }
 
 #endif //STACKINGCAMERA_OPENCL_H

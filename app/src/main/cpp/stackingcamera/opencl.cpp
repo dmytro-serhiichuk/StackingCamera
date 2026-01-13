@@ -4,7 +4,6 @@
 
 #include "opencl.h"
 #include <stdexcept>
-#include <string>
 
 namespace CL {
     static char logBuffer[256];
@@ -110,7 +109,11 @@ namespace CL {
         if (status != CL_SUCCESS) throw std::runtime_error("Cannot create the context");
 
         // Step 7: Creating command queues
-        cl_properties props[] = { 0 };
+        cl_properties props[] = {
+            CL_QUEUE_PROPERTIES,
+            (cl_command_queue_properties)(CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE),
+            0
+        };
         computeQueue = clCreateCommandQueueWithProperties(context, device, props, &status);
         if (status != CL_SUCCESS) throw std::runtime_error("Cannot create compute queue");
         transferQueue = clCreateCommandQueueWithProperties(context, device, props, &status);
@@ -159,7 +162,7 @@ namespace CL {
             printf(logBuffer, "buffer creating error: %d", status);
             throw std::runtime_error(logBuffer);
         }
-        return nullptr;
+        return buffer;
     }
 
     cl_kernel createKernel(const char *name) {
@@ -170,6 +173,36 @@ namespace CL {
             throw std::runtime_error(logBuffer);
         }
         return kernel;
+    }
+
+    void enqueueNDRangeKernel(cl_kernel kernel, cl_uint ND, size_t* offset, size_t* global, size_t* local)
+    {
+        cl_int status = clEnqueueNDRangeKernel(
+                computeQueue, kernel, ND, offset, global, local, 0, nullptr, nullptr
+        );
+        if (status != CL_SUCCESS) {
+            sprintf(logBuffer, "EnqueueNDRangeKernel error: %d", status);
+            throw std::runtime_error(logBuffer);
+        }
+    }
+    void readBuffer(cl_mem cl_buffer, void *buffer, size_t bufferSize, cl_bool block)
+    {
+        cl_int status = clEnqueueReadBuffer(
+                transferQueue, cl_buffer, block, 0, bufferSize, buffer, 0, nullptr, nullptr
+        );
+        if (status != CL_SUCCESS) {
+            sprintf(logBuffer, "EnqueueReadBuffer error: %d", status);
+            throw std::runtime_error(logBuffer);
+        }
+    }
+
+    void copyBuffer(cl_mem src, cl_mem dst, size_t size) {
+        cl_int status = clEnqueueCopyBuffer(transferQueue, src, dst, 0, 0, size, 0, nullptr, nullptr);
+        if (status != CL_SUCCESS) {
+            sprintf(logBuffer, "CopyBuffer failed: %d", status);
+            throw std::runtime_error(logBuffer);
+        }
+        clFinish(transferQueue);
     }
 };
 

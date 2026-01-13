@@ -1,15 +1,16 @@
 #define PI 3.14159265358979323846f
 
-__kernel void to_grayscale_8(
-    __global const ushort* input_image, 
-    __global uchar* output_image, 
-    int width
+__kernel void from_rgb16_to_gray8(
+    __global const ushort* input_image,
+    __global uchar* output_image,
+    const int width,
+    const int channels
 ) {
     int x = get_global_id(0);
     int y = get_global_id(1);
 
     int out_index = y * width + x;
-    int in_index = out_index * 3;
+    int in_index = out_index * channels;
 
     float r = (float)input_image[in_index];
     float g = (float)input_image[in_index + 1];
@@ -18,6 +19,25 @@ __kernel void to_grayscale_8(
     ushort usVal = (ushort)(0.299f * r + 0.587f * g + 0.114f * b);
     uchar val = (uchar)(usVal >> 8);
     output_image[out_index] = val;
+}
+
+__kernel void from_rgb8_to_gray8(
+    __global const uchar* input_image,
+    __global uchar* output_image, 
+    const int width,
+    const int channels
+) {
+    int x = get_global_id(0);
+    int y = get_global_id(1);
+
+    int out_index = y * width + x;
+    int in_index = out_index * channels;
+
+    float r = (float)input_image[in_index];
+    float g = (float)input_image[in_index + 1];
+    float b = (float)input_image[in_index + 2];
+
+    output_image[out_index] = (uchar)(0.299f * r + 0.587f * g + 0.114f * b);
 }
 
 __kernel void clahe_make_lut(
@@ -161,39 +181,58 @@ __kernel void clahe_interpolate(
     image[y * width + x] = (uchar)newVal;
 }
 
-__kernel void gaussian_blur(
+__kernel void gaussian_blur_horizontal(
     __global const uchar* input_image,
-    __global uchar* output_image,
+    __global uchar* temp_image,
     int width, int height,
-    __global const float* gaussian_kernel,
-    const int gaussian_kernel_radius
+    __constant float* weights,
+    const int radius
 ) {
     int x = get_global_id(0);
     int y = get_global_id(1);
 
-    if (x >= width || y >= height) {
-        return;
+    if (x >= width || y >= height) return;
+
+    float pixel_sum = 0.0f;
+
+    for (int k = -radius; k <= radius; k++) {
+        int sample_x = clamp(x + k, 0, width - 1);
+
+        float weight = weights[k + radius];
+
+        uchar pixel_val = input_image[y * width + sample_x];
+
+        pixel_sum += pixel_val * weight;
     }
 
-    int pixel_index = y * width + x;
+    temp_image[y * width + x] = (uchar)(pixel_sum + 0.5f);
+}
 
-    const int gauss_kernel_diameter = gaussian_kernel_radius + gaussian_kernel_radius + 1;
-    float val = 0.0f;
+__kernel void gaussian_blur_vertical(
+    __global const uchar* temp_image,
+    __global uchar* output_image,
+    int width, int height,
+    __constant float* weights,
+    const int radius
+) {
+    int x = get_global_id(0);
+    int y = get_global_id(1);
 
-    for (int ky = -gaussian_kernel_radius; ky <= gaussian_kernel_radius; ky++) {
-        for (int kx = -gaussian_kernel_radius; kx <= gaussian_kernel_radius; kx++) {
-            int nx = clamp(x + kx, 0, width - 1);
-            int ny = clamp(y + ky, 0, height - 1);
+    if (x >= width || y >= height) return;
 
-            int neighbor_index = ny * width + nx;
+    float pixel_sum = 0.0f;
 
-            float weight = gaussian_kernel[(ky + gaussian_kernel_radius) * gauss_kernel_diameter + (kx + gaussian_kernel_radius)];
+    for (int k = -radius; k <= radius; k++) {
+        int sample_y = clamp(y + k, 0, height - 1);
 
-            val += input_image[neighbor_index] * weight;
-        }
+        float weight = weights[k + radius];
+
+        uchar pixel_val = temp_image[sample_y * width + x];
+
+        pixel_sum += pixel_val * weight;
     }
 
-    output_image[pixel_index] = (uchar)clamp(val, 0.0f, 255.0f);
+    output_image[y * width + x] = (uchar)(pixel_sum + 0.5f);
 }
 
 __kernel void resize(
