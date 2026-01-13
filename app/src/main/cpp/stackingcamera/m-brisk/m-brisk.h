@@ -7,7 +7,7 @@
 
 
 #include "../imageio/imageio.h"
-#include "../collection.h"
+#include "../collections/buffer.h"
 #include "../opencl.h"
 
 using namespace ImageIO;
@@ -68,18 +68,18 @@ private:
     float scaleRange;
     const float dMaxSq = 5.85f * 5.85f;
     const float dMinSq = 8.2f * 8.2f;
-    Collection<BriskShortPair>* shortPairs;
-    Collection<BriskLongPair>* longPairs;
+    Buffer<BriskShortPair>* shortPairs;
+    Buffer<BriskLongPair>* longPairs;
 
-    inline void subpixelRefine(Bitmap &bitmap, cl_mem buffer, Collection<KeyPoint> &keypoints);
+    inline void subpixelRefine(Bitmap &bitmap, cl_mem buffer, Buffer<KeyPoint> &keypoints);
     inline bool RoiPredicate(Bitmap &bitmap, KeyPoint &kp, uint32_t size);
-    inline void filterKeypointsAfterRefining(Bitmap &bmp, Collection<KeyPoint> &kps);
+    inline void filterKeypointsAfterRefining(Bitmap &bmp, Buffer<KeyPoint> &kps);
 public:
     M_BRISK(uint32_t _octaves=8, float _briskScaleFactor=1.4f);
     ~M_BRISK();
 
-    Collection<KeyPoint>* detect(Bitmap &inputBitmap);
-    Descriptors* compute(Bitmap &inputBitmap, Collection<KeyPoint> &keyPoints);
+    Buffer<KeyPoint>* detect(Bitmap &inputBitmap);
+    Descriptors* compute(Bitmap &inputBitmap, Buffer<KeyPoint> &keyPoints);
 };
 
 #endif //STACKINGCAMERA_M_BRISK_H

@@ -2,35 +2,35 @@
 // Created by sedv2 on 11.01.2026.
 //
 
-#ifndef STACKINGCAMERA_COLLECTION_H
-#define STACKINGCAMERA_COLLECTION_H
+#ifndef STACKINGCAMERA_BUFFER_H
+#define STACKINGCAMERA_BUFFER_H
 
 #include <cstdint>
 #include <stdexcept>
 #include <cstring>
 
 template <typename T>
-class Collection {
+class Buffer {
 public:
     size_t capacity;
     size_t size;
     T* buffer;
 
-    Collection(size_t _capacity = 0) {
+    Buffer(size_t _capacity = 0) {
         buffer = _capacity > 0 ? new T[_capacity] : nullptr;
         capacity = _capacity;
         size = 0;
     }
-    ~Collection() {
+    ~Buffer() {
         delete [] buffer;
         buffer = nullptr;
         size = 0;
         capacity = 0;
     }
 
-    Collection& operator=(const Collection& other) {
+    Buffer& operator=(const Buffer& other) {
         if (this != &other) {
-            Collection temp(other);
+            Buffer temp(other);
             std::swap(capacity, temp.capacity);
             std::swap(size, temp.size);
             std::swap(buffer, temp.buffer);
@@ -65,4 +65,4 @@ public:
     }
 };
 
-#endif //STACKINGCAMERA_COLLECTION_H
+#endif //STACKINGCAMERA_BUFFER_H

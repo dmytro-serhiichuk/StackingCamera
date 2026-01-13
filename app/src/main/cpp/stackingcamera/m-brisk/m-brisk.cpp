@@ -24,8 +24,8 @@ M_BRISK::M_BRISK(uint32_t _octaves, float _briskScaleFactor) {
     scaleRange = dScaleRange * nOctaves;
 
     size_t pairsMaxSize = nPoints * (nPoints - 1) / 2;
-    shortPairs = new Collection<BriskShortPair>(pairsMaxSize);
-    longPairs = new Collection<BriskLongPair>(pairsMaxSize);
+    shortPairs = new Buffer<BriskShortPair>(pairsMaxSize);
+    longPairs = new Buffer<BriskLongPair>(pairsMaxSize);
 
     uint32_t nRings = 5;
     float *radiusList = new float[nRings] {
@@ -151,7 +151,7 @@ bool M_BRISK::RoiPredicate(Bitmap &bitmap, KeyPoint &kp, uint32_t size) {
     return kp.x >= size && kp.y >= size && kp.x < bitmap.width - size && kp.y < bitmap.height - size;
 }
 
-void M_BRISK::subpixelRefine(Bitmap &bitmap, cl_mem buffer, Collection<KeyPoint> &keypoints) {
+void M_BRISK::subpixelRefine(Bitmap &bitmap, cl_mem buffer, Buffer<KeyPoint> &keypoints) {
     cl_mem kpsBuffer = CL::createBuffer(
             CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
             keypoints.size * sizeof(KeyPoint), keypoints.buffer
@@ -180,7 +180,7 @@ void M_BRISK::subpixelRefine(Bitmap &bitmap, cl_mem buffer, Collection<KeyPoint>
     clReleaseMemObject(kpsBuffer);
 }
 
-inline void M_BRISK::filterKeypointsAfterRefining(Bitmap &bmp, Collection<KeyPoint> &kps) {
+inline void M_BRISK::filterKeypointsAfterRefining(Bitmap &bmp, Buffer<KeyPoint> &kps) {
     size_t fi = 0;
     for (size_t i = 0; i < kps.size; i++) {
         if (RoiPredicate(bmp, kps[i], sizes[kps[i].octave + 1])) {
@@ -192,7 +192,7 @@ inline void M_BRISK::filterKeypointsAfterRefining(Bitmap &bmp, Collection<KeyPoi
     kps.shrink();
 }
 
-Collection<KeyPoint> *M_BRISK::detect(Bitmap &inputBitmap) {
+Buffer<KeyPoint> *M_BRISK::detect(Bitmap &inputBitmap) {
     cl_mem buffer = CL::createBuffer(
             CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR | CL_MEM_HOST_NO_ACCESS,
             inputBitmap.sizeOfBuffer(), inputBitmap.buffer
@@ -202,7 +202,7 @@ Collection<KeyPoint> *M_BRISK::detect(Bitmap &inputBitmap) {
     CLAHE(bitmapInfo, buffer);
 
     size_t kpsLen = bitmapInfo.bufferLength;
-    Collection<KeyPoint>* keyPoints = new Collection<KeyPoint>(kpsLen);
+    Buffer<KeyPoint>* keyPoints = new Buffer<KeyPoint>(kpsLen);
     FAST::FAST_Buffers* fastBuffers = new FAST::FAST_Buffers(kpsLen * sizeof(KeyPoint));
 
     cl_mem subpixelRefineBuffer = CL::createBuffer(
@@ -273,7 +273,7 @@ Collection<KeyPoint> *M_BRISK::detect(Bitmap &inputBitmap) {
     return keyPoints;
 }
 
-Descriptors *M_BRISK::compute(Bitmap &inputBitmap, Collection<KeyPoint> &keyPoints) {
+Descriptors *M_BRISK::compute(Bitmap &inputBitmap, Buffer<KeyPoint> &keyPoints) {
     cl_mem buffer = CL::createBuffer(
             CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR | CL_MEM_HOST_NO_ACCESS,
             inputBitmap.sizeOfBuffer(), inputBitmap.buffer

@@ -894,14 +894,15 @@ __kernel void brisk(
 
 // ------------------------
 
-__kernel void warp_perspective(
+__kernel void warp_perspective_16(
     __global const ushort* input_image,
     __global ushort* output_image,
     __constant float* H,
-    int input_width,
-    int input_height,
-    int output_width,
-    int output_height
+    const int input_width,
+    const int input_height,
+    const int output_width,
+    const int output_height,
+    const int channels
 )
 {
     int x = get_global_id(0);
@@ -928,20 +929,73 @@ __kernel void warp_perspective(
         float dy = y_src - y0;
 
         for (int c = 0; c < 3; c++) {
-            float p0 = input_image[(y0 * input_width + x0) * 3 + c];
-            float p1 = input_image[(y0 * input_width + x1) * 3 + c];
-            float p2 = input_image[(y1 * input_width + x0) * 3 + c];
-            float p3 = input_image[(y1 * input_width + x1) * 3 + c];
+            float p0 = input_image[(y0 * input_width + x0) * channels + c];
+            float p1 = input_image[(y0 * input_width + x1) * channels + c];
+            float p2 = input_image[(y1 * input_width + x0) * channels + c];
+            float p3 = input_image[(y1 * input_width + x1) * channels + c];
 
             float value = (1 - dx) * (1 - dy) * p0 +
                           dx * (1 - dy) * p1 +
                           (1 - dx) * dy * p2 +
                           dx * dy * p3;
-            output_image[(y * output_width + x) * 3 + c] = (ushort)clamp(value, 0.0f, 65535.0f);
+            output_image[(y * output_width + x) * channels + c] = (ushort)clamp(value, 0.0f, 65535.0f);
         }
     } else {
-        output_image[(y * output_width + x) * 3]     = 65000;
-        output_image[(y * output_width + x) * 3 + 1] = 0;
-        output_image[(y * output_width + x) * 3 + 2] = 0;
+        output_image[(y * output_width + x) * channels]     = 65000;
+        output_image[(y * output_width + x) * channels + 1] = 0;
+        output_image[(y * output_width + x) * channels + 2] = 0;
+    }
+}
+
+__kernel void warp_perspective_8(
+    __global const uchar* input_image,
+    __global uchar* output_image,
+    __constant float* H,
+    const int input_width,
+    const int input_height,
+    const int output_width,
+    const int output_height,
+    const int channels
+)
+{
+    int x = get_global_id(0);
+    int y = get_global_id(1);
+
+    if (x >= output_width || y >= output_height) return;
+
+    float x_src = H[0] * x + H[1] * y + H[2];
+    float y_src = H[3] * x + H[4] * y + H[5];
+    float w = H[6] * x + H[7] * y + H[8];
+
+    float inv_w = 1.0f / w;
+    x_src *= inv_w;
+    y_src *= inv_w;
+
+    if (x_src >= 0 && x_src < input_width && y_src >= 0 && y_src < input_height) {
+        int x0 = (int)x_src;
+        int y0 = (int)y_src;
+
+        int x1 = min(x0 + 1, input_width - 1);
+        int y1 = min(y0 + 1, input_height - 1);
+
+        float dx = x_src - x0;
+        float dy = y_src - y0;
+
+        for (int c = 0; c < 3; c++) {
+            float p0 = input_image[(y0 * input_width + x0) * channels + c];
+            float p1 = input_image[(y0 * input_width + x1) * channels + c];
+            float p2 = input_image[(y1 * input_width + x0) * channels + c];
+            float p3 = input_image[(y1 * input_width + x1) * channels + c];
+
+            float value = (1 - dx) * (1 - dy) * p0 +
+                          dx * (1 - dy) * p1 +
+                          (1 - dx) * dy * p2 +
+                          dx * dy * p3;
+            output_image[(y * output_width + x) * channels + c] = (uchar)clamp(value, 0.0f, 255.0f);
+        }
+    } else {
+        output_image[(y * output_width + x) * channels]     = 255;
+        output_image[(y * output_width + x) * channels + 1] = 0;
+        output_image[(y * output_width + x) * channels + 2] = 0;
     }
 }

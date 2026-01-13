@@ -33,7 +33,7 @@ namespace FAST {
         }
     }
 
-    void detect(BitmapInfo &bitmap, cl_mem &imageBuffer, Collection<KeyPoint> &keyPoints,
+    void detect(BitmapInfo &bitmap, cl_mem &imageBuffer, Buffer<KeyPoint> &keyPoints,
                 FAST_Buffers &fastBuffers, uint32_t padding, uint32_t octave, float scaleFactor) {
         cl_event counterFilled, fastFinished, counterRead;
 

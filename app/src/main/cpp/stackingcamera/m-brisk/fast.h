@@ -17,7 +17,7 @@ namespace FAST {
         ~FAST_Buffers();
     } FAST_Buffers;
 
-    void detect(BitmapInfo &bitmap, cl_mem &imageBuffer, Collection<KeyPoint> &keyPoints, FAST_Buffers &fastBuffers, uint32_t padding, uint32_t octave, float scaleFactor);
+    void detect(BitmapInfo &bitmap, cl_mem &imageBuffer, Buffer<KeyPoint> &keyPoints, FAST_Buffers &fastBuffers, uint32_t padding, uint32_t octave, float scaleFactor);
 }
 
 #endif //STACKINGCAMERA_FAST_H
