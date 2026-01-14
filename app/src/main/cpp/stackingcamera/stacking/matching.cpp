@@ -49,7 +49,7 @@ namespace Matching {
     match(BitmapPtr &bmp, List<Descriptors> &descriptors, Buffer<KeyPoint> &keyPoints,
           uint32_t bestIndex) {
         size_t matchesIndex = 0;
-        Buffer<Buffer<Match>> *matches = new Buffer<Buffer<Match>>(descriptors.size - 1);
+        auto matches = new Buffer<Buffer<Match>>(descriptors.size - 1);
         matches->size = descriptors.size - 1;
 
         Descriptors& descriptors1 = *descriptors.buffer[bestIndex];
@@ -105,38 +105,38 @@ namespace Matching {
             clReleaseEvent(matchingFinished);
             clReleaseMemObject(buffer2);
 
-            Buffer<Match>* currentMatches = &matches->buffer[matchesIndex];
-            currentMatches->buffer = new Match[matchingClBuffers.count];
-            currentMatches->size = matchingClBuffers.count;
-            currentMatches->capacity = matchingClBuffers.count;
+            Buffer<Match>& currentMatches = (*matches)[matchesIndex];
+            currentMatches.buffer = new Match[matchingClBuffers.count];
+            currentMatches.size = matchingClBuffers.count;
+            currentMatches.capacity = matchingClBuffers.count;
 
             size_t fi = 0;
             for (uint32_t j = 0; j < descriptors1.count; j++) {
                 if (matchingClBuffers.distances[j] < 30) {
-                    (*currentMatches)[fi] = Match(matchingClBuffers.closestIndices[j], j, matchingClBuffers.distances[j]);
+                    currentMatches[fi] = Match(matchingClBuffers.closestIndices[j], j, matchingClBuffers.distances[j]);
                     fi++;
                 }
             }
-            currentMatches->size = fi;
+            currentMatches.size = fi;
 
-            std::sort(currentMatches->begin(), currentMatches->end(), [](Match &a, Match &b) {
+            std::sort(currentMatches.begin(), currentMatches.end(), [](Match &a, Match &b) {
                 return a.distance < b.distance;
             });
 
-            uint32_t* counter = new uint32_t[Core::CHUNKS_COUNT] { 0 };
+            auto counter = new uint32_t[Core::CHUNKS_COUNT]();
             fi = 0;
-            for (size_t m = 0; m < currentMatches->size; m++) {
-                const KeyPoint &kp = keyPoints[(*currentMatches)[m].index2];
+            for (size_t m = 0; m < currentMatches.size; m++) {
+                const KeyPoint &kp = keyPoints[currentMatches[m].index2];
                 uint32_t x = std::min((uint32_t)kp.x / chunkWidth, Core::CHUNKS_PER_SIDE - 1);
                 uint32_t y = std::min((uint32_t)kp.y / chunkHeight, Core::CHUNKS_PER_SIDE - 1);
 
                 uint32_t index = y * Core::CHUNKS_PER_SIDE + x;
-                double distance = (*currentMatches)[m].distance;
-                if (counter[index] <= Core::MATCHES_PER_CHUNK && distance < 30.0) {
+                double distance = currentMatches[m].distance;
+                if (counter[index] <= Core::MATCHES_PER_CHUNK) {
                     double t = (distance > 5.0) ? ((distance - 5.0) * 0.04) : 0.0;
                     double threshold = Core::MATCHES_PER_CHUNK * (1.0 - 0.5 * t);
                     if (counter[index] <= threshold) {
-                        (*currentMatches)[fi] = (*currentMatches)[m];
+                        currentMatches[fi] = currentMatches[m];
                         counter[index]++;
                         fi++;
                     }
@@ -144,8 +144,8 @@ namespace Matching {
             }
 
             delete [] counter;
-            currentMatches->size = fi;
-            currentMatches->shrink();
+            currentMatches.size = fi;
+            currentMatches.shrink();
             matchesIndex++;
         }
 

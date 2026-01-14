@@ -14,10 +14,15 @@ namespace ImageIO {
         uint32_t height;
         ColorSpace colorSpace;
         Depth depth;
+        uint32_t bufferSize;
         char* filePath;
 
         BitmapPtr(Bitmap& bitmap);
         BitmapPtr(uint32_t w, uint32_t h, void* b, ColorSpace cs, Depth d);
+        ~BitmapPtr();
+
+        Bitmap* read() const;
+        uint8_t* readChunk(size_t offset, size_t size) const;
     };
 }
 
