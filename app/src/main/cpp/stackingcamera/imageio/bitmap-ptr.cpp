@@ -3,20 +3,30 @@
 //
 
 #include "bitmap-ptr.h"
+#include "../core.h"
 
 namespace ImageIO {
     BitmapPtr::BitmapPtr(uint32_t w, uint32_t h, void *b, ColorSpace cs, Depth d) :
         width(w), height(h), colorSpace(cs), depth(d), bufferSize(w * h * (size_t)cs * (size_t)d)
     {
+        filePath = Core::jniHelper->createTempFile();
 
-        // TODO: storing bitmap's data into the file
+        FILE *file = fopen(filePath, "w");
+        fwrite(b, sizeof(uint8_t), bufferSize, file);
+        fclose(file);
+
+        delete [] (uint8_t*)b;
     }
 
     BitmapPtr::BitmapPtr(Bitmap &bitmap) :
         width(bitmap.width), height(bitmap.height),
-        colorSpace(bitmap.colorSpace), depth(bitmap.depth)
+        colorSpace(bitmap.colorSpace), depth(bitmap.depth), bufferSize(bitmap.sizeOfBuffer())
     {
-        // TODO: storing bitmap's data into the file
+        filePath = Core::jniHelper->createTempFile();
+
+        FILE *file = fopen(filePath, "w");
+        fwrite(bitmap.buffer, sizeof(uint8_t), bufferSize, file);
+        fclose(file);
     }
 
     BitmapPtr::~BitmapPtr() {

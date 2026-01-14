@@ -6,6 +6,7 @@
 #define STACKINGCAMERA_CORE_H
 
 #include <cstdint>
+#include "jni-helper.h"
 
 namespace Core {
     const size_t MAX_MEMORY_SIZE = 1342177280;  // 1.25 GB temp
@@ -20,6 +21,8 @@ namespace Core {
     float BRISK_PATTERN_SCALE = .0f;
     bool DRAW_KEYPOINTS = false;
     bool DRAW_MATCHES = false;
+
+    JNIHelper* jniHelper = nullptr;
 }
 
 #endif //STACKINGCAMERA_CORE_H

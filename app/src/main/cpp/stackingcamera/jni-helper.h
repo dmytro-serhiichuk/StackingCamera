@@ -15,7 +15,14 @@ private:
     jclass jniHelperClass;
 
 public:
+    JNIHelper(JNIEnv *env, jobject helper) :
+            env(env),
+            jniHelperObject(env->NewGlobalRef(helper)),
+            jniHelperClass((jclass)env->NewGlobalRef(env->GetObjectClass(helper))) {}
+    ~JNIHelper();
 
+    char* createTempFile();
+    int createImageFile(const char *fileName);
 };
 
 #endif //STACKINGCAMERA_JNI_HELPER_H
