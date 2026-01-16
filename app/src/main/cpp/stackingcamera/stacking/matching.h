@@ -5,8 +5,9 @@
 #ifndef STACKINGCAMERA_MATCHING_H
 #define STACKINGCAMERA_MATCHING_H
 
-#include "../collections/list.h"
-#include "../m-brisk/m-brisk.h"
+#include "collections/list.h"
+#include "m-brisk/m-brisk.h"
+#include "core.h"
 
 namespace Matching {
     typedef struct Match {
@@ -31,7 +32,7 @@ namespace Matching {
         ~MatchingCLBuffers();
     } MatchingCLBuffers;
 
-    Buffer<Buffer<Match>>* match(BitmapPtr &bmp, List<Descriptors> &descriptors, Buffer<KeyPoint> &keyPoints, uint32_t bestIndex);
+    Buffer<Buffer<Match>>* match(List<Core::Data> &sources, uint32_t bestIndex);
 }
 
 #endif //STACKINGCAMERA_MATCHING_H

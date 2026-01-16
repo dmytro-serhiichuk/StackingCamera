@@ -5,6 +5,8 @@
 #ifndef STACKINGCAMERA_OPENCL_H
 #define STACKINGCAMERA_OPENCL_H
 
+#define CL_TARGET_OPENCL_VERSION 200
+
 #include <android/asset_manager.h>
 #include <android/asset_manager_jni.h>
 #include "CL/cl.h"
@@ -22,17 +24,17 @@ namespace CL {
         ImageChannelTypeSupportInfo UNORM_INT16_SUPPORT;
     } ImageChannelOrderSupportInfo;
 
-    cl_context context = nullptr;
-    cl_command_queue computeQueue = nullptr;
-    cl_command_queue transferQueue = nullptr;
-    cl_program program = nullptr;
-    size_t maxGroupSize = 0;
+    extern cl_context context;
+    extern cl_command_queue computeQueue;
+    extern cl_command_queue transferQueue;
+    extern cl_program program;
+    extern size_t maxGroupSize;
 
-    ImageChannelOrderSupportInfo grayscaleInfo = {};
-    ImageChannelOrderSupportInfo rgbInfo = {};
-    ImageChannelOrderSupportInfo rgbaInfo = {};
+    extern ImageChannelOrderSupportInfo grayscaleInfo;
+    extern ImageChannelOrderSupportInfo rgbInfo;
+    extern ImageChannelOrderSupportInfo rgbaInfo;
 
-    void init(AAssetManager* gAssetManager);
+    void init(AAssetManager* aam);
     cl_mem createBuffer(cl_mem_flags flags, size_t size, void* data);
     cl_kernel createKernel(const char* name);
     void enqueueNDRangeKernel(cl_kernel kernel, cl_uint ND, size_t* offset, size_t* global, size_t* local);

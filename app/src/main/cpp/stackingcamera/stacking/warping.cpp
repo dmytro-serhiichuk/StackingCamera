@@ -46,7 +46,7 @@ static inline cl_mem initHBuffer(const Eigen::Matrix3d &H) {
     return buffer;
 }
 
-BitmapPtr *WarpManager::warpPerspective(Bitmap &bitmap, const Eigen::Matrix3d &H) {
+BitmapPtr *WarpManager::warpSingleBitmap(Bitmap &bitmap, const Eigen::Matrix3d &H) {
     cl_mem HBuffer = initHBuffer(H);
 
     cl_mem inputBuffer = CL::createBuffer(
@@ -80,4 +80,21 @@ BitmapPtr *WarpManager::warpPerspective(Bitmap &bitmap, const Eigen::Matrix3d &H
     clReleaseMemObject(HBuffer);
 
     return new BitmapPtr(outputWidth, outputHeight, outputBitmapBuffer, bitmap.colorSpace, bitmap.depth);
+}
+
+List<BitmapPtr> *WarpManager::warp(List<Core::Data> &sources, uint32_t bestIndex,
+                                   Buffer<Eigen::Matrix3d> &matrices) {
+    auto warpedBitmaps = new List<BitmapPtr>(matrices.size);
+
+    size_t matrixIndex = 0;
+    for (size_t i = 0; i < sources.size; i++) {
+        if (i == bestIndex) continue;
+
+        auto bitmap = sources.buffer[i]->bitmapPtr->read();
+        warpedBitmaps->add(warpSingleBitmap(*bitmap, matrices[matrixIndex]));
+        delete bitmap;
+        matrixIndex++;
+    }
+
+    return warpedBitmaps;
 }

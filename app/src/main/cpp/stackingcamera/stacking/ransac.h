@@ -7,14 +7,11 @@
 
 #include <eigen3/Eigen/Dense>
 #include "matching.h"
-#include "../collections/buffer.h"
+#include "collections/buffer.h"
 
 namespace RANSAC {
-    Eigen::Matrix3d computeHomography(
-            Buffer<Matching::Match> &matches,
-            Buffer<KeyPoint> &kps1,
-            Buffer<KeyPoint> &kps2
-    );
+    Buffer<Eigen::Matrix3d> *computeHomographyMatrices(List<Core::Data> &sources, uint32_t bestIndex,
+                                                       Buffer<Buffer<Matching::Match>> &matches);
 }
 
 #endif //STACKINGCAMERA_RANSAC_H

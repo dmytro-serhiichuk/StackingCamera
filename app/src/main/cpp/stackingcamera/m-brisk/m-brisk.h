@@ -6,9 +6,9 @@
 #define STACKINGCAMERA_M_BRISK_H
 
 
-#include "../imageio/imageio.h"
-#include "../collections/buffer.h"
-#include "../opencl.h"
+#include "imageio/imageio.h"
+#include "collections/buffer.h"
+#include "opencl.h"
 
 using namespace ImageIO;
 

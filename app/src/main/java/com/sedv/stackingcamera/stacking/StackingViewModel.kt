@@ -9,7 +9,7 @@ class StackingViewModel : ViewModel() {
     fun canStack(): Boolean {
         if (bitmaps.isEmpty() || isAlignmentDisabled) return false
         for (bitmap in bitmaps) {
-            if (!bitmap.isInitialized) return false
+            if (!bitmap.isAnalyzed) return false
         }
         return true
     }

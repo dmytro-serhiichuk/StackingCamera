@@ -6,7 +6,7 @@
 #include <libraw.h>
 
 namespace ImageIO {
-    bool isRaw(void* buffer, size_t size) {
+    bool isRAW(void* buffer, size_t size) {
         LibRaw processor;
         if (processor.open_buffer(buffer, size) == LIBRAW_SUCCESS) {
             processor.recycle();

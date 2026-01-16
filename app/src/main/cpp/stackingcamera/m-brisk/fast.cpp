@@ -4,8 +4,8 @@
 
 #include <cmath>
 #include "fast.h"
-#include "../opencl.h"
-#include "../core.h"
+#include "opencl.h"
+#include "core.h"
 
 namespace FAST {
     FAST_Buffers::FAST_Buffers(size_t size) {

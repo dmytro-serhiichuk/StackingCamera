@@ -60,11 +60,11 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
 
 # Including project lib
-include_directories(${CMAKE_SOURCE_DIR}/${CMAKE_PROJECT_NAME}/include)
-file(GLOB SOURCES "${CMAKE_SOURCE_DIR}/${CMAKE_PROJECT_NAME}/*.cpp")
+file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/${CMAKE_PROJECT_NAME}/*.cpp")
 add_library(${CMAKE_PROJECT_NAME} SHARED ${SOURCES}
         # List C/C++ source files with relative paths to this CMakeLists.txt.
         ${SOURCES})
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/${CMAKE_PROJECT_NAME}/")
 
 # Specifies libraries CMake should link to your target library. You
 # can link libraries from various origins, such as libraries defined in this

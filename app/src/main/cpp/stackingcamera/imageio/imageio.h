@@ -9,9 +9,9 @@
 
 namespace ImageIO {
     enum class OutputFormat {
-        JPEG,
-        PNG,
-        TIFF
+        JPEG = 0,
+        PNG  = 1,
+        TIFF = 2
     };
 
     typedef struct SaveProperties {

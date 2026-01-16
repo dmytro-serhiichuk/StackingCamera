@@ -3,7 +3,7 @@
 //
 
 #include "matching.h"
-#include "../core.h"
+#include "core.h"
 #include <algorithm>
 
 namespace Matching {
@@ -45,14 +45,15 @@ namespace Matching {
     }
 
 
-    Buffer<Buffer<Match>> *
-    match(BitmapPtr &bmp, List<Descriptors> &descriptors, Buffer<KeyPoint> &keyPoints,
-          uint32_t bestIndex) {
-        size_t matchesIndex = 0;
-        auto matches = new Buffer<Buffer<Match>>(descriptors.size - 1);
-        matches->size = descriptors.size - 1;
+    Buffer<Buffer<Match>> *match(List<Core::Data> &sources, uint32_t bestIndex) {
+        auto &bmp = *sources.buffer[bestIndex]->bitmapPtr;
+        auto &bestKeypoints = *sources.buffer[bestIndex]->keyPoints;
 
-        Descriptors& descriptors1 = *descriptors.buffer[bestIndex];
+        size_t matchesIndex = 0;
+        auto matches = new Buffer<Buffer<Match>>(sources.size - 1);
+        matches->size = sources.size - 1;
+
+        Descriptors& descriptors1 = *sources.buffer[bestIndex]->descriptors;
 
         cl_mem buffer1 = CL::createBuffer(
                 CL_MEM_HOST_NO_ACCESS | CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
@@ -69,10 +70,10 @@ namespace Matching {
 
         MatchingCLBuffers matchingClBuffers {descriptors1.count};
 
-        for (size_t i = 0; i < descriptors.size; i++) {
+        for (size_t i = 0; i < sources.size; i++) {
             if (i == bestIndex) continue;
 
-            Descriptors& descriptors2 = *descriptors.buffer[i];
+            Descriptors& descriptors2 = *sources.buffer[i]->descriptors;
 
             cl_mem buffer2 = CL::createBuffer(
                     CL_MEM_HOST_NO_ACCESS | CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
@@ -126,7 +127,7 @@ namespace Matching {
             auto counter = new uint32_t[Core::CHUNKS_COUNT]();
             fi = 0;
             for (size_t m = 0; m < currentMatches.size; m++) {
-                const KeyPoint &kp = keyPoints[currentMatches[m].index2];
+                const KeyPoint &kp = bestKeypoints[currentMatches[m].index2];
                 uint32_t x = std::min((uint32_t)kp.x / chunkWidth, Core::CHUNKS_PER_SIDE - 1);
                 uint32_t y = std::min((uint32_t)kp.y / chunkHeight, Core::CHUNKS_PER_SIDE - 1);
 

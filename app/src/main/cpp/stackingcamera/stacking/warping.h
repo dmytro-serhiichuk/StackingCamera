@@ -6,8 +6,7 @@
 #define STACKINGCAMERA_WARPING_H
 
 #include <eigen3/Eigen/Dense>
-#include "../imageio/bitmap-ptr.h"
-#include "../opencl.h"
+#include "core.h"
 
 using namespace ImageIO;
 
@@ -22,7 +21,10 @@ public:
 
     WarpManager(BitmapPtr& baseBitmap);
     ~WarpManager();
-    BitmapPtr *warpPerspective(Bitmap &bitmap, const Eigen::Matrix3d &H);
+    List<BitmapPtr> *warp(List<Core::Data> &sources, uint32_t bestIndex, Buffer<Eigen::Matrix3d> &matrices);
+
+private:
+    BitmapPtr *warpSingleBitmap(Bitmap &bitmap, const Eigen::Matrix3d &H);
 };
 
 #endif //STACKINGCAMERA_WARPING_H

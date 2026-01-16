@@ -5,7 +5,7 @@
 #include "ransac.h"
 #include <vector>
 #include <random>
-#include "../core.h"
+#include "core.h"
 
 namespace RANSAC {
     namespace {
@@ -113,40 +113,60 @@ namespace RANSAC {
 
             return H;
         }
+
+        Eigen::Matrix3d computeHomography(Buffer<Matching::Match> &matches, Buffer<KeyPoint> &kps1,
+                                          Buffer<KeyPoint> &kps2) {
+            Eigen::Matrix3d bestH;
+            InlierInfo bestInliers;
+
+            int32_t* indices = new int32_t[matches.size];
+            for (size_t i = 0; i < matches.size; i++) {
+                indices[i] = i;
+            }
+
+            for (size_t i = 0; i < Core::RANSAC_ITERATIONS; i++) {
+                shuffleMatches(matches, indices);
+                Eigen::Matrix3d H = findHomography(matches, kps1, kps2, indices);
+                InlierInfo inlierInfo = findInliers(matches, kps1, kps2, H);
+
+                if ((inlierInfo.count > bestInliers.count) || (inlierInfo.count == bestInliers.count && inlierInfo.errorFactor < bestInliers.errorFactor)) {
+                    bestH = H;
+                    bestInliers = inlierInfo;
+                }
+            }
+
+            Eigen::Matrix3d refinedH = refineHomographyWithInliers(matches, kps1, kps2, bestInliers);
+
+            InlierInfo refinedInfo = findInliers(matches, kps1, kps2, refinedH);
+
+            if (refinedInfo.count >= bestInliers.count && refinedInfo.errorFactor <= bestInliers.errorFactor) {
+                bestH = refinedH;
+            }
+
+            delete [] indices;
+
+            return bestH;
+        }
     }
 
-    Eigen::Matrix3d computeHomography(Buffer<Matching::Match> &matches, Buffer<KeyPoint> &kps1,
-                                      Buffer<KeyPoint> &kps2) {
-        Eigen::Matrix3d bestH;
-        InlierInfo bestInliers;
+    Buffer<Eigen::Matrix3d> *
+    computeHomographyMatrices(List<Core::Data> &sources, uint32_t bestIndex, Buffer<Buffer<Matching::Match>> &matches) {
+        Buffer<Eigen::Matrix3d>* matrices = new Buffer<Eigen::Matrix3d>(matches.size);
+        matrices->size = matches.size;
 
-        int32_t* indices = new int32_t[matches.size];
-        for (size_t i = 0; i < matches.size; i++) {
-            indices[i] = i;
+        size_t matchesIndex = 0;
+        for (size_t i = 0; i < sources.size; i++) {
+            if (i == bestIndex) continue;
+
+            matrices->buffer[matchesIndex] = computeHomography(
+                matches[matchesIndex],
+                *sources.buffer[i]->keyPoints,
+                *sources.buffer[bestIndex]->keyPoints
+            );
+            matchesIndex++;
         }
 
-        for (size_t i = 0; i < Core::RANSAC_ITERATIONS; i++) {
-            shuffleMatches(matches, indices);
-            Eigen::Matrix3d H = findHomography(matches, kps1, kps2, indices);
-            InlierInfo inlierInfo = findInliers(matches, kps1, kps2, H);
-
-            if ((inlierInfo.count > bestInliers.count) || (inlierInfo.count == bestInliers.count && inlierInfo.errorFactor < bestInliers.errorFactor)) {
-                bestH = H;
-                bestInliers = inlierInfo;
-            }
-        }
-
-        Eigen::Matrix3d refinedH = refineHomographyWithInliers(matches, kps1, kps2, bestInliers);
-
-        InlierInfo refinedInfo = findInliers(matches, kps1, kps2, refinedH);
-
-        if (refinedInfo.count >= bestInliers.count && refinedInfo.errorFactor <= bestInliers.errorFactor) {
-            bestH = refinedH;
-        }
-
-        delete [] indices;
-
-        return bestH;
+        return matrices;
     }
 }
 

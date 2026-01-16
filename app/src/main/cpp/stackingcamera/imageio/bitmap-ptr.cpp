@@ -3,7 +3,7 @@
 //
 
 #include "bitmap-ptr.h"
-#include "../core.h"
+#include "core.h"
 
 namespace ImageIO {
     BitmapPtr::BitmapPtr(uint32_t w, uint32_t h, void *b, ColorSpace cs, Depth d) :

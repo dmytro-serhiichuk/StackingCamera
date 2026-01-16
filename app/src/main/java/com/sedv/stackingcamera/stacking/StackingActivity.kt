@@ -36,6 +36,14 @@ class StackingActivity : AppCompatActivity() {
     }
 
 
+    fun loadBitmapWrapper(fd: Int): BitmapInfo {
+        val packedData = loadBitmap(fd)
+        val width = (packedData shr 32).toInt()
+        val height = packedData.toInt()
+        return BitmapInfo(width, height)
+    }
+
+    // Functions which are called from native code
     fun createTempFile(): String {
         val tempFile = File.createTempFile("temp_", "", cacheDir)
         return tempFile.absolutePath
@@ -59,7 +67,13 @@ class StackingActivity : AppCompatActivity() {
         return pfd.fd
     }
 
+    // Native functions
     external fun initStacking(am: AssetManager)
+    external fun loadBitmap(fd: Int): Long
+    external fun removeBitmap(index: Int)
+    external fun analyse(reanalyse: Boolean): IntArray
+    external fun stack(disableAlignment: Boolean)
+    external fun save(fd: Int, format: Int)
 
     companion object {
         public const val APP_FOLDER = "/StackingCamera/"

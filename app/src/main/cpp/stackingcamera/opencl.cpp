@@ -55,8 +55,8 @@ namespace CL {
         return channelSupportInfo;
     }
 
-    static char* readProgramSource(AAssetManager *assetManager) {
-        AAsset* asset = AAssetManager_open(assetManager, "program.cl", AASSET_MODE_BUFFER);
+    static char* readProgramSource(AAssetManager *aam) {
+        AAsset* asset = AAssetManager_open(aam, "program.cl", AASSET_MODE_BUFFER);
         if (!asset) {
             throw std::runtime_error("Program source file opening failed");
         }
@@ -68,7 +68,17 @@ namespace CL {
         return buffer;
     }
 
-    void init(AAssetManager *gAssetManager) {
+    cl_context context = nullptr;
+    cl_command_queue computeQueue = nullptr;
+    cl_command_queue transferQueue = nullptr;
+    cl_program program = nullptr;
+    size_t maxGroupSize = 0;
+
+    ImageChannelOrderSupportInfo grayscaleInfo = {};
+    ImageChannelOrderSupportInfo rgbInfo = {};
+    ImageChannelOrderSupportInfo rgbaInfo = {};
+
+    void init(AAssetManager *aam) {
         // Step 1.1: Getting platforms num
         cl_uint numPlatforms;
         cl_int status = clGetPlatformIDs(0, nullptr, &numPlatforms);
@@ -119,7 +129,7 @@ namespace CL {
         transferQueue = clCreateCommandQueueWithProperties(context, device, props, &status);
         if (status != CL_SUCCESS) throw std::runtime_error("Cannot create transfer queue");
 
-        const char* source = readProgramSource(gAssetManager);
+        const char* source = readProgramSource(aam);
 
         // Step 9: Create program
         program = clCreateProgramWithSource(context, 1, &source, nullptr, &status);

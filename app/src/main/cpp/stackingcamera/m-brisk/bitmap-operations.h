@@ -5,8 +5,8 @@
 #ifndef STACKINGCAMERA_BITMAP_OPERATIONS_H
 #define STACKINGCAMERA_BITMAP_OPERATIONS_H
 
-#include "../imageio/bitmap.h"
-#include "../opencl.h"
+#include "imageio/bitmap.h"
+#include "opencl.h"
 
 using namespace ImageIO;
 

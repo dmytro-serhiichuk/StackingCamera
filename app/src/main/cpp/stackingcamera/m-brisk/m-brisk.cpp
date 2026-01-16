@@ -6,7 +6,7 @@
 #include <cmath>
 #include "bitmap-operations.h"
 #include "fast.h"
-#include "../core.h"
+#include "core.h"
 #include <algorithm>
 
 Descriptors::~Descriptors() {

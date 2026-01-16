@@ -14,14 +14,18 @@ public:
     size_t capacity;
     size_t size;
     T** buffer;
+    bool ownsBufferData;
 
-    List(size_t initCapacity = 3) {
+    List(size_t initCapacity = 3, bool ownsBufferData = true) {
         capacity = initCapacity;
         size = 0;
         buffer = new T*[capacity];
+        this->ownsBufferData = ownsBufferData;
     }
     ~List() {
-        for (size_t i = 0; i < size; i++) delete buffer[i];
+        if (ownsBufferData) {
+            for (size_t i = 0; i < size; i++) delete buffer[i];
+        }
         delete[] buffer;
         buffer = nullptr;
         capacity = 0;
