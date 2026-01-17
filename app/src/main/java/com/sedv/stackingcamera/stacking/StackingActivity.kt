@@ -1,21 +1,23 @@
 package com.sedv.stackingcamera.stacking
 
 import android.annotation.SuppressLint
-import android.app.Activity
 import android.app.AlertDialog
 import android.content.ContentValues
 import android.content.Intent
 import android.content.res.AssetManager
+import android.media.MediaScannerConnection
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
+import android.os.ParcelFileDescriptor
 import android.provider.MediaStore
 import android.provider.OpenableColumns
 import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.forEach
 import androidx.core.view.forEachIndexed
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
@@ -69,6 +71,12 @@ class StackingActivity : AppCompatActivity() {
 
         binding.loadImagesBtn.setOnClickListener { handleLoadImagesButtonClicked() }
         binding.analyseBtn.setOnClickListener { handleAnalyseButtonClicked() }
+        binding.stackBtn.setOnClickListener { handleStackButtonClicked() }
+        binding.saveBtn.setOnClickListener { handleSaveButtonClicked() }
+
+        binding.disableAlignmentCheckBox.setOnCheckedChangeListener { _, isChecked ->
+            updateButtonsState()
+        }
 
         val outputFormatAdapter = ArrayAdapter(
             this,
@@ -97,8 +105,12 @@ class StackingActivity : AppCompatActivity() {
         val isIdle = viewModel.state == StackingState.IDLE
         binding.loadImagesBtn.isEnabled = isIdle
         binding.analyseBtn.isEnabled = isIdle && viewModel.bitmaps.isNotEmpty()
-        binding.stackBtn.isEnabled = isIdle && viewModel.canStack()
+        binding.stackBtn.isEnabled = isIdle && viewModel.canStack() && (viewModel.isAllBitmapsInitialized() || binding.disableAlignmentCheckBox.isChecked)
         binding.saveBtn.isEnabled = isIdle && viewModel.hasStackedResult
+        binding.loadedImagesList.forEach {
+            val bitmapListItem = it as BitmapListItem
+            bitmapListItem.setEnableMode(isIdle)
+        }
     }
     private fun startAction() {
         viewModel.state = StackingState.BUSY
@@ -121,8 +133,9 @@ class StackingActivity : AppCompatActivity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == PICK_IMAGE_REQUEST && resultCode == Activity.RESULT_OK) {
-            loadImages(data)
+        if (requestCode == PICK_IMAGE_REQUEST) {
+            if (resultCode == RESULT_OK) loadImages(data)
+            if (resultCode == RESULT_CANCELED) endAction()
         }
     }
 
@@ -177,7 +190,6 @@ class StackingActivity : AppCompatActivity() {
             endAction()
         }
     }
-
     private fun Uri.getFileName(): String? {
         contentResolver.query(this, null, null, null, null)?.use { cursor ->
             val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
@@ -205,6 +217,7 @@ class StackingActivity : AppCompatActivity() {
 
     private fun handleAnalyseButtonClicked() {
         startAction()
+        viewModel.hasStackedResult = false
 
         lifecycleScope.launch {
             val scores = withContext(Dispatchers.Default) {
@@ -214,6 +227,97 @@ class StackingActivity : AppCompatActivity() {
                 val bitmapListItem = item as BitmapListItem
                 bitmapListItem.bitmapInfo.score = scores[index]
                 bitmapListItem.updateScore()
+            }
+            endAction()
+        }
+    }
+
+    private fun handleStackButtonClicked() {
+        startAction()
+
+        lifecycleScope.launch {
+            try {
+                withContext(Dispatchers.Default) {
+                    stack(binding.disableAlignmentCheckBox.isChecked)
+                }
+                viewModel.hasStackedResult = true
+            }
+            catch (e: RuntimeException) {
+                Toast.makeText(
+                    this@StackingActivity,
+                    "Error: ${e.message}",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+            endAction()
+        }
+    }
+
+    private fun handleSaveButtonClicked() {
+        startAction()
+
+        lifecycleScope.launch {
+            try {
+                val ext = binding.outputFormatSelector.selectedItem.toString()
+                val timestamp = System.currentTimeMillis()
+                val filename = "Stacked_Result_${timestamp}${ext}"
+                val mimeType = when (ext) {
+                    ".jpg" -> "image/jpeg"
+                    ".png" -> "image/png"
+                    else -> "image/*"
+                }
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    // Android 10+ (API 29+)
+                    val contentValues = ContentValues().apply {
+                        put(MediaStore.MediaColumns.DISPLAY_NAME, filename)
+                        put(MediaStore.MediaColumns.MIME_TYPE, mimeType)
+                        put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DCIM + APP_DIRECTORY)
+                    }
+
+                    val imageUri = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
+                    withContext(Dispatchers.IO) {
+                        contentResolver.openFileDescriptor(imageUri!!, "w")!!.use {
+                            save(it.fd, binding.outputFormatSelector.selectedItemId.toInt())
+                        }
+                    }
+                } else {
+                    // Android 9-
+                    val picturesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM)
+                    val outputDir = File(picturesDir, APP_DIRECTORY)
+                    if (!outputDir.exists()) outputDir.mkdirs()
+
+                    val file = File(outputDir, filename)
+
+                    withContext(Dispatchers.IO) {
+                        val mode = ParcelFileDescriptor.MODE_WRITE_ONLY or ParcelFileDescriptor.MODE_CREATE or ParcelFileDescriptor.MODE_TRUNCATE
+                        ParcelFileDescriptor.open(file, mode).use {
+                            save(it.fd, binding.outputFormatSelector.selectedItemId.toInt())
+                        }
+                    }
+                    // write to file
+
+                    MediaScannerConnection.scanFile(
+                        this@StackingActivity,
+                        arrayOf(file.absolutePath),
+                        arrayOf(mimeType),
+                        null
+                    )
+                }
+            }
+            catch (e: NullPointerException) {
+                Toast.makeText(
+                    this@StackingActivity,
+                    "Unexpected error. Image was not saved",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+            catch (e: RuntimeException) {
+                Toast.makeText(
+                    this@StackingActivity,
+                    "Error: ${e.message}",
+                    Toast.LENGTH_LONG
+                ).show()
             }
             endAction()
         }
@@ -230,9 +334,9 @@ class StackingActivity : AppCompatActivity() {
             put(MediaStore.MediaColumns.DISPLAY_NAME, name)
             put(MediaStore.MediaColumns.MIME_TYPE, "image")
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + APP_FOLDER)
+                put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + APP_DIRECTORY)
             } else {
-                val path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).absolutePath + APP_FOLDER
+                val path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).absolutePath + APP_DIRECTORY
                 put(MediaStore.MediaColumns.DATA, path + name)
             }
         }
@@ -252,7 +356,7 @@ class StackingActivity : AppCompatActivity() {
     external fun save(fd: Int, format: Int)
 
     companion object {
-        public const val APP_FOLDER = "/StackingCamera/"
+        public const val APP_DIRECTORY = "/StackingCamera/"
         public const val PICK_IMAGE_REQUEST = 0
         init {
             System.loadLibrary("stackingcamera")

@@ -4,13 +4,14 @@ import androidx.lifecycle.ViewModel
 
 class StackingViewModel : ViewModel() {
     val bitmaps = arrayListOf<BitmapInfo>()
-    var isAlignmentDisabled = false
     var hasStackedResult = false
 
     var state = StackingState.NOT_READY
 
     fun canStack(): Boolean {
-        if (bitmaps.size < 2 || isAlignmentDisabled) return false
+        return bitmaps.size >= 2
+    }
+    fun isAllBitmapsInitialized(): Boolean {
         for (bitmap in bitmaps) {
             if (!bitmap.isAnalyzed) return false
         }

@@ -149,7 +149,7 @@ namespace Core {
         }
 
         stackedResult = MedianStacking::stack(stackedSrc, *sources->buffer[bestBitmapIndex]->bitmapPtr);
-        delete warpManager;
+        delete warpedBitmaps;
     }
 
     void save(int fd, int format) {

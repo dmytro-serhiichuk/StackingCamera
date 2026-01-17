@@ -111,8 +111,11 @@ JNIEXPORT void JNICALL
 Java_com_sedv_stackingcamera_stacking_StackingActivity_stack(JNIEnv *env, jobject thiz,
                                                              jboolean disable_alignment) {
     try {
+        Core::jniHelper = new JNIHelper(env, thiz);
         Core::stack(disable_alignment);
+        delete Core::jniHelper;
     } catch (std::exception &e) {
+        delete Core::jniHelper;
         env->ThrowNew(env->FindClass("java/lang/RuntimeException"), e.what());
     }
 }

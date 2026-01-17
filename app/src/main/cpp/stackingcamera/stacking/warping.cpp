@@ -42,7 +42,6 @@ static inline cl_mem initHBuffer(const Eigen::Matrix3d &H) {
     );
 
     delete [] dst;
-    delete [] src;
     return buffer;
 }
 
