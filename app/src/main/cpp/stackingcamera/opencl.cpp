@@ -69,8 +69,7 @@ namespace CL {
     }
 
     cl_context context = nullptr;
-    cl_command_queue computeQueue = nullptr;
-    cl_command_queue transferQueue = nullptr;
+    cl_command_queue queue = nullptr;
     cl_program program = nullptr;
     size_t maxGroupSize = 0;
 
@@ -118,16 +117,14 @@ namespace CL {
         context = clCreateContext(nullptr, 1, &device, nullptr, nullptr, &status);
         if (status != CL_SUCCESS) throw std::runtime_error("Cannot create the context");
 
-        // Step 7: Creating command queues
+        // Step 7: Creating command queue
         cl_properties props[] = {
             CL_QUEUE_PROPERTIES,
             (cl_command_queue_properties)(CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE),
             0
         };
-        computeQueue = clCreateCommandQueueWithProperties(context, device, props, &status);
+        queue = clCreateCommandQueueWithProperties(context, device, props, &status);
         if (status != CL_SUCCESS) throw std::runtime_error("Cannot create compute queue");
-        transferQueue = clCreateCommandQueueWithProperties(context, device, props, &status);
-        if (status != CL_SUCCESS) throw std::runtime_error("Cannot create transfer queue");
 
         const char* source = readProgramSource(aam);
 
@@ -188,7 +185,7 @@ namespace CL {
     void enqueueNDRangeKernel(cl_kernel kernel, cl_uint ND, size_t* offset, size_t* global, size_t* local)
     {
         cl_int status = clEnqueueNDRangeKernel(
-                computeQueue, kernel, ND, offset, global, local, 0, nullptr, nullptr
+                queue, kernel, ND, offset, global, local, 0, nullptr, nullptr
         );
         if (status != CL_SUCCESS) {
             sprintf(logBuffer, "EnqueueNDRangeKernel error: %d", status);
@@ -198,7 +195,7 @@ namespace CL {
     void readBuffer(cl_mem cl_buffer, void *buffer, size_t bufferSize, cl_bool block)
     {
         cl_int status = clEnqueueReadBuffer(
-                transferQueue, cl_buffer, block, 0, bufferSize, buffer, 0, nullptr, nullptr
+                queue, cl_buffer, block, 0, bufferSize, buffer, 0, nullptr, nullptr
         );
         if (status != CL_SUCCESS) {
             sprintf(logBuffer, "EnqueueReadBuffer error: %d", status);
@@ -207,12 +204,12 @@ namespace CL {
     }
 
     void copyBuffer(cl_mem src, cl_mem dst, size_t size) {
-        cl_int status = clEnqueueCopyBuffer(transferQueue, src, dst, 0, 0, size, 0, nullptr, nullptr);
+        cl_int status = clEnqueueCopyBuffer(queue, src, dst, 0, 0, size, 0, nullptr, nullptr);
         if (status != CL_SUCCESS) {
             sprintf(logBuffer, "CopyBuffer failed: %d", status);
             throw std::runtime_error(logBuffer);
         }
-        clFinish(transferQueue);
+        clFinish(queue);
     }
 };
 

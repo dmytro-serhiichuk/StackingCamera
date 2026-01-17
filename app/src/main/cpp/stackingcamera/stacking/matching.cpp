@@ -88,17 +88,17 @@ namespace Matching {
             cl_event matchingFinished;
 
             clEnqueueNDRangeKernel(
-                CL::computeQueue, kernel, 1, nullptr,
-                &descriptors1.count, nullptr,
-                0, nullptr, &matchingFinished
+                    CL::queue, kernel, 1, nullptr,
+                    &descriptors1.count, nullptr,
+                    0, nullptr, &matchingFinished
             );
             clEnqueueReadBuffer(
-                CL::transferQueue, matchingClBuffers.closestIndicesBuffer,
+                CL::queue, matchingClBuffers.closestIndicesBuffer,
                 CL_FALSE, 0, matchingClBuffers.size, matchingClBuffers.closestIndices,
                 1, &matchingFinished,nullptr
             );
             clEnqueueReadBuffer(
-                    CL::transferQueue, matchingClBuffers.distancesBuffer,
+                    CL::queue, matchingClBuffers.distancesBuffer,
                     CL_TRUE, 0, matchingClBuffers.size, matchingClBuffers.distances,
                     1, &matchingFinished,nullptr
             );

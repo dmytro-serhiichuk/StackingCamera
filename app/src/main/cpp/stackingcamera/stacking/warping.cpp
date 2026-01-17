@@ -66,11 +66,11 @@ BitmapPtr *WarpManager::warpSingleBitmap(Bitmap &bitmap, const Eigen::Matrix3d &
 
     size_t global[2] { (size_t)outputWidth, (size_t)outputHeight };
     clEnqueueNDRangeKernel(
-        CL::computeQueue, kernel, 2, nullptr,
+        CL::queue, kernel, 2, nullptr,
         global, nullptr, 0, nullptr, &warpingFinished
     );
     clEnqueueReadBuffer(
-        CL::transferQueue, outputBuffer,
+        CL::queue, outputBuffer,
         CL_TRUE, 0, outputBufferSize, outputBitmapBuffer,
         1, &warpingFinished,nullptr
     );

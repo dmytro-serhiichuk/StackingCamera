@@ -25,8 +25,7 @@ namespace CL {
     } ImageChannelOrderSupportInfo;
 
     extern cl_context context;
-    extern cl_command_queue computeQueue;
-    extern cl_command_queue transferQueue;
+    extern cl_command_queue queue;
     extern cl_program program;
     extern size_t maxGroupSize;
 

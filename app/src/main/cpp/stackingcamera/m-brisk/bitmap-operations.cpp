@@ -63,10 +63,10 @@ void toGray8(BitmapInfo &bitmap, cl_mem &inputBuffer) {
 
     size_t global [2] { (size_t)bitmap.width, (size_t)bitmap.height };
     clEnqueueNDRangeKernel(
-        CL::computeQueue, kernel, 2, nullptr, global,
-        nullptr, 0, nullptr, nullptr
+            CL::queue, kernel, 2, nullptr, global,
+            nullptr, 0, nullptr, nullptr
     );
-    clFinish(CL::computeQueue);
+    clFinish(CL::queue);
 
     clReleaseKernel(kernel);
     clReleaseMemObject(inputBuffer);
@@ -97,20 +97,20 @@ Bitmap *toGray8WithReading(Bitmap &bitmap, cl_mem &inputBuffer) {
     clSetKernelArg(kernel, 2, sizeof(uint32_t), &bitmap.width);
     clSetKernelArg(kernel, 3, sizeof(int32_t), &channels);
 
-    cl_event convertingFinished;
+    cl_event finished;
 
     size_t global [2] { (size_t)bitmap.width, (size_t)bitmap.height };
     clEnqueueNDRangeKernel(
-            CL::computeQueue, kernel, 2, nullptr, global,
-            nullptr, 0, nullptr, &convertingFinished
+            CL::queue, kernel, 2, nullptr, global,
+            nullptr, 0, nullptr, &finished
     );
     clEnqueueReadBuffer(
-        CL::transferQueue, outputBuffer,
+        CL::queue, outputBuffer,
         CL_TRUE, 0,outputDataLength, outputBitmapBuffer,
-        1, &convertingFinished,nullptr
+        1, &finished ,nullptr
     );
 
-    clReleaseEvent(convertingFinished);
+    clReleaseEvent(finished);
     clReleaseKernel(kernel);
     clReleaseMemObject(inputBuffer);
 
@@ -135,7 +135,7 @@ void CLAHE(BitmapInfo &bitmap, cl_mem &inputBuffer, uint32_t tileCount, float fC
     cl_event lutCreatedEvent;
 
     cl_int zero = 0;
-    clEnqueueFillBuffer(CL::computeQueue, mapBuffer, &zero, sizeof(zero),
+    clEnqueueFillBuffer(CL::queue, mapBuffer, &zero, sizeof(zero),
                         0, mapSize, 0, nullptr, &fillEvent);
 
     cl_kernel make_lut_kernel = CL::createKernel("clahe_make_lut");
@@ -151,7 +151,7 @@ void CLAHE(BitmapInfo &bitmap, cl_mem &inputBuffer, uint32_t tileCount, float fC
 
     size_t global1[2] { tileCount, tileCount };
     clEnqueueNDRangeKernel(
-        CL::computeQueue, make_lut_kernel, 2, nullptr, global1,
+        CL::queue, make_lut_kernel, 2, nullptr, global1,
         nullptr, 1, &fillEvent, &lutCreatedEvent
     );
 
@@ -167,11 +167,13 @@ void CLAHE(BitmapInfo &bitmap, cl_mem &inputBuffer, uint32_t tileCount, float fC
 
     size_t global2[2] { bitmap.width, bitmap.height };
     clEnqueueNDRangeKernel(
-            CL::computeQueue, interpolate_kernel, 2, nullptr, global2,
+            CL::queue, interpolate_kernel, 2, nullptr, global2,
             nullptr, 1, &lutCreatedEvent, nullptr
     );
-    clFinish(CL::computeQueue);
+    clFinish(CL::queue);
 
+    clReleaseEvent(fillEvent);
+    clReleaseEvent(lutCreatedEvent);
     clReleaseKernel(make_lut_kernel);
     clReleaseKernel(interpolate_kernel);
     clReleaseMemObject(mapBuffer);
@@ -202,10 +204,11 @@ void blur(BitmapInfo &bitmap, cl_mem &inputBuffer, GaussianKernel &gk) {
     clSetKernelArg(kernel_h, 4, sizeof(cl_mem), &gaussianBuffer);
     clSetKernelArg(kernel_h, 5, sizeof(int32_t), &gk.radius);
 
-    cl_event horizontalBlurFinished;
+    cl_event h_finished;
+
     clEnqueueNDRangeKernel(
-        CL::computeQueue, kernel_h, 2, nullptr, global,
-        nullptr, 0, nullptr, &horizontalBlurFinished
+            CL::queue, kernel_h, 2, nullptr, global,
+            nullptr, 0, nullptr, &h_finished
     );
 
     cl_kernel kernel_v = CL::createKernel("gaussian_blur_vertical");
@@ -218,12 +221,12 @@ void blur(BitmapInfo &bitmap, cl_mem &inputBuffer, GaussianKernel &gk) {
     clSetKernelArg(kernel_v, 5, sizeof(int32_t), &gk.radius);
 
     clEnqueueNDRangeKernel(
-            CL::computeQueue, kernel_v, 2, nullptr, global,
-            nullptr, 1, &horizontalBlurFinished, nullptr
+            CL::queue, kernel_v, 2, nullptr, global,
+            nullptr, 1, &h_finished, nullptr
     );
-    clFinish(CL::computeQueue);
+    clFinish(CL::queue);
 
-    clReleaseEvent(horizontalBlurFinished);
+    clReleaseEvent(h_finished);
     clReleaseKernel(kernel_h);
     clReleaseKernel(kernel_v);
     clReleaseMemObject(inputBuffer);
@@ -258,10 +261,10 @@ bool resize(BitmapInfo &bitmap, cl_mem &inputBuffer, float scaleFactor, uint32_t
 
     size_t global[2] { (size_t)rWidth, (size_t)rHeight };
     clEnqueueNDRangeKernel(
-        CL::computeQueue, kernel, 2, nullptr,
-        global, nullptr, 0, nullptr, nullptr
+            CL::queue, kernel, 2, nullptr,
+            global, nullptr, 0, nullptr, nullptr
     );
-    clFinish(CL::computeQueue);
+    clFinish(CL::queue);
 
     clReleaseKernel(kernel);
     clReleaseMemObject(inputBuffer);

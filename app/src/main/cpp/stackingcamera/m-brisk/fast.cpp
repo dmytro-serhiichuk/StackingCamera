@@ -35,13 +35,13 @@ namespace FAST {
 
     void detect(BitmapInfo &bitmap, cl_mem &imageBuffer, Buffer<KeyPoint> &keyPoints,
                 FAST_Buffers &fastBuffers, uint32_t padding, uint32_t octave, float scaleFactor) {
-        cl_event counterFilled, fastFinished, counterRead;
+        cl_event counterFilled, fastFinished;
 
         int32_t count = 0;
         clEnqueueFillBuffer(
-            CL::computeQueue, fastBuffers.counterBuffer,
-            &count,sizeof(int32_t), 0, sizeof(int32_t),
-            0,nullptr, &counterFilled
+                CL::queue, fastBuffers.counterBuffer,
+                &count, sizeof(int32_t), 0, sizeof(int32_t),
+                0, nullptr, &counterFilled
         );
 
         cl_kernel kernel = CL::createKernel("fast_9");
@@ -75,25 +75,24 @@ namespace FAST {
         size_t local[2] { localWidth, localHeight };
         size_t global[2] { gw, gh };
         clEnqueueNDRangeKernel(
-            CL::computeQueue, kernel, 2, nullptr,
-            global, local, 1, &counterFilled, &fastFinished
+                CL::queue, kernel, 2, nullptr,
+                global, local, 1, &counterFilled, &fastFinished
         );
         clEnqueueReadBuffer(
-            CL::transferQueue, fastBuffers.counterBuffer,
-            CL_FALSE, 0, sizeof(int32_t), &count,
-            1, &fastFinished, &counterRead
+            CL::queue, fastBuffers.counterBuffer,
+            CL_TRUE, 0, sizeof(int32_t), &count,
+            1, &fastFinished, nullptr
         );
         clEnqueueReadBuffer(
-            CL::transferQueue, fastBuffers.kpsBuffer,
+            CL::queue, fastBuffers.kpsBuffer,
             CL_TRUE, 0, count * sizeof(KeyPoint), keyPoints.end(),
-            1, &counterRead,nullptr
+            1, &fastFinished,nullptr
         );
 
         keyPoints.size += count;
 
         clReleaseEvent(counterFilled);
         clReleaseEvent(fastFinished);
-        clReleaseEvent(counterRead);
         clReleaseKernel(kernel);
     }
 }

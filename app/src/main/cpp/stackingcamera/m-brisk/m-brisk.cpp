@@ -164,18 +164,19 @@ void M_BRISK::subpixelRefine(Bitmap &bitmap, cl_mem buffer, Buffer<KeyPoint> &ke
     clSetKernelArg(kernel, 2, sizeof(int), &bitmap.width);
     clSetKernelArg(kernel, 3, sizeof(int), &bitmap.height);
 
-    cl_event event;
+    cl_event finished;
+
     clEnqueueNDRangeKernel(
-        CL::computeQueue, kernel, 2, nullptr,&keypoints.size,
-        nullptr, 0, nullptr, &event
+            CL::queue, kernel, 1, nullptr, &keypoints.size,
+            nullptr, 0, nullptr, &finished
     );
     clEnqueueReadBuffer(
-        CL::transferQueue, kpsBuffer,
+        CL::queue, kpsBuffer,
         CL_TRUE, 0, keypoints.size * sizeof(KeyPoint),
-        keypoints.buffer, 1, &event,nullptr
+        keypoints.buffer, 1, &finished,nullptr
     );
 
-    clReleaseEvent(event);
+    clReleaseEvent(finished);
     clReleaseKernel(kernel);
     clReleaseMemObject(kpsBuffer);
 }
@@ -328,19 +329,19 @@ Descriptors *M_BRISK::compute(Bitmap &inputBitmap, Buffer<KeyPoint> &keyPoints) 
     clSetKernelArg(kernel, 6, sizeof(cl_mem), &sp);
     clSetKernelArg(kernel, 7, sizeof(cl_mem), &lp);
 
-    cl_event computingFinished;
+    cl_event finished;
 
     clEnqueueNDRangeKernel(
-        CL::computeQueue, kernel, 1, nullptr,
-        &keyPoints.size, nullptr, 0, nullptr, &computingFinished
+            CL::queue, kernel, 1, nullptr,
+            &keyPoints.size, nullptr, 0, nullptr, &finished
     );
     clEnqueueReadBuffer(
-        CL::transferQueue, descBuffer,
+        CL::queue, descBuffer,
         CL_TRUE, 0, descriptorsSize, descriptors->buffer,
-        1, &computingFinished,nullptr
+        1, &finished,nullptr
     );
 
-    clReleaseEvent(computingFinished);
+    clReleaseEvent(finished);
     clReleaseKernel(kernel);
     clReleaseMemObject(buffer);
     clReleaseMemObject(integralBuffer);
