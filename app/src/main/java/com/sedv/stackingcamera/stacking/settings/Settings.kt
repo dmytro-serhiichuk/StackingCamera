@@ -50,11 +50,7 @@ object Settings {
         availableImageSettings = getAvailableImageSettings()
 
         for (prop in properties) {
-            when (prop) {
-                is RangedProperty<*> -> if (prop.value is Int) prop.value = sharedPreferences.getInt(prop.name, prop.defaultValue)
-                else if (prop.value is Float) prop.value = sharedPreferences.getFloat(prop.name, prop.defaultValue)
-                is BoolProperty -> prop.value = sharedPreferences.getBoolean(prop.name, prop.defaultValue)
-            }
+            prop.loadFrom(sharedPreferences)
         }
 
         callApplySettings()
@@ -63,10 +59,8 @@ object Settings {
     fun updateSettings() {
         val editor = sharedPreferences.edit()
 
-        for (prop in properties) when (prop) {
-            is RangedProperty<*> -> if (prop.value is Int) editor.putInt(prop.name, prop.value)
-            else if (prop.value is Float) editor.putFloat(prop.name, prop.value)
-            is BoolProperty -> editor.putBoolean(prop.name, prop.value)
+        for (prop in properties) {
+            prop.saveTo(editor)
         }
 
         editor.commit()
@@ -76,11 +70,8 @@ object Settings {
     fun resetSettings() {
         val editor = sharedPreferences.edit()
 
-        for (prop in properties) when (prop) {
-            is RangedProperty<*> -> if (prop.value is Int) editor.putInt(prop.name, prop.defaultValue)
-            else if (prop.value is Float) editor.putFloat(prop.name, prop.defaultValue)
-            is BoolProperty -> editor.putBoolean(prop.name, prop.defaultValue)
-            prop.value = prop.defaultValue
+        for (prop in properties) {
+            prop.reset(editor)
         }
 
         editor.commit()
@@ -89,19 +80,19 @@ object Settings {
 
     inline fun callApplySettings() {
         applySettings(
-            FAST_THRESHOLD,
-            RANSAC_THRESHOLD,
-            RANSAC_ITERATIONS,
-            CHUNKS_PER_SIDE,
-            MAX_KEYPOINTS_COUNT,
-            MAX_MATCHES_COUNT,
-            BRISK_PATTERNS_SCALE,
-            USE_16_BIT_BITMAPS,
-            USE_IMAGES,
-            USE_RGB_IMAGES,
-            USE_16_BIT_IMAGES,
-            DRAW_KEYPOINTS,
-            DRAW_MATCHES
+            FAST_THRESHOLD.value,
+            RANSAC_THRESHOLD.value,
+            RANSAC_ITERATIONS.value,
+            CHUNKS_PER_SIDE.value,
+            MAX_KEYPOINTS_COUNT.value,
+            MAX_MATCHES_COUNT.value,
+            BRISK_PATTERNS_SCALE.value,
+            USE_16_BIT_BITMAPS.value,
+            USE_IMAGES.value,
+            USE_RGB_IMAGES.value,
+            USE_16_BIT_IMAGES.value,
+            DRAW_KEYPOINTS.value,
+            DRAW_MATCHES.value
         )
     }
 
