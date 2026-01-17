@@ -92,7 +92,9 @@ extern "C"
 JNIEXPORT jintArray JNICALL
 Java_com_sedv_stackingcamera_stacking_StackingActivity_analyse(JNIEnv *env, jobject thiz,
                                                                jboolean reanalyse) {
+    Core::jniHelper = new JNIHelper(env, thiz);
     Core::analyse(reanalyse);
+    delete Core::jniHelper;
 
     auto scores = new int32_t[Core::sources->size]();
     for (size_t i = 0; i < Core::sources->size; i++) {

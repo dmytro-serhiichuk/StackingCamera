@@ -7,6 +7,7 @@
 #include "stacking/ransac.h"
 #include "stacking/warping.h"
 #include "stacking/median-stacking.h"
+#include "utils.h"
 
 namespace Core {
     void Data::removeAnalysedData() {
@@ -71,6 +72,9 @@ namespace Core {
         // TODO: handle images
         DRAW_KEYPOINTS = draw_keypoints;
         DRAW_MATCHES = draw_matches;
+
+        DRAW_KEYPOINTS = true;
+        DRAW_MATCHES = true;
     }
 
     static void updateBestBitmapIndex() {
@@ -100,6 +104,11 @@ namespace Core {
                     Bitmap* bitmap   = src->bitmapPtr->read();
                     src->keyPoints   = mBrisk->detect(*bitmap);
                     src->descriptors = mBrisk->compute(*bitmap, *src->keyPoints);
+
+                    if (DRAW_KEYPOINTS) {
+                        Utils::drawKeyPoints(*bitmap, *src->keyPoints);
+                    }
+
                     delete bitmap;
                 }
                 catch (std::exception &e) {
@@ -134,6 +143,11 @@ namespace Core {
         updateBestBitmapIndex();
 
         Buffer<Buffer<Matching::Match>> *matches = Matching::match(*sources, bestBitmapIndex);
+
+        if (DRAW_MATCHES) {
+            Utils::drawAllMatches(*matches, bestBitmapIndex);
+        }
+
         Buffer<Eigen::Matrix3d> *matrices = RANSAC::computeHomographyMatrices(*sources, bestBitmapIndex, *matches);
         delete matches;
 
