@@ -95,7 +95,7 @@ namespace Core {
 
         for (size_t i = 0; i < sources->size; i++) {
             auto src = sources->buffer[i];
-            if (src->keyPoints != nullptr && src->descriptors != nullptr) {
+            if (src->keyPoints == nullptr && src->descriptors == nullptr) {
                 try {
                     Bitmap* bitmap   = src->bitmapPtr->read();
                     src->keyPoints   = mBrisk->detect(*bitmap);

@@ -10,6 +10,7 @@
     android:background="@color/white">
 
     <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/top_container"
         android:layout_width="match_parent"
         android:layout_height="@dimen/nav_panel_height"
         app:layout_constraintTop_toTopOf="parent"
@@ -49,5 +50,97 @@
         </LinearLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        app:layout_constraintTop_toBottomOf="@id/top_container"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:orientation="vertical"
+        android:padding="10dp">
+
+        <GridLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:useDefaultMargins="true">
+            <Button
+                android:id="@+id/load_images_btn"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Load Images"
+                android:layout_row="0"
+                android:layout_column="0"
+                android:layout_columnSpan="2"
+                android:layout_gravity="fill_horizontal"/>
+            <Button
+                android:id="@+id/analyse_btn"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Analyse"
+                android:layout_row="1"
+                android:layout_column="0"
+                android:layout_gravity="fill_horizontal"/>
+            <CheckBox
+                android:id="@+id/analyse_check_box"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Allow re-analysis"
+                android:layout_row="1"
+                android:layout_column="1"/>
+
+            <Button
+                android:id="@+id/stack_btn"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Stack"
+                android:layout_row="2"
+                android:layout_column="0"
+                android:layout_gravity="fill_horizontal"/>
+            <CheckBox
+                android:id="@+id/disable_alignment_check_box"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Disable Alignment"
+                android:layout_row="2"
+                android:layout_column="1"/>
+
+            <Button
+                android:id="@+id/save_btn"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Save Result"
+                android:layout_row="3"
+                android:layout_column="0"
+                android:layout_gravity="fill_horizontal"/>
+            <Spinner
+                android:id="@+id/output_format_selector"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:spinnerMode="dropdown"
+                android:layout_row="3"
+                android:layout_column="1"/>
+        </GridLayout>
+
+        <TextView
+            android:id="@+id/loaded_images_count"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Images: "
+            android:visibility="gone"/>
+        <ScrollView
+            android:layout_marginTop="@dimen/big_margin"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+            <LinearLayout
+                android:id="@+id/loaded_images_list"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:showDividers="middle"
+                android:divider="@drawable/vertical_divider">
+            </LinearLayout>
+        </ScrollView>
+
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

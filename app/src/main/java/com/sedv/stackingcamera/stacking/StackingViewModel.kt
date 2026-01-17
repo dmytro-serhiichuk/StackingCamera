@@ -5,6 +5,9 @@ import androidx.lifecycle.ViewModel
 class StackingViewModel : ViewModel() {
     val bitmaps = arrayListOf<BitmapInfo>()
     var isAlignmentDisabled = false
+    var hasStackedResult = false
+
+    var state = StackingState.NOT_READY
 
     fun canStack(): Boolean {
         if (bitmaps.isEmpty() || isAlignmentDisabled) return false
@@ -13,4 +16,10 @@ class StackingViewModel : ViewModel() {
         }
         return true
     }
+}
+
+enum class StackingState {
+    NOT_READY,
+    IDLE,
+    BUSY
 }

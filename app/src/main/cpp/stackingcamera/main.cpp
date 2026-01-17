@@ -20,13 +20,17 @@ JNIEXPORT jlong JNICALL
 Java_com_sedv_stackingcamera_stacking_StackingActivity_loadBitmap(JNIEnv *env, jobject thiz,
                                                                   jint fd) {
     try {
+        Core::jniHelper = new JNIHelper(env, thiz);
         Core::loadBitmap(fd);
+        delete Core::jniHelper;
         auto loadedBitmapPtr = Core::sources->buffer[Core::sources->size - 1]->bitmapPtr;
 
         jlong packed = ((jlong)loadedBitmapPtr->width << 32) | loadedBitmapPtr->height;
         return packed;
     } catch (std::exception &e) {
+        delete Core::jniHelper;
         env->ThrowNew(env->FindClass("java/lang/RuntimeException"), e.what());
+        return -1;
     }
 }
 inline int calculateImageChannelSupport(bool uint8, bool uint16) {

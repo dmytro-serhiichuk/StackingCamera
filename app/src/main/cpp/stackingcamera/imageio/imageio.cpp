@@ -103,7 +103,7 @@ namespace ImageIO {
         delete [] buffer;
 
         if (bitmapPtr == nullptr) {
-            throw std::runtime_error("File read failed");
+            throw std::runtime_error("Unsupported file format");
         }
 
         return bitmapPtr;
