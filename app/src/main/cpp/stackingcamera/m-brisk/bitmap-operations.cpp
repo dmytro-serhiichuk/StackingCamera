@@ -83,7 +83,7 @@ Bitmap *toGray8WithReading(Bitmap &bitmap, cl_mem &inputBuffer) {
 
     uint8_t* outputBitmapBuffer = new uint8_t[outputDataLength];
     cl_mem outputBuffer = CL::createBuffer(
-            CL_MEM_HOST_NO_ACCESS | CL_MEM_READ_WRITE,
+            CL_MEM_READ_WRITE,
             outputDataLength, nullptr
     );
 
