@@ -295,7 +295,6 @@ class StackingActivity : AppCompatActivity() {
                             save(it.fd, binding.outputFormatSelector.selectedItemId.toInt())
                         }
                     }
-                    // write to file
 
                     MediaScannerConnection.scanFile(
                         this@StackingActivity,
@@ -328,7 +327,6 @@ class StackingActivity : AppCompatActivity() {
         val tempFile = File.createTempFile("temp_", "", cacheDir)
         return tempFile.absolutePath
     }
-    @SuppressLint("Recycle")
     fun createImageFile(name: String): Int {
         val contentValues = ContentValues().apply {
             put(MediaStore.MediaColumns.DISPLAY_NAME, name)

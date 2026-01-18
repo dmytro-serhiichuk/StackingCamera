@@ -121,7 +121,7 @@ void Utils::drawKeyPoints(Bitmap &bmp, Buffer<KeyPoint> &kps) {
     auto bitmap8 = bmp.convertTo(Depth::U8, ColorSpace::RGB);
 
     for (KeyPoint &kp : kps) {
-        drawCircle(bmp, kp.x, kp.y, 0, 255, 0);
+        drawCircle(*bitmap8, kp.x, kp.y, 0, 255, 0);
     }
     SaveProperties props {};
     props.outputFormat = OutputFormat::JPEG;
