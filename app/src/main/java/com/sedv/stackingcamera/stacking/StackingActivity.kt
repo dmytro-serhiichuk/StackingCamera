@@ -332,7 +332,7 @@ class StackingActivity : AppCompatActivity() {
     fun createImageFile(name: String): Int {
         val contentValues = ContentValues().apply {
             put(MediaStore.MediaColumns.DISPLAY_NAME, name)
-            put(MediaStore.MediaColumns.MIME_TYPE, "image")
+            put(MediaStore.MediaColumns.MIME_TYPE, "image/*")
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + APP_DIRECTORY)
             } else {
@@ -344,7 +344,7 @@ class StackingActivity : AppCompatActivity() {
         val uri = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)!!
         val pfd = contentResolver.openFileDescriptor(uri, "w")!! // pfd will be closed in native code
 
-        return pfd.fd
+        return pfd.detachFd()
     }
 
     // Native functions
