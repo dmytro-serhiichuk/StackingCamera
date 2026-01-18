@@ -8,6 +8,7 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_com_sedv_stackingcamera_stacking_StackingActivity_initStacking(JNIEnv *env, jobject, jobject am) {
     try {
+        JNIHelper::initialize(env);
         AAssetManager* aam = AAssetManager_fromJava(env, am);
         Core::init(aam);
     }
@@ -20,15 +21,13 @@ JNIEXPORT jlong JNICALL
 Java_com_sedv_stackingcamera_stacking_StackingActivity_loadBitmap(JNIEnv *env, jobject thiz,
                                                                   jint fd) {
     try {
-        Core::jniHelper = new JNIHelper(env, thiz);
+        JNIHelper::getInstance()->updateHelper(env, thiz);
         Core::loadBitmap(fd);
-        delete Core::jniHelper;
         auto loadedBitmapPtr = Core::sources->buffer[Core::sources->size - 1]->bitmapPtr;
 
         jlong packed = ((jlong)loadedBitmapPtr->width << 32) | loadedBitmapPtr->height;
         return packed;
     } catch (std::exception &e) {
-        delete Core::jniHelper;
         env->ThrowNew(env->FindClass("java/lang/RuntimeException"), e.what());
         return -1;
     }
@@ -92,9 +91,8 @@ extern "C"
 JNIEXPORT jintArray JNICALL
 Java_com_sedv_stackingcamera_stacking_StackingActivity_analyse(JNIEnv *env, jobject thiz,
                                                                jboolean reanalyse) {
-    Core::jniHelper = new JNIHelper(env, thiz);
+    JNIHelper::getInstance()->updateHelper(env, thiz);
     Core::analyse(reanalyse);
-    delete Core::jniHelper;
 
     auto scores = new int32_t[Core::sources->size]();
     for (size_t i = 0; i < Core::sources->size; i++) {
@@ -113,11 +111,9 @@ JNIEXPORT void JNICALL
 Java_com_sedv_stackingcamera_stacking_StackingActivity_stack(JNIEnv *env, jobject thiz,
                                                              jboolean disable_alignment) {
     try {
-        Core::jniHelper = new JNIHelper(env, thiz);
+        JNIHelper::getInstance()->updateHelper(env, thiz);
         Core::stack(disable_alignment);
-        delete Core::jniHelper;
     } catch (std::exception &e) {
-        delete Core::jniHelper;
         env->ThrowNew(env->FindClass("java/lang/RuntimeException"), e.what());
     }
 }

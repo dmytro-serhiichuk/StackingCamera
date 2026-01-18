@@ -41,7 +41,7 @@ namespace {
                      uint32_t index
     ) {
         std::string name = std::string("match_") + std::to_string(index) + ".jpg";
-        int fd = Core::jniHelper->createImageFile(name.c_str());
+        int fd = JNIHelper::getInstance()->createImageFile(name.c_str());
 
         uint32_t width = bmp1.width + bmp2.width;
         uint32_t height = bmp1.height > bmp2.height ? bmp1.height : bmp2.height;
@@ -116,7 +116,7 @@ namespace {
 
 void Utils::drawKeyPoints(Bitmap &bmp, Buffer<KeyPoint> &kps) {
     const char *fileName = "keyPoints.jpg";
-    int fd = Core::jniHelper->createImageFile(fileName);
+    int fd = JNIHelper::getInstance()->createImageFile(fileName);
 
     auto bitmap8 = bmp.convertTo(Depth::U8, ColorSpace::RGB);
 

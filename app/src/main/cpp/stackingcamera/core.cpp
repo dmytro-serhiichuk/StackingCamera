@@ -30,8 +30,6 @@ namespace Core {
     ColorSpace BITMAP_COLOR_SPACE = ColorSpace::RGB;
     Depth BITMAP_DEPTH = Depth::U16;
 
-    JNIHelper* jniHelper = nullptr;
-
     M_BRISK* mBrisk = nullptr;
     List<Data>* sources = new List<Data>(10);
     Bitmap* stackedResult = nullptr;
@@ -73,8 +71,8 @@ namespace Core {
         DRAW_KEYPOINTS = draw_keypoints;
         DRAW_MATCHES = draw_matches;
 
-        DRAW_KEYPOINTS = true;
-        DRAW_MATCHES = true;
+//        DRAW_KEYPOINTS = true;
+//        DRAW_MATCHES = true;
     }
 
     static void updateBestBitmapIndex() {

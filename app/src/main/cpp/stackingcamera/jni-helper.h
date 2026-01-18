@@ -10,17 +10,26 @@
 
 class JNIHelper {
 private:
-    JNIEnv *env;
+    static JavaVM *jvm;
+    static JNIHelper *instance;
+
+    JNIEnv *jniEnv;
+    // TODO: use lightweight listener instead of the whole activity
     jobject jniHelperObject;
     jclass jniHelperClass;
 
+    JNIHelper(): jniHelperObject(nullptr), jniHelperClass(nullptr) {}
+
 public:
-    JNIHelper(JNIEnv *env, jobject helper) :
-            env(env),
-            jniHelperObject(env->NewGlobalRef(helper)),
-            jniHelperClass((jclass)env->NewGlobalRef(env->GetObjectClass(helper))) {}
+    static void initialize(JNIEnv *env);
+
+    static JNIHelper* getInstance() {
+        return instance;
+    }
+
     ~JNIHelper();
 
+    void updateHelper(JNIEnv *env, jobject newHelper);
     char* createTempFile();
     int createImageFile(const char *fileName);
 };

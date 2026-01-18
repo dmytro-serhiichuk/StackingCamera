@@ -37,8 +37,6 @@ namespace Core {
     extern ColorSpace BITMAP_COLOR_SPACE;
     extern Depth BITMAP_DEPTH;
 
-    extern JNIHelper* jniHelper;
-
     extern M_BRISK* mBrisk;
     extern List<Data>* sources;
     extern Bitmap* stackedResult;

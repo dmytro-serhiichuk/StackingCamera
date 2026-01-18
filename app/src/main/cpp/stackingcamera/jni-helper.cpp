@@ -4,31 +4,53 @@
 
 #include "jni-helper.h"
 
+JavaVM* JNIHelper::jvm = nullptr;
+JNIHelper* JNIHelper::instance = nullptr;
+
+void JNIHelper::initialize(JNIEnv *env) {
+    if (!jvm) env->GetJavaVM(&jvm);
+    if (!instance) instance = new JNIHelper();
+}
+
 JNIHelper::~JNIHelper() {
-    env->DeleteGlobalRef(jniHelperObject);
-    env->DeleteGlobalRef(jniHelperClass);
+    if (jvm) {
+        JNIEnv *env;
+        jvm->GetEnv((void**)&env, JNI_VERSION_1_6);
+
+        if (jniHelperObject) env->DeleteGlobalRef(jniHelperObject);
+        if (jniHelperClass) env->DeleteGlobalRef(jniHelperClass);
+    }
+}
+
+void JNIHelper::updateHelper(JNIEnv *env, jobject newHelper) {
+    jniEnv = env;
+    if (jniHelperObject) jniEnv->DeleteGlobalRef(jniHelperObject);
+    if (jniHelperClass) jniEnv->DeleteGlobalRef(jniHelperClass);
+
+    jniHelperObject = jniEnv->NewGlobalRef(newHelper);
+    jniHelperClass = (jclass)jniEnv->NewGlobalRef(env->GetObjectClass(newHelper));
 }
 
 char *JNIHelper::createTempFile() {
-    jmethodID method = env->GetMethodID(jniHelperClass, "createTempFile", "()Ljava/lang/String;");
-    jstring jfilePath = ((jstring)(env->CallObjectMethod(jniHelperObject, method)));
+    jmethodID method = jniEnv->GetMethodID(jniHelperClass, "createTempFile", "()Ljava/lang/String;");
+    jstring jfilePath = ((jstring)(jniEnv->CallObjectMethod(jniHelperObject, method)));
 
-    const char* tempChars = env->GetStringUTFChars(jfilePath, nullptr);
+    const char* tempChars = jniEnv->GetStringUTFChars(jfilePath, nullptr);
     char* result = strdup(tempChars);
 
-    env->ReleaseStringUTFChars(jfilePath, tempChars);
-    env->DeleteLocalRef(jfilePath);
+    jniEnv->ReleaseStringUTFChars(jfilePath, tempChars);
+    jniEnv->DeleteLocalRef(jfilePath);
 
     return result;
 }
 
 int JNIHelper::createImageFile(const char *fileName) {
-    jstring jfileName = env->NewStringUTF(fileName);
-    jmethodID method = env->GetMethodID(jniHelperClass, "createImageFile", "(Ljava/lang/String;)I");
+    jstring jfileName = jniEnv->NewStringUTF(fileName);
+    jmethodID method = jniEnv->GetMethodID(jniHelperClass, "createImageFile", "(Ljava/lang/String;)I");
 
-    jint fd = env->CallIntMethod(jniHelperObject, method, jfileName);
+    jint fd = jniEnv->CallIntMethod(jniHelperObject, method, jfileName);
 
-    env->DeleteLocalRef(jfileName);
+    jniEnv->DeleteLocalRef(jfileName);
 
     return fd;
 }
