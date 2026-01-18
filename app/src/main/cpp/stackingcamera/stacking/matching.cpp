@@ -85,7 +85,7 @@ namespace Matching {
             clSetKernelArg(kernel, 3, sizeof(cl_mem), &matchingClBuffers.distancesBuffer);
             clSetKernelArg(kernel, 5, sizeof(int32_t), &descriptors2.count);
 
-            cl_event matchingFinished;
+            cl_event matchingFinished, indicesRead, distancesRead;
 
             clEnqueueNDRangeKernel(
                     CL::queue, kernel, 1, nullptr,
@@ -95,15 +95,20 @@ namespace Matching {
             clEnqueueReadBuffer(
                 CL::queue, matchingClBuffers.closestIndicesBuffer,
                 CL_FALSE, 0, matchingClBuffers.size, matchingClBuffers.closestIndices,
-                1, &matchingFinished,nullptr
+                1, &matchingFinished,&indicesRead
             );
             clEnqueueReadBuffer(
                     CL::queue, matchingClBuffers.distancesBuffer,
-                    CL_TRUE, 0, matchingClBuffers.size, matchingClBuffers.distances,
-                    1, &matchingFinished,nullptr
+                    CL_FALSE, 0, matchingClBuffers.size, matchingClBuffers.distances,
+                    1, &matchingFinished,&distancesRead
             );
 
+            cl_event wait_list[2] { distancesRead, indicesRead };
+            clWaitForEvents(2, wait_list);
+
             clReleaseEvent(matchingFinished);
+            clReleaseEvent(indicesRead);
+            clReleaseEvent(distancesRead);
             clReleaseMemObject(buffer2);
 
             Buffer<Match>& currentMatches = (*matches)[matchesIndex];
@@ -149,6 +154,9 @@ namespace Matching {
             currentMatches.shrink();
             matchesIndex++;
         }
+
+        clReleaseKernel(kernel);
+        clReleaseMemObject(buffer1);
 
         return matches;
     }
