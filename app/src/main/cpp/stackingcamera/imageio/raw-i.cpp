@@ -7,7 +7,7 @@
 
 namespace ImageIO {
     bool isRAW(void* buffer, size_t size) {
-        LibRaw processor;
+        LibRaw processor {};
         if (processor.open_buffer(buffer, size) == LIBRAW_SUCCESS) {
             processor.recycle();
             return true;
@@ -17,7 +17,7 @@ namespace ImageIO {
     }
 
     BitmapPtr* loadRAW(uint8_t* fileData, size_t fileSize, ColorSpace colorSpace, Depth depth) {
-        LibRaw processor;
+        LibRaw processor {};
         // Open file from memory
         if (processor.open_buffer(fileData, fileSize) != LIBRAW_SUCCESS) {
             return nullptr;
@@ -76,7 +76,7 @@ namespace ImageIO {
         if (cropWidth != 0 && cropHeight != 0) {
             uint8_t *src = reinterpret_cast<uint8_t *>(processed_image->data);
             buffer = new uint8_t[cropWidth * cropHeight * 3 * bytesPerSample];
-            size_t offset = topOffset * bigWidth * 3;
+            size_t offset = topOffset * bigWidth * 3 * bytesPerSample;
 
             uint32_t startOffset = leftOffset * 3 * bytesPerSample;
             uint32_t row = cropWidth * 3 * bytesPerSample;

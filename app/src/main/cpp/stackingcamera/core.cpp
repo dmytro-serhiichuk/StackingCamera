@@ -71,7 +71,7 @@ namespace Core {
         DRAW_KEYPOINTS = draw_keypoints;
         DRAW_MATCHES = draw_matches;
 
-//        DRAW_KEYPOINTS = true;
+        DRAW_KEYPOINTS = true;
 //        DRAW_MATCHES = true;
     }
 

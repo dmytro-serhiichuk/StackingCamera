@@ -20,7 +20,7 @@ namespace ImageIO {
         TIFF,
     };
 
-    uint8_t* readFile(int fd, size_t &size) {
+    static uint8_t* readFile(int fd, size_t &size) {
         struct stat fileStat;
         if (fstat(fd, &fileStat) == -1) {
             return nullptr;
@@ -42,7 +42,7 @@ namespace ImageIO {
         return buffer;
     }
 
-    static Format getFormat(uint8_t* buffer) {
+    static Format getFormat(uint8_t* buffer, size_t size) {
         if (buffer[0] == 0xFF && buffer[1] == 0xD8 && buffer[2] == 0xFF) {
             return Format::JPG;
         }
@@ -52,7 +52,7 @@ namespace ImageIO {
             return Format::PNG;
         }
 
-        if (isRAW(buffer, 8)) {
+        if (isRAW(buffer, size)) {
             return Format::RAW;
         }
 
@@ -81,7 +81,7 @@ namespace ImageIO {
             throw std::runtime_error("Invalid input file");
         }
 
-        Format format = getFormat(buffer);
+        Format format = getFormat(buffer, size);
 
         BitmapPtr* bitmapPtr = nullptr;
 
