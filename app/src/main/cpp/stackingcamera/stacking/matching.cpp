@@ -73,6 +73,8 @@ namespace Matching {
         for (size_t i = 0; i < sources.size; i++) {
             if (i == bestIndex) continue;
 
+            JNIHelper::getInstance()->writeMessageToLog(false, "Starting matching descriptors with image %zd", i);
+
             Descriptors& descriptors2 = *sources.buffer[i]->descriptors;
 
             cl_mem buffer2 = CL::createBuffer(
@@ -153,6 +155,8 @@ namespace Matching {
             currentMatches.size = fi;
             currentMatches.shrink();
             matchesIndex++;
+
+            JNIHelper::getInstance()->writeMessageToLog(false, "Total number of selected matches: %zd\n", fi);
         }
 
         clReleaseKernel(kernel);

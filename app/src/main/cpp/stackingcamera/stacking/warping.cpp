@@ -88,11 +88,13 @@ List<BitmapPtr> *WarpManager::warp(List<Core::Data> &sources, uint32_t bestIndex
     size_t matrixIndex = 0;
     for (size_t i = 0; i < sources.size; i++) {
         if (i == bestIndex) continue;
+        JNIHelper::getInstance()->writeMessageToLog(false, "Starting warping image %zd", i);
 
         auto bitmap = sources.buffer[i]->bitmapPtr->read();
         warpedBitmaps->add(warpSingleBitmap(*bitmap, matrices[matrixIndex]));
         delete bitmap;
         matrixIndex++;
+        JNIHelper::getInstance()->writeMessageToLog(false, "Image %zd warping completed\n", i);
     }
 
     return warpedBitmaps;

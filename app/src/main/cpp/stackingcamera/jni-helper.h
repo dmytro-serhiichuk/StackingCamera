@@ -13,6 +13,9 @@ private:
     static JavaVM *jvm;
     static JNIHelper *instance;
 
+    static const size_t LOG_BUFFER_SIZE = 512;
+    static char LOG_BUFFER[LOG_BUFFER_SIZE];
+
     JNIEnv *jniEnv;
     // TODO: use lightweight listener instead of the whole activity
     jobject jniHelperObject;
@@ -32,6 +35,7 @@ public:
     void updateHelper(JNIEnv *env, jobject newHelper);
     char* createTempFile();
     int createImageFile(const char *fileName);
+    void writeMessageToLog(bool isError, const char *format, ...);
 };
 
 #endif //STACKINGCAMERA_JNI_HELPER_H

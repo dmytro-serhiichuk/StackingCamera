@@ -71,7 +71,7 @@ namespace Core {
         DRAW_KEYPOINTS = draw_keypoints;
         DRAW_MATCHES = draw_matches;
 
-        DRAW_KEYPOINTS = true;
+//        DRAW_KEYPOINTS = true;
 //        DRAW_MATCHES = true;
     }
 
@@ -99,18 +99,23 @@ namespace Core {
             auto src = sources->buffer[i];
             if (src->keyPoints == nullptr && src->descriptors == nullptr) {
                 try {
+                    JNIHelper::getInstance()->writeMessageToLog(false, "Starting analysis of image %zd", i);
+
                     Bitmap* bitmap   = src->bitmapPtr->read();
                     src->keyPoints   = mBrisk->detect(*bitmap);
                     src->descriptors = mBrisk->compute(*bitmap, *src->keyPoints);
+                    JNIHelper::getInstance()->writeMessageToLog(false, "\tDescriptors computing completed");
 
                     if (DRAW_KEYPOINTS) {
                         Utils::drawKeyPoints(*bitmap, *src->keyPoints);
+                        JNIHelper::getInstance()->writeMessageToLog(false, "\tDrawing completed");
                     }
 
                     delete bitmap;
+                    JNIHelper::getInstance()->writeMessageToLog(false, "Analysis of image %zd completed\n", i);
                 }
                 catch (std::exception &e) {
-                    // TODO: notify user about the error
+                    JNIHelper::getInstance()->writeMessageToLog(true, "Analysis of image %zd failed: %s\n", i, e.what());
                 }
             }
         }
@@ -125,7 +130,9 @@ namespace Core {
             }
             stackedSrc.add(sources->buffer[i]->bitmapPtr);
         }
+        JNIHelper::getInstance()->writeMessageToLog(false, "Starting median stacking");
         stackedResult = MedianStacking::stack(stackedSrc, *sources->buffer[0]->bitmapPtr);
+        JNIHelper::getInstance()->writeMessageToLog(false, "Median stacking completed");
     }
 
     void stack(bool disableAlignment) {
@@ -139,6 +146,7 @@ namespace Core {
         }
 
         updateBestBitmapIndex();
+        JNIHelper::getInstance()->writeMessageToLog(false, "Index of the reference frame: %d\n", bestBitmapIndex);
 
         Buffer<Buffer<Matching::Match>> *matches = Matching::match(*sources, bestBitmapIndex);
 
@@ -160,8 +168,10 @@ namespace Core {
             stackedSrc.add(warpedBitmaps->buffer[i]);
         }
 
+        JNIHelper::getInstance()->writeMessageToLog(false, "Starting median stacking");
         stackedResult = MedianStacking::stack(stackedSrc, *sources->buffer[bestBitmapIndex]->bitmapPtr);
         delete warpedBitmaps;
+        JNIHelper::getInstance()->writeMessageToLog(false, "Median stacking completed");
     }
 
     void save(int fd, int format) {

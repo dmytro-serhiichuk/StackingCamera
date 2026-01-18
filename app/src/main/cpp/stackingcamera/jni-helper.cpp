@@ -6,6 +6,7 @@
 
 JavaVM* JNIHelper::jvm = nullptr;
 JNIHelper* JNIHelper::instance = nullptr;
+char JNIHelper::LOG_BUFFER[JNIHelper::LOG_BUFFER_SIZE];
 
 void JNIHelper::initialize(JNIEnv *env) {
     if (!jvm) env->GetJavaVM(&jvm);
@@ -53,4 +54,18 @@ int JNIHelper::createImageFile(const char *fileName) {
     jniEnv->DeleteLocalRef(jfileName);
 
     return fd;
+}
+
+void JNIHelper::writeMessageToLog(bool isError, const char *format, ...) {
+    va_list args;
+    va_start(args, format);
+    vsnprintf(LOG_BUFFER, LOG_BUFFER_SIZE, format, args);
+    puts(LOG_BUFFER);
+    va_end(args);
+
+    jstring jmessage = jniEnv->NewStringUTF(LOG_BUFFER);
+    jmethodID method = jniEnv->GetMethodID(jniHelperClass, "addLogMessage", "(Ljava/lang/String;Z)V");
+
+    jniEnv->CallVoidMethod(jniHelperObject, method, jmessage, isError);
+    jniEnv->DeleteLocalRef(jmessage);
 }

@@ -86,6 +86,8 @@ class StackingActivity : AppCompatActivity() {
         outputFormatAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         binding.outputFormatSelector.adapter = outputFormatAdapter
         binding.outputFormatSelector.setSelection(0)
+
+        binding.logWindow.onCloseButtonClicked = ::handleLogWindowsClosed
     }
 
     private fun showFatalError(e: Exception) {
@@ -111,6 +113,14 @@ class StackingActivity : AppCompatActivity() {
             val bitmapListItem = it as BitmapListItem
             bitmapListItem.setEnableMode(isIdle)
         }
+        if (viewModel.state == StackingState.BUSY) {
+            binding.logWindow.isVisible = true
+            binding.logWindowBackground.isVisible = true
+            binding.logWindow.reset()
+        }
+        else if (isIdle) {
+            binding.logWindow.markFinished()
+        }
     }
     private fun startAction() {
         viewModel.state = StackingState.BUSY
@@ -134,8 +144,13 @@ class StackingActivity : AppCompatActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == PICK_IMAGE_REQUEST) {
-            if (resultCode == RESULT_OK) loadImages(data)
-            if (resultCode == RESULT_CANCELED) endAction()
+            if (resultCode == RESULT_OK) {
+                loadImages(data)
+            }
+            if (resultCode == RESULT_CANCELED) {
+                endAction()
+                handleLogWindowsClosed()
+            }
         }
     }
 
@@ -171,20 +186,14 @@ class StackingActivity : AppCompatActivity() {
                         bitmapInfo,
                         ::handleBitmapRemoved
                     ))
+
+                    binding.logWindow.addMessage("Image: $fileName loaded")
                 }
                 catch (e: NullPointerException) {
-                    Toast.makeText(
-                        this@StackingActivity,
-                        "File: $fileName does not exist or can't be accessed",
-                        Toast.LENGTH_LONG
-                    ).show()
+                    binding.logWindow.addMessage("File $fileName does not exist or can't be accessed", true)
                 }
                 catch (e: Exception) {
-                    Toast.makeText(
-                        this@StackingActivity,
-                        "Failed reading file: $fileName - ${e.message}",
-                        Toast.LENGTH_LONG
-                    ).show()
+                    binding.logWindow.addMessage("Failed reading file: $fileName - ${e.message}", true)
                 }
             }
             endAction()
@@ -243,11 +252,7 @@ class StackingActivity : AppCompatActivity() {
                 viewModel.hasStackedResult = true
             }
             catch (e: RuntimeException) {
-                Toast.makeText(
-                    this@StackingActivity,
-                    "Error: ${e.message}",
-                    Toast.LENGTH_LONG
-                ).show()
+                binding.logWindow.addMessage("Error: ${e.message}", true)
             }
             endAction()
         }
@@ -272,7 +277,7 @@ class StackingActivity : AppCompatActivity() {
                     val contentValues = ContentValues().apply {
                         put(MediaStore.MediaColumns.DISPLAY_NAME, filename)
                         put(MediaStore.MediaColumns.MIME_TYPE, mimeType)
-                        put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DCIM + APP_DIRECTORY)
+                        put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + APP_DIRECTORY)
                     }
 
                     val imageUri = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
@@ -283,7 +288,7 @@ class StackingActivity : AppCompatActivity() {
                     }
                 } else {
                     // Android 9-
-                    val picturesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM)
+                    val picturesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
                     val outputDir = File(picturesDir, APP_DIRECTORY)
                     if (!outputDir.exists()) outputDir.mkdirs()
 
@@ -303,23 +308,22 @@ class StackingActivity : AppCompatActivity() {
                         null
                     )
                 }
+
+                binding.logWindow.addMessage("Image was saved successfully")
             }
             catch (e: NullPointerException) {
-                Toast.makeText(
-                    this@StackingActivity,
-                    "Unexpected error. Image was not saved",
-                    Toast.LENGTH_LONG
-                ).show()
+                binding.logWindow.addMessage("Unexpected error. Image was not saved", true)
             }
             catch (e: RuntimeException) {
-                Toast.makeText(
-                    this@StackingActivity,
-                    "Error: ${e.message}",
-                    Toast.LENGTH_LONG
-                ).show()
+                binding.logWindow.addMessage("Error: ${e.message}", true)
             }
             endAction()
         }
+    }
+
+    private fun handleLogWindowsClosed() {
+        binding.logWindow.isVisible = false
+        binding.logWindowBackground.isVisible = false
     }
 
     // Functions which are called from native code
@@ -343,6 +347,11 @@ class StackingActivity : AppCompatActivity() {
         val pfd = contentResolver.openFileDescriptor(uri, "w")!! // pfd will be closed in native code
 
         return pfd.detachFd()
+    }
+    fun addLogMessage(message: String, isError: Boolean) {
+        runOnUiThread {
+            binding.logWindow.addMessage(message, isError)
+        }
     }
 
     // Native functions

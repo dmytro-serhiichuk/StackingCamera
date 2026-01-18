@@ -52,12 +52,13 @@
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <LinearLayout
+        android:id="@+id/stacking_controls"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         app:layout_constraintTop_toBottomOf="@id/top_container"
         app:layout_constraintBottom_toBottomOf="parent"
         android:orientation="vertical"
-        android:padding="10dp">
+        android:padding="@dimen/padding_normal">
 
         <GridLayout
             android:layout_width="wrap_content"
@@ -140,7 +141,28 @@
                 android:divider="@drawable/vertical_divider">
             </LinearLayout>
         </ScrollView>
-
     </LinearLayout>
+
+    <FrameLayout
+        android:id="@+id/log_window_background"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        app:layout_constraintTop_toTopOf="@id/stacking_controls"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:background="#88000000"
+        android:visibility="gone"/>
+    <com.sedv.stackingcamera.stacking.LogWindow
+        android:id="@+id/log_window"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        app:layout_constraintTop_toTopOf="@id/stacking_controls"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="@dimen/log_view_padding_top"
+        app:cardBackgroundColor="@color/transparent"
+        app:cardElevation="@dimen/log_view_elevation"
+        app:shapeAppearanceOverlay="@style/LogWindowStyle"
+        android:visibility="gone"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

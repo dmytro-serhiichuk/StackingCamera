@@ -151,6 +151,9 @@ void Utils::drawAllMatches(Buffer<Buffer<Matching::Match>> &matches, uint32_t be
         );
         index++;
         delete bmp1_8;
+
+        JNIHelper::getInstance()->writeMessageToLog(false, "Drawing matches with image %zd completed", i);
     }
     delete bmp2_8;
+    JNIHelper::getInstance()->writeMessageToLog(false, "Drawing completed\n");
 }

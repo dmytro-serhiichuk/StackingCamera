@@ -141,7 +141,10 @@ namespace RANSAC {
 
             if (refinedInfo.count >= bestInliers.count && refinedInfo.errorFactor <= bestInliers.errorFactor) {
                 bestH = refinedH;
+                bestInliers = refinedInfo;
             }
+
+            JNIHelper::getInstance()->writeMessageToLog(false, "Number of inliers: %zd\nError: %f\n", bestInliers.count, bestInliers.errorFactor);
 
             delete [] indices;
 
@@ -157,6 +160,7 @@ namespace RANSAC {
         size_t matchesIndex = 0;
         for (size_t i = 0; i < sources.size; i++) {
             if (i == bestIndex) continue;
+            JNIHelper::getInstance()->writeMessageToLog(false, "Starting computing homography for image %zd", i);
 
             matrices->buffer[matchesIndex] = computeHomography(
                 matches[matchesIndex],

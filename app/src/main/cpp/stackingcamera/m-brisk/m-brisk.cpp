@@ -191,6 +191,8 @@ inline void M_BRISK::filterKeypointsAfterRefining(Bitmap &bmp, Buffer<KeyPoint> 
     }
     kps.size = fi;
     kps.shrink();
+
+    JNIHelper::getInstance()->writeMessageToLog(false, "\tTotal number of selected keypoints: %zd\n\tKeypoints detecting completed", kps.size);
 }
 
 Buffer<KeyPoint> *M_BRISK::detect(Bitmap &inputBitmap) {
@@ -227,6 +229,8 @@ Buffer<KeyPoint> *M_BRISK::detect(Bitmap &inputBitmap) {
 
         FAST::detect(bitmapInfo, buffer, *keyPoints, *fastBuffers, FAST_PADDING, i, lastScaleFactor);
         delete gk;
+
+        JNIHelper::getInstance()->writeMessageToLog(false, "\tOctave %zd keypoints detecting completed", i);
     }
 
     delete fastBuffers;
@@ -239,6 +243,8 @@ Buffer<KeyPoint> *M_BRISK::detect(Bitmap &inputBitmap) {
     if (keyPoints->size > MAX_KEYPOINTS) {
         keyPoints->size = MAX_KEYPOINTS;
     }
+
+    JNIHelper::getInstance()->writeMessageToLog(false, "\tTotal number of detected keypoints: %zd", keyPoints->size);
 
     if (keyPoints->size <= Core::KEYPOINTS_PER_CHUNK * Core::CHUNKS_COUNT) {
         subpixelRefine(inputBitmap, subpixelRefineBuffer, *keyPoints);
