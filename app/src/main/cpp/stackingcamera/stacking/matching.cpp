@@ -65,8 +65,8 @@ namespace Matching {
         clSetKernelArg(kernel, 0, sizeof(cl_mem), &buffer1);
         clSetKernelArg(kernel, 4, sizeof(int32_t), &descriptors1.count);
 
-        uint32_t chunkWidth = bmp.width / Core::CHUNKS_PER_SIDE;
-        uint32_t chunkHeight = bmp.height / Core::CHUNKS_PER_SIDE;
+        uint32_t tileWidth = bmp.width / Core::TILES_PER_SIDE;
+        uint32_t tileHeight = bmp.height / Core::TILES_PER_SIDE;
 
         MatchingCLBuffers matchingClBuffers {descriptors1.count};
 
@@ -131,18 +131,18 @@ namespace Matching {
                 return a.distance < b.distance;
             });
 
-            auto counter = new uint32_t[Core::CHUNKS_COUNT]();
+            auto counter = new uint32_t[Core::TILES_COUNT]();
             fi = 0;
             for (size_t m = 0; m < currentMatches.size; m++) {
                 const KeyPoint &kp = bestKeypoints[currentMatches[m].index2];
-                uint32_t x = std::min((uint32_t)kp.x / chunkWidth, Core::CHUNKS_PER_SIDE - 1);
-                uint32_t y = std::min((uint32_t)kp.y / chunkHeight, Core::CHUNKS_PER_SIDE - 1);
+                uint32_t x = std::min((uint32_t)kp.x / tileWidth, Core::TILES_PER_SIDE - 1);
+                uint32_t y = std::min((uint32_t)kp.y / tileHeight, Core::TILES_PER_SIDE - 1);
 
-                uint32_t index = y * Core::CHUNKS_PER_SIDE + x;
+                uint32_t index = y * Core::TILES_PER_SIDE + x;
                 double distance = currentMatches[m].distance;
-                if (counter[index] <= Core::MATCHES_PER_CHUNK) {
+                if (counter[index] <= Core::MATCHES_PER_TILE) {
                     double t = (distance > 5.0) ? ((distance - 5.0) * 0.04) : 0.0;
-                    double threshold = Core::MATCHES_PER_CHUNK * (1.0 - 0.5 * t);
+                    double threshold = Core::MATCHES_PER_TILE * (1.0 - 0.5 * t);
                     if (counter[index] <= threshold) {
                         currentMatches[fi] = currentMatches[m];
                         counter[index]++;

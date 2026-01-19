@@ -20,13 +20,13 @@ namespace Core {
     int32_t FAST_THRESHOLD = 0;
     float RANSAC_THRESHOLD = .0f;
     uint32_t RANSAC_ITERATIONS = 0;
-    uint32_t CHUNKS_COUNT = 0;
-    uint32_t CHUNKS_PER_SIDE = 0;
-    uint32_t KEYPOINTS_PER_CHUNK = 0;
-    uint32_t MATCHES_PER_CHUNK = 0;
+    uint32_t TILES_COUNT = 0;
+    uint32_t TILES_PER_SIDE = 0;
+    uint32_t KEYPOINTS_PER_TILE = 0;
+    uint32_t MATCHES_PER_TILE = 0;
     float BRISK_PATTERN_SCALE_FACTOR = .0f;
-    bool DRAW_KEYPOINTS = false;
-    bool DRAW_MATCHES = false;
+    bool SAVE_KEYPOINTS = false;
+    bool SAVE_MATCHES = false;
     ColorSpace BITMAP_COLOR_SPACE = ColorSpace::RGB;
     Depth BITMAP_DEPTH = Depth::U16;
 
@@ -48,17 +48,16 @@ namespace Core {
     }
 
     void applySettings(int fast_threshold, float ransac_threshold, int ransac_iterations,
-                       int chunks_per_side, int max_keypoints, int max_matches,
-                       float brisk_pattern_scale, bool use16_bit_bitmaps, bool use_images,
-                       bool use_rgb_images, bool use16_bit_images, bool draw_keypoints,
-                       bool draw_matches) {
+                       int tiles_per_side, int max_keypoints, int max_matches,
+                       float brisk_pattern_scale, bool use16_bit, bool use_images,
+                       bool use_rgb, bool save_keypoints, bool save_matches) {
         FAST_THRESHOLD = fast_threshold;
         RANSAC_THRESHOLD = ransac_threshold;
         RANSAC_ITERATIONS = ransac_iterations;
-        CHUNKS_PER_SIDE = chunks_per_side;
-        CHUNKS_COUNT = CHUNKS_PER_SIDE * CHUNKS_PER_SIDE;
-        KEYPOINTS_PER_CHUNK = std::ceil((float)max_keypoints / (float)CHUNKS_COUNT);
-        MATCHES_PER_CHUNK = std::ceil((float)max_matches / (float)CHUNKS_COUNT);
+        TILES_PER_SIDE = tiles_per_side;
+        TILES_COUNT = TILES_PER_SIDE * TILES_PER_SIDE;
+        KEYPOINTS_PER_TILE = std::ceil((float)max_keypoints / (float)TILES_COUNT);
+        MATCHES_PER_TILE = std::ceil((float)max_matches / (float)TILES_COUNT);
 
         if (BRISK_PATTERN_SCALE_FACTOR != brisk_pattern_scale || mBrisk == nullptr) {
             BRISK_PATTERN_SCALE_FACTOR = brisk_pattern_scale;
@@ -66,13 +65,10 @@ namespace Core {
             mBrisk = new M_BRISK(8, BRISK_PATTERN_SCALE_FACTOR);
         }
 
-        BITMAP_DEPTH = use16_bit_bitmaps ? Depth::U16 : Depth::U8;
+        BITMAP_DEPTH = use16_bit ? Depth::U16 : Depth::U8;
         // TODO: handle images
-        DRAW_KEYPOINTS = draw_keypoints;
-        DRAW_MATCHES = draw_matches;
-
-//        DRAW_KEYPOINTS = true;
-//        DRAW_MATCHES = true;
+        SAVE_KEYPOINTS = save_keypoints;
+        SAVE_MATCHES = save_matches;
     }
 
     static void updateBestBitmapIndex() {
@@ -106,7 +102,7 @@ namespace Core {
                     src->descriptors = mBrisk->compute(*bitmap, *src->keyPoints);
                     JNIHelper::getInstance()->writeMessageToLog(false, "\tDescriptors computing completed");
 
-                    if (DRAW_KEYPOINTS) {
+                    if (SAVE_KEYPOINTS) {
                         Utils::drawKeyPoints(*bitmap, *src->keyPoints);
                         JNIHelper::getInstance()->writeMessageToLog(false, "\tDrawing completed");
                     }
@@ -150,7 +146,7 @@ namespace Core {
 
         Buffer<Buffer<Matching::Match>> *matches = Matching::match(*sources, bestBitmapIndex);
 
-        if (DRAW_MATCHES) {
+        if (SAVE_MATCHES) {
             Utils::drawAllMatches(*matches, bestBitmapIndex);
         }
 

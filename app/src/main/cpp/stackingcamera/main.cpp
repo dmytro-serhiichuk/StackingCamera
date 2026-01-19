@@ -65,20 +65,19 @@ Java_com_sedv_stackingcamera_stacking_settings_Settings_applySettings(JNIEnv *en
                                                                       jint fast_threshold,
                                                                       jfloat ransac_threshold,
                                                                       jint ransac_iterations,
-                                                                      jint chunks_per_side,
+                                                                      jint tiles_per_side,
                                                                       jint max_keypoints,
                                                                       jint max_matches,
                                                                       jfloat brisk_pattern_scale,
-                                                                      jboolean use16_bit_bitmaps,
+                                                                      jboolean use16_bit,
                                                                       jboolean use_images,
-                                                                      jboolean use_rgb_images,
-                                                                      jboolean use16_bit_images,
-                                                                      jboolean draw_keypoints,
-                                                                      jboolean draw_matches) {
+                                                                      jboolean use_rgb,
+                                                                      jboolean save_keypoints,
+                                                                      jboolean save_matches) {
     Core::applySettings(
-        fast_threshold, ransac_threshold, ransac_iterations, chunks_per_side, max_keypoints,
-        max_matches, brisk_pattern_scale, use16_bit_bitmaps, use_images, use_rgb_images,
-        use16_bit_images, draw_keypoints, draw_matches
+        fast_threshold, ransac_threshold, ransac_iterations, tiles_per_side, max_keypoints,
+        max_matches, brisk_pattern_scale, use16_bit, use_images, use_rgb,
+        save_keypoints, save_matches
     );
 }
 extern "C"

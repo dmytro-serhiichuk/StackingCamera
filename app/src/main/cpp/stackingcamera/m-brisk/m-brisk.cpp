@@ -246,25 +246,25 @@ Buffer<KeyPoint> *M_BRISK::detect(Bitmap &inputBitmap) {
 
     JNIHelper::getInstance()->writeMessageToLog(false, "\tTotal number of detected keypoints: %zd", keyPoints->size);
 
-    if (keyPoints->size <= Core::KEYPOINTS_PER_CHUNK * Core::CHUNKS_COUNT) {
+    if (keyPoints->size <= Core::KEYPOINTS_PER_TILE * Core::TILES_COUNT) {
         subpixelRefine(inputBitmap, subpixelRefineBuffer, *keyPoints);
         clReleaseMemObject(subpixelRefineBuffer);
         filterKeypointsAfterRefining(inputBitmap, *keyPoints);
         return keyPoints;
     }
 
-    int32_t chunkWidth = inputBitmap.width / Core::CHUNKS_PER_SIDE;
-    int32_t chunkHeight = inputBitmap.height / Core::CHUNKS_PER_SIDE;
+    int32_t tileWidth = inputBitmap.width / Core::TILES_PER_SIDE;
+    int32_t tileHeight = inputBitmap.height / Core::TILES_PER_SIDE;
 
-    uint32_t* counter = new uint32_t[Core::CHUNKS_COUNT] { 0 };
+    uint32_t* counter = new uint32_t[Core::TILES_COUNT] {0 };
     size_t fi = 0;
     for (size_t i = 0; i < keyPoints->size; i++) {
-        uint32_t x = std::min((uint32_t)keyPoints->buffer[i].x / chunkWidth, Core::CHUNKS_PER_SIDE - 1);
-        uint32_t y = std::min((uint32_t)keyPoints->buffer[i].y / chunkHeight, Core::CHUNKS_PER_SIDE - 1);
+        uint32_t x = std::min((uint32_t)keyPoints->buffer[i].x / tileWidth, Core::TILES_PER_SIDE - 1);
+        uint32_t y = std::min((uint32_t)keyPoints->buffer[i].y / tileHeight, Core::TILES_PER_SIDE - 1);
 
-        uint32_t index = y * Core::CHUNKS_PER_SIDE + x;
+        uint32_t index = y * Core::TILES_PER_SIDE + x;
 
-        if (counter[index] < Core::KEYPOINTS_PER_CHUNK) {
+        if (counter[index] < Core::KEYPOINTS_PER_TILE) {
             keyPoints->buffer[fi] = keyPoints->buffer[i];
             counter[index]++;
             fi++;

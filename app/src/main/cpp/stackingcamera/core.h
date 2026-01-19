@@ -27,13 +27,13 @@ namespace Core {
     extern int32_t FAST_THRESHOLD;
     extern float RANSAC_THRESHOLD;
     extern uint32_t RANSAC_ITERATIONS;
-    extern uint32_t CHUNKS_COUNT;
-    extern uint32_t CHUNKS_PER_SIDE;
-    extern uint32_t KEYPOINTS_PER_CHUNK;
-    extern uint32_t MATCHES_PER_CHUNK;
+    extern uint32_t TILES_COUNT;
+    extern uint32_t TILES_PER_SIDE;
+    extern uint32_t KEYPOINTS_PER_TILE;
+    extern uint32_t MATCHES_PER_TILE;
     extern float BRISK_PATTERN_SCALE_FACTOR;
-    extern bool DRAW_KEYPOINTS;
-    extern bool DRAW_MATCHES;
+    extern bool SAVE_KEYPOINTS;
+    extern bool SAVE_MATCHES;
     extern ColorSpace BITMAP_COLOR_SPACE;
     extern Depth BITMAP_DEPTH;
 
@@ -44,10 +44,9 @@ namespace Core {
     void init(AAssetManager* aam);
     void loadBitmap(int fd);
     void applySettings(int fast_threshold, float ransac_threshold, int ransac_iterations,
-                       int chunks_per_side, int max_keypoints, int max_matches,
-                       float brisk_pattern_scale, bool use16_bit_bitmaps, bool use_images,
-                       bool use_rgb_images, bool use16_bit_images, bool draw_keypoints,
-                       bool draw_matches);
+                       int tiles_per_side, int max_keypoints, int max_matches,
+                       float brisk_pattern_scale, bool use16_bit, bool use_images,
+                       bool use_rgb, bool save_keypoints, bool save_matches);
     void analyse(bool reanalyse);
     void stack(bool disableAlignment);
     void save(int fd, int format);

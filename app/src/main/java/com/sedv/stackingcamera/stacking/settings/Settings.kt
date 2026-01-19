@@ -8,16 +8,15 @@ object Settings {
     val FAST_THRESHOLD = RangedProperty("FAST_THRESHOLD", 20, Range(5, 60))
     val RANSAC_THRESHOLD = RangedProperty("RANSAC_THRESHOLD", 1.0f, Range(0.5f, 5.0f))
     val RANSAC_ITERATIONS = RangedProperty("RANSAC_ITERATIONS", 10_000, Range(1_000, 30_000))
-    val CHUNKS_PER_SIDE = RangedProperty("CHUNKS_PER_SIDE", 6, Range(1, 10))
-    val MAX_KEYPOINTS_COUNT = RangedProperty("MAX_KEYPOINTS_COUNT", 20_000, Range(5_000, 100_000))
-    val MAX_MATCHES_COUNT = RangedProperty("MAX_MATCHES_COUNT", 500, Range(50, 2000))
+    val TILES_PER_SIDE = RangedProperty("TILES_PER_SIDE", 6, Range(1, 10))
+    val MAX_KEYPOINTS = RangedProperty("MAX_KEYPOINTS", 20_000, Range(5_000, 100_000))
+    val MAX_MATCHES = RangedProperty("MAX_MATCHES", 500, Range(50, 2000))
     val BRISK_PATTERNS_SCALE = RangedProperty("BRISK_PATTERNS_SCALE", 10.0f, Range(1.0f, 15.0f))
-    val USE_16_BIT_BITMAPS = BoolProperty("USE_16_BIT_BITMAPS", true)
+    val USE_16_BIT = BoolProperty("USE_16_BIT", true)
     val USE_IMAGES = BoolProperty("USE_IMAGES", false)
-    val USE_RGB_IMAGES = BoolProperty("USE_RGB_IMAGES", false)
-    val USE_16_BIT_IMAGES = BoolProperty("USE_16_BIT_IMAGES", false)
-    val DRAW_KEYPOINTS = BoolProperty("DRAW_KEYPOINTS", false)
-    val DRAW_MATCHES = BoolProperty("DRAW_MATCHES", false)
+    val USE_RGB = BoolProperty("USE_RGB", false)
+    val SAVE_KEYPOINTS = BoolProperty("SAVE_KEYPOINTS", false)
+    val SAVE_MATCHES = BoolProperty("SAVE_MATCHES", false)
 
     val properties: ArrayList<Property<*>>
 
@@ -31,16 +30,15 @@ object Settings {
             FAST_THRESHOLD,
             RANSAC_THRESHOLD,
             RANSAC_ITERATIONS,
-            CHUNKS_PER_SIDE,
-            MAX_KEYPOINTS_COUNT,
-            MAX_MATCHES_COUNT,
+            TILES_PER_SIDE,
+            MAX_KEYPOINTS,
+            MAX_MATCHES,
             BRISK_PATTERNS_SCALE,
-            USE_16_BIT_BITMAPS,
+            USE_16_BIT,
             USE_IMAGES,
-            USE_RGB_IMAGES,
-            USE_16_BIT_IMAGES,
-            DRAW_KEYPOINTS,
-            DRAW_MATCHES
+            USE_RGB,
+            SAVE_KEYPOINTS,
+            SAVE_MATCHES
         )
     }
 
@@ -83,16 +81,15 @@ object Settings {
             FAST_THRESHOLD.value,
             RANSAC_THRESHOLD.value,
             RANSAC_ITERATIONS.value,
-            CHUNKS_PER_SIDE.value,
-            MAX_KEYPOINTS_COUNT.value,
-            MAX_MATCHES_COUNT.value,
+            TILES_PER_SIDE.value,
+            MAX_KEYPOINTS.value,
+            MAX_MATCHES.value,
             BRISK_PATTERNS_SCALE.value,
-            USE_16_BIT_BITMAPS.value,
+            USE_16_BIT.value,
             USE_IMAGES.value,
-            USE_RGB_IMAGES.value,
-            USE_16_BIT_IMAGES.value,
-            DRAW_KEYPOINTS.value,
-            DRAW_MATCHES.value
+            USE_RGB.value,
+            SAVE_KEYPOINTS.value,
+            SAVE_MATCHES.value
         )
     }
 
@@ -102,15 +99,14 @@ object Settings {
         fastThreshold: Int,
         ransacThreshold: Float,
         ransacIterations: Int,
-        chunksPerSide: Int,
+        tilesPerSide: Int,
         maxKeypoints: Int,
         maxMatches: Int,
         briskPatternScale: Float,
-        use16BitBitmaps: Boolean,
+        use16Bit: Boolean,
         useImages: Boolean,
-        useRgbImages: Boolean,
-        use16BitImages: Boolean,
-        drawKeypoints: Boolean,
-        drawMatches: Boolean
+        useRgb: Boolean,
+        saveKeypoints: Boolean,
+        saveMatches: Boolean
     )
 }
