@@ -46,7 +46,7 @@ namespace Core {
     void applySettings(int fast_threshold, float ransac_threshold, int ransac_iterations,
                        int tiles_per_side, int max_keypoints, int max_matches,
                        float brisk_pattern_scale, bool use16_bit, bool use_images,
-                       bool use_rgb, bool save_keypoints, bool save_matches);
+                       int image_format, bool save_keypoints, bool save_matches);
     void analyse(bool reanalyse);
     void stack(bool disableAlignment);
     void save(int fd, int format);

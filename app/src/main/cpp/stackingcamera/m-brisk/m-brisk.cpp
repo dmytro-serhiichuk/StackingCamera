@@ -204,7 +204,7 @@ Buffer<KeyPoint> *M_BRISK::detect(Bitmap &inputBitmap) {
     toGray8(bitmapInfo, buffer);
     CLAHE(bitmapInfo, buffer);
 
-    size_t kpsLen = bitmapInfo.bufferLength;
+    size_t kpsLen = bitmapInfo.width * bitmapInfo.height;
     Buffer<KeyPoint>* keyPoints = new Buffer<KeyPoint>(kpsLen);
     FAST::FAST_Buffers* fastBuffers = new FAST::FAST_Buffers(kpsLen * sizeof(KeyPoint));
 
@@ -240,11 +240,11 @@ Buffer<KeyPoint> *M_BRISK::detect(Bitmap &inputBitmap) {
         return a.response > b.response;
     });
 
+    JNIHelper::getInstance()->writeMessageToLog(false, "\tTotal number of detected keypoints: %zd", keyPoints->size);
+
     if (keyPoints->size > MAX_KEYPOINTS) {
         keyPoints->size = MAX_KEYPOINTS;
     }
-
-    JNIHelper::getInstance()->writeMessageToLog(false, "\tTotal number of detected keypoints: %zd", keyPoints->size);
 
     if (keyPoints->size <= Core::KEYPOINTS_PER_TILE * Core::TILES_COUNT) {
         subpixelRefine(inputBitmap, subpixelRefineBuffer, *keyPoints);

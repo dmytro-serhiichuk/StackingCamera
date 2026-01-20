@@ -71,4 +71,8 @@
     <dimen name="log_view_elevation">5dp</dimen>
     <dimen name="log_view_padding_top">150dp</dimen>
     <dimen name="log_view_text_size_header">20dp</dimen>
+
+<!--    Stacking Settings-->
+    <dimen name="stacking_settings_switch_description_text_size">12sp</dimen>
+    <dimen name="stacking_settings_slider_thumb_height">25dp</dimen>
 </resources>

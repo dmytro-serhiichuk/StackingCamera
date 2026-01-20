@@ -6,15 +6,14 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".stacking.StackingActivity"
-    android:background="@color/white">
+    tools:context=".stacking.StackingActivity">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/top_container"
         android:layout_width="match_parent"
         android:layout_height="@dimen/nav_panel_height"
         app:layout_constraintTop_toTopOf="parent"
-        android:background="@color/primary"
+        android:background="?attr/colorPrimary"
         android:paddingHorizontal="@dimen/nav_panel_padding">
 
         <TextView
@@ -113,13 +112,20 @@
                 android:layout_row="3"
                 android:layout_column="0"
                 android:layout_gravity="fill_horizontal"/>
-            <Spinner
+            <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/output_format_selector"
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:spinnerMode="dropdown"
                 android:layout_row="3"
-                android:layout_column="1"/>
+                android:layout_column="1">
+                <AutoCompleteTextView
+                    android:id="@+id/output_format_selector_auto_complete_text_view"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="none" />
+            </com.google.android.material.textfield.TextInputLayout>
+
         </GridLayout>
 
         <TextView

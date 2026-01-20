@@ -9,7 +9,7 @@ android {
 
     defaultConfig {
         applicationId = "com.sedv.stackingcamera"
-        minSdk = 24
+        minSdk = 26 // Android 8
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"

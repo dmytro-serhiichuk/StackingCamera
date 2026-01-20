@@ -10,6 +10,14 @@
 #include "utils.h"
 
 namespace Core {
+    enum class ImageFormat {
+        NONE    = 0,
+        RGB_8   = 1,
+        RGB_16  = 2,
+        RGBA_8  = 3,
+        RGBA_16 = 4
+    };
+
     void Data::removeAnalysedData() {
         delete keyPoints;
         delete descriptors;
@@ -50,7 +58,7 @@ namespace Core {
     void applySettings(int fast_threshold, float ransac_threshold, int ransac_iterations,
                        int tiles_per_side, int max_keypoints, int max_matches,
                        float brisk_pattern_scale, bool use16_bit, bool use_images,
-                       bool use_rgb, bool save_keypoints, bool save_matches) {
+                       int image_format, bool save_keypoints, bool save_matches) {
         FAST_THRESHOLD = fast_threshold;
         RANSAC_THRESHOLD = ransac_threshold;
         RANSAC_ITERATIONS = ransac_iterations;
@@ -66,6 +74,7 @@ namespace Core {
         }
 
         BITMAP_DEPTH = use16_bit ? Depth::U16 : Depth::U8;
+        BITMAP_COLOR_SPACE = ColorSpace::RGB;
         // TODO: handle images
         SAVE_KEYPOINTS = save_keypoints;
         SAVE_MATCHES = save_matches;

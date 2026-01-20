@@ -10,7 +10,7 @@ abstract class Property<T>(
 ) {
     abstract fun loadFrom(sharedPreferences: SharedPreferences)
     abstract fun saveTo(editor: SharedPreferences.Editor)
-    fun reset(editor: SharedPreferences.Editor) {
+    open fun reset(editor: SharedPreferences.Editor) {
         value = defaultValue
         saveTo(editor)
     }
@@ -19,7 +19,8 @@ abstract class Property<T>(
 class RangedProperty<T : Comparable<T>>(
     name: String,
     defaultValue: T,
-    val range: Range<T>
+    val range: Range<T>,
+    val step: T
 ) : Property<T>(name, defaultValue) {
     override fun loadFrom(sharedPreferences: SharedPreferences) {
         value = when (defaultValue) {
@@ -47,5 +48,20 @@ class BoolProperty(
 
     override fun saveTo(editor: SharedPreferences.Editor) {
         editor.putBoolean(name, value)
+    }
+}
+
+class OptionsProperty(
+    name: String,
+    defaultValue: Int,
+    val options: LinkedHashSet<Int>
+) : Property<Int>(name, defaultValue) {
+
+    override fun loadFrom(sharedPreferences: SharedPreferences) {
+        value = sharedPreferences.getInt(name, defaultValue)
+    }
+
+    override fun saveTo(editor: SharedPreferences.Editor) {
+        editor.putInt(name, value)
     }
 }

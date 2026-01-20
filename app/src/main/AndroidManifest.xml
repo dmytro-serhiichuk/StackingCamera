@@ -26,15 +26,16 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
-        android:supportsRtl="true"
-        android:theme="@style/Theme.StackingCamera">
+        android:supportsRtl="true">
         <activity
             android:name=".stacking.settings.StackingSettingsActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:theme="@style/Base.Theme.Stacking"/>
         <activity
             android:name=".stacking.StackingActivity"
             android:exported="false"
-            android:screenOrientation="portrait"/>
+            android:screenOrientation="portrait"
+            android:theme="@style/Base.Theme.Stacking"/>
 
         <provider
             android:name="androidx.core.content.FileProvider"
@@ -49,7 +50,8 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:screenOrientation="portrait">
+            android:screenOrientation="portrait"
+            android:theme="@style/Base.Theme.Camera">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

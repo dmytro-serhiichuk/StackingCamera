@@ -8,10 +8,18 @@
 
     <color name="primary">#766EC3</color>
     <color name="primary_20">#33766EC3</color>
+    <color name="primary_text">#FFFFFF</color>
 
     <color name="secondary">#4C4C6F</color>
     <color name="background">#1F1F1F</color>
     <color name="background_20">#331F1F1F</color>
 
     <color name="grid_line_color">#BFDEDEDE</color>
+
+    <color name="info_icon_tint">#E9E900</color>
+
+<!--    Night-->
+    <color name="primary_night">#2B2845</color>
+    <color name="secondary_night">#282838</color>
+    <color name="primary_text_night">#AFAFAF</color>
 </resources>

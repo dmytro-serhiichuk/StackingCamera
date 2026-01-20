@@ -6,4 +6,9 @@
         <attr name="majorTickWidth" format="dimension"/>
         <attr name="selectedTickWidth" format="dimension"/>
     </declare-styleable>
+
+    <declare-styleable name="StackingSettings">
+        <attr name="titleText" format="string"/>
+        <attr name="descriptionText" format="string"/>
+    </declare-styleable>
 </resources>

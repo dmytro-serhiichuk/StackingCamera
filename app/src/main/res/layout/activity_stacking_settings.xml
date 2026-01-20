@@ -5,14 +5,14 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".stacking.settings.StackingSettingsActivity"
-    android:background="@color/white">
+    tools:context=".stacking.settings.StackingSettingsActivity">
 
     <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/top_container"
         android:layout_width="match_parent"
         android:layout_height="@dimen/nav_panel_height"
         app:layout_constraintTop_toTopOf="parent"
-        android:background="@color/primary"
+        android:background="?attr/colorPrimary"
         android:paddingHorizontal="@dimen/nav_panel_padding">
 
         <LinearLayout
@@ -41,5 +41,203 @@
         </LinearLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        app:layout_constraintTop_toBottomOf="@id/top_container"
+        app:layout_constraintBottom_toTopOf="@id/bottom_buttons">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="@dimen/padding_normal">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="GENERAL"
+                android:textStyle="bold"
+                android:layout_marginBottom="@dimen/big_margin"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:showDividers="middle"
+                android:divider="@drawable/vertical_divider">
+                <com.sedv.stackingcamera.stacking.settings.ui.Switch
+                    android:id="@+id/use_images"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:titleText="Use images instead of buffers"
+                    app:descriptionText="Operations in OpenCL may perform faster using images instead of buffers"/>
+
+                <com.sedv.stackingcamera.stacking.settings.ui.Switch
+                    android:id="@+id/use_16_bit_data"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:titleText="Use higher data accuracy"
+                    app:descriptionText="Using 16-bit format instead of 8-bit avoids data loss when decoding images, but consumes more device memory"/>
+
+                <com.sedv.stackingcamera.stacking.settings.ui.DropDown
+                    android:id="@+id/image_format"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:titleText="OpenCL image format"
+                    app:descriptionText="Specifies the image format that OpenCL will work with. Using a 16-bit format avoids data loss during image decoding, but uses more device memory. RGB format consumes less memory, but may have worse GPU support than RGBA"/>
+
+                <com.sedv.stackingcamera.stacking.settings.ui.Slider
+                    android:id="@+id/number_of_tiles"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:titleText="Number of tiles"
+                    app:descriptionText="Determines the number of tiles into which the image will be divided to ensure an even distribution of keypoints and descriptor matches"/>
+            </LinearLayout>
+
+            <com.google.android.material.divider.MaterialDivider
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginVertical="@dimen/big_margin"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="ANALYSIS"
+                android:textStyle="bold"
+                android:layout_marginBottom="@dimen/big_margin"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:showDividers="middle"
+                android:divider="@drawable/vertical_divider">
+                <com.sedv.stackingcamera.stacking.settings.ui.Slider
+                    android:id="@+id/max_keypoints"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:titleText="Maximum number of keypoints"
+                    app:descriptionText="Sets the threshold up to which the best keypoints will be selected. The actual value may be slightly higher than the threshold, depending on the number of tiles"/>
+                <com.sedv.stackingcamera.stacking.settings.ui.Slider
+                    android:id="@+id/fast_threshold"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:titleText="FAST threshold"
+                    app:descriptionText="Determines the sensitivity threshold of the FAST detector. As the value decreases, the sensitivity increases"/>
+                <com.sedv.stackingcamera.stacking.settings.ui.Slider
+                    android:id="@+id/m_brisk_pattern_scale_factor"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:titleText="M-BRISK pattern scale factor"
+                    app:descriptionText="Larger values increase the accuracy of descriptor computation in the absence of obvious contrast details around key points, but may reduce the overall quality of point orientation computation and descriptor vector formation"/>
+                <com.sedv.stackingcamera.stacking.settings.ui.Switch
+                    android:id="@+id/save_keypoints"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:titleText="Save keypoints"
+                    app:descriptionText="Draws detected key points for each image and saves to device"/>
+
+            </LinearLayout>
+
+            <com.google.android.material.divider.MaterialDivider
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginVertical="@dimen/big_margin"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="MATCHING"
+                android:textStyle="bold"
+                android:layout_marginBottom="@dimen/big_margin"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:showDividers="middle"
+                android:divider="@drawable/vertical_divider">
+                <com.sedv.stackingcamera.stacking.settings.ui.Slider
+                    android:id="@+id/max_matches"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:titleText="Maximum number of matches"
+                    app:descriptionText="Sets the threshold up to which the best matches will be selected. The actual value may be slightly higher than the threshold, depending on the number of tiles"/>
+                <com.sedv.stackingcamera.stacking.settings.ui.Switch
+                    android:id="@+id/save_matches"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:titleText="Save matches"
+                    app:descriptionText="Draws found matches between each image and reference one and saves them to device"/>
+            </LinearLayout>
+
+            <com.google.android.material.divider.MaterialDivider
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginVertical="@dimen/big_margin"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="HOMOGRAPHY ESTIMATION"
+                android:textStyle="bold"
+                android:layout_marginBottom="@dimen/big_margin"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:showDividers="middle"
+                android:divider="@drawable/vertical_divider">
+                <com.sedv.stackingcamera.stacking.settings.ui.Slider
+                    android:id="@+id/ransac_threshold"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:titleText="RANSAC threshold"
+                    app:descriptionText="Defines the threshold for acceptable error in matching. A high value may yield better results if matches are of generally low quality"/>
+                <com.sedv.stackingcamera.stacking.settings.ui.Slider
+                    android:id="@+id/ransac_iterations"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:titleText="RANSAC iterations"
+                    app:descriptionText="Sets the number of iterations when estimating homography matrices. A large value increases the probability of a better result, but slows down the execution time"/>
+            </LinearLayout>
+
+
+        </LinearLayout>
+    </ScrollView>
+
+    <LinearLayout
+        android:id="@+id/bottom_buttons"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:paddingLeft="@dimen/padding_normal"
+        android:paddingRight="@dimen/padding_normal"
+        android:paddingBottom="@dimen/padding_normal"
+        android:orientation="vertical">
+        <com.google.android.material.divider.MaterialDivider
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/medium_margin"/>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="end">
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/restore_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Restore"/>
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/save_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Save Changes"
+                android:layout_marginLeft="@dimen/big_margin" />
+        </LinearLayout>
+
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

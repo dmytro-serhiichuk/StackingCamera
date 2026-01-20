@@ -71,12 +71,12 @@ Java_com_sedv_stackingcamera_stacking_settings_Settings_applySettings(JNIEnv *en
                                                                       jfloat brisk_pattern_scale,
                                                                       jboolean use16_bit,
                                                                       jboolean use_images,
-                                                                      jboolean use_rgb,
+                                                                      jint image_format,
                                                                       jboolean save_keypoints,
                                                                       jboolean save_matches) {
     Core::applySettings(
         fast_threshold, ransac_threshold, ransac_iterations, tiles_per_side, max_keypoints,
-        max_matches, brisk_pattern_scale, use16_bit, use_images, use_rgb,
+        max_matches, brisk_pattern_scale, use16_bit, use_images, image_format,
         save_keypoints, save_matches
     );
 }

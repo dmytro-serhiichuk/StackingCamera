@@ -14,6 +14,7 @@ import android.os.ParcelFileDescriptor
 import android.provider.MediaStore
 import android.provider.OpenableColumns
 import android.widget.ArrayAdapter
+import android.widget.AutoCompleteTextView
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
@@ -38,6 +39,9 @@ class StackingActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        binding = ActivityStackingBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
         if (viewModel.state == StackingState.NOT_READY) {
             cacheDir.listFiles()?.forEach { f ->
                 f.delete()
@@ -54,10 +58,17 @@ class StackingActivity : AppCompatActivity() {
                     showFatalError(e)
                 }
             }
+        } else {
+            for (bitmap in viewModel.bitmaps) {
+                binding.loadedImagesList.addView(BitmapListItem(
+                    this, bitmap, ::handleBitmapRemoved
+                ))
+            }
+            if (viewModel.bitmaps.isNotEmpty()) {
+                binding.loadedImagesCount.isVisible = true
+                binding.loadedImagesCount.text = "Images: ${viewModel.bitmaps.size}"
+            }
         }
-
-        binding = ActivityStackingBinding.inflate(layoutInflater)
-        setContentView(binding.root)
 
         binding.navToCameraButton.setOnClickListener {
             finish()
@@ -80,12 +91,12 @@ class StackingActivity : AppCompatActivity() {
 
         val outputFormatAdapter = ArrayAdapter(
             this,
-            android.R.layout.simple_spinner_item,
-            listOf(".jpg", ".png", ".tiff")
+            android.R.layout.simple_list_item_1,
+            OUTPUT_FORMATS
         )
         outputFormatAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        binding.outputFormatSelector.adapter = outputFormatAdapter
-        binding.outputFormatSelector.setSelection(0)
+        (binding.outputFormatSelector.editText as? AutoCompleteTextView)?.setAdapter(outputFormatAdapter)
+        binding.outputFormatSelectorAutoCompleteTextView.setText(OUTPUT_FORMATS[0], false)
 
         binding.logWindow.onCloseButtonClicked = ::handleLogWindowsClosed
     }
@@ -121,6 +132,8 @@ class StackingActivity : AppCompatActivity() {
         else if (isIdle) {
             binding.logWindow.markFinished()
         }
+        binding.navToCameraButton.isEnabled = isIdle
+        binding.navToStackingSettingsButton.isEnabled = isIdle
     }
     private fun startAction() {
         viewModel.state = StackingState.BUSY
@@ -263,7 +276,7 @@ class StackingActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             try {
-                val ext = binding.outputFormatSelector.selectedItem.toString()
+                val ext = binding.outputFormatSelectorAutoCompleteTextView.text.toString()
                 val timestamp = System.currentTimeMillis()
                 val filename = "Stacked_Result_${timestamp}${ext}"
                 val mimeType = when (ext) {
@@ -283,7 +296,7 @@ class StackingActivity : AppCompatActivity() {
                     val imageUri = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
                     withContext(Dispatchers.IO) {
                         contentResolver.openFileDescriptor(imageUri!!, "w")!!.use {
-                            save(it.fd, binding.outputFormatSelector.selectedItemId.toInt())
+                            save(it.fd, OUTPUT_FORMATS.indexOf(ext))
                         }
                     }
                 } else {
@@ -297,7 +310,7 @@ class StackingActivity : AppCompatActivity() {
                     withContext(Dispatchers.IO) {
                         val mode = ParcelFileDescriptor.MODE_WRITE_ONLY or ParcelFileDescriptor.MODE_CREATE or ParcelFileDescriptor.MODE_TRUNCATE
                         ParcelFileDescriptor.open(file, mode).use {
-                            save(it.fd, binding.outputFormatSelector.selectedItemId.toInt())
+                            save(it.fd, OUTPUT_FORMATS.indexOf(ext))
                         }
                     }
 
@@ -365,6 +378,7 @@ class StackingActivity : AppCompatActivity() {
     companion object {
         public const val APP_DIRECTORY = "/StackingCamera/"
         public const val PICK_IMAGE_REQUEST = 0
+        val OUTPUT_FORMATS = listOf(".jpg", ".png", ".tiff")
         init {
             System.loadLibrary("stackingcamera")
         }
