@@ -16,6 +16,7 @@
             android:textSize="@dimen/log_view_text_size_header"/>
 
         <ScrollView
+            android:id="@+id/scroll_container"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_weight="1"

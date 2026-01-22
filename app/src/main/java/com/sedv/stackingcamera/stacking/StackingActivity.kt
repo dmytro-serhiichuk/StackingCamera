@@ -13,6 +13,7 @@ import android.os.Environment
 import android.os.ParcelFileDescriptor
 import android.provider.MediaStore
 import android.provider.OpenableColumns
+import android.view.WindowManager
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import android.widget.Toast
@@ -41,6 +42,8 @@ class StackingActivity : AppCompatActivity() {
 
         binding = ActivityStackingBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
         if (viewModel.state == StackingState.NOT_READY) {
             cacheDir.listFiles()?.forEach { f ->
