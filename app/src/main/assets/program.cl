@@ -44,7 +44,7 @@ __kernel void clahe_make_lut(
     __global uchar* image,
     uint width,
     uint height,
-    __global ulong* map,    // tileCount x tileCount x 256
+    __global uint* map,    // tileCount x tileCount x 256
     uint tileCount,         // def. 32
     ulong clipLimit,        // def. 4.0f => знайдено наперед: clipLimit * (tileWidth * tileHeight) / binsCount -- лише для меншого регіона
     uint tileWidth,         // width / tileCount (лише менший регіон, більший знаходиться вже в ядрі)
@@ -53,75 +53,94 @@ __kernel void clahe_make_lut(
 {
     const int BINS_COUNT = 256;
 
-    int tileX = get_global_id(0);
-    int tileY = get_global_id(1);
-    int tileIndex = tileY * tileCount + tileX;
+    int tid = get_local_id(0);
+    int groupSize = get_local_size(0);
 
-    // if (tileX == tileCount - 1) tileWidth = width - (tileCount - 1) * tileWidth;
-    // if (tileY == tileCount - 1) tileHeight = height - (tileCount - 1) * tileHeight;
+    int totalTileIndex = get_group_id(0);
+    int tileX = totalTileIndex % tileCount;
+    int tileY = totalTileIndex / tileCount;
 
-    // LUT - no need cos of 0 - 256 range
+    __local uint local_hist[BINS_COUNT];
 
-    __global ulong *hist = map + tileIndex * BINS_COUNT;
+    for (int i = tid; i < BINS_COUNT; i+=groupSize) {
+        local_hist[i] = 0;
+    }
+    barrier(CLK_LOCAL_MEM_FENCE);
 
-    uint imgIndex = tileY * tileHeight * width + tileX * tileWidth;
-    __global uchar *pImg = image + imgIndex;
+    int startX = tileX * tileWidth;
+    int startY = tileY * tileHeight;
+    int actualTileW = min(startX + tileWidth,  width) - startX;
+    int actualTileH = min(startY + tileHeight, height) - startY;
 
-    // make histogram
-    for (int y = 0; y < tileHeight; y++) {
-        for (int x = 0; x < tileWidth; x++, pImg++) {
-            hist[(*pImg)]++;
+    // Filling the local map
+    int totalPixels = actualTileW * actualTileH;
+    int imgBaseOffset = startY * width + startX;
+
+    for (int i = tid; i < totalPixels; i += groupSize) {
+        int py = i / actualTileW;
+        int px = i % actualTileW;
+
+        int globalIdx = imgBaseOffset + py * width + px;
+        uchar val = image[globalIdx];
+        atomic_inc(&local_hist[val]);
+    }
+    barrier(CLK_LOCAL_MEM_FENCE);
+
+    if (tid == 0) {
+        // clip histogram
+        // calculating total excess
+        ulong excessCount = 0;
+        for (int i = 0; i < BINS_COUNT; i++) {
+            long excess = local_hist[i] - clipLimit;
+            if (excess > 0) excessCount += excess;
         }
-        pImg += width - tileWidth;
-    }
 
-    pImg = image + imgIndex;
-
-    // clip histogram
-    // calculating total excess
-    ulong excessCount = 0;
-    for (int i = 0; i < BINS_COUNT; i++) {
-        long excess = hist[i] - clipLimit;
-        if (excess > 0) excessCount += excess;
-    }
-
-    // clip and redistribute excess pixels
-    ulong increment = excessCount / BINS_COUNT;
-    ulong upper = clipLimit - increment;
-    for (int i = 0; i < BINS_COUNT; i++) {
-        if (hist[i] > clipLimit) hist[i] = clipLimit;
-        else {
-            if (hist[i] > upper) {
-                excessCount -= hist[i] - upper;
-                hist[i] = clipLimit;
-            }
+        // clip and redistribute excess pixels
+        ulong increment = excessCount / BINS_COUNT;
+        ulong upper = clipLimit - increment;
+        for (int i = 0; i < BINS_COUNT; i++) {
+            if (local_hist[i] > clipLimit) local_hist[i] = clipLimit;
             else {
-                excessCount -= increment;
-                hist[i] += increment;
-            }
-        }
-    }
-    // Redistribute remaining excess
-    while (excessCount > 0) {
-        for (int i = 0; excessCount > 0 && i < BINS_COUNT; i++) {
-            ulong stepSize = BINS_COUNT / excessCount;
-            if (stepSize < 1) stepSize = 1;
-                for (int j = i; excessCount > 0 && j < BINS_COUNT; j+=stepSize) {
-                if (hist[j] < clipLimit) {
-                    hist[j]++;
-                    excessCount--;
+                if (local_hist[i] > upper) {
+                    excessCount -= local_hist[i] - upper;
+                    local_hist[i] = clipLimit;
+                }
+                else {
+                    excessCount -= increment;
+                    local_hist[i] += increment;
                 }
             }
         }
-    }
+        // Redistribute remaining excess
+        while (excessCount > 0) {
+            for (int i = 0; excessCount > 0 && i < BINS_COUNT; i++) {
+                ulong stepSize = BINS_COUNT / excessCount;
+                if (stepSize < 1) stepSize = 1;
+                    for (int j = i; excessCount > 0 && j < BINS_COUNT; j+=stepSize) {
+                    if (local_hist[j] < clipLimit) {
+                        local_hist[j]++;
+                        excessCount--;
+                    }
+                }
+            }
+        }
 
-    // map hist
-    const float scale = (float)(BINS_COUNT - 1) / (tileWidth * tileHeight);
-    ulong sum = 0;
-    for (int i = 0; i < BINS_COUNT; i++) {
-        sum += hist[i];
-        hist[i] = (ulong)sum * scale;
-        if (hist[i] > 255) hist[i] = 255;
+        // map hist
+        const float scale = (float)(BINS_COUNT - 1) / (actualTileW * actualTileH);
+        ulong sum = 0;
+        for (int i = 0; i < BINS_COUNT; i++) {
+            sum += local_hist[i];
+            ulong val = (ulong)(sum * scale);
+            if (val > 255) val = 255;
+            local_hist[i] = (uint)val;
+        }
+    }
+    barrier(CLK_LOCAL_MEM_FENCE);
+
+    // copy from local hist to global
+    __global uint *global_hist_ptr = map + totalTileIndex * BINS_COUNT;
+    for (int i = tid; i < BINS_COUNT; i+=groupSize) {
+        global_hist_ptr[i] = local_hist[i];
     }
 }
 
@@ -129,24 +148,26 @@ __kernel void clahe_interpolate(
     __global uchar *image,
     uint width,
     uint height,
-    __global ulong *map,
+    __global uint *map,
     int tileCount,
-    int tileWidth,
-    int tileHeight)
+    uint tileWidth,
+    uint tileHeight)
 {
     const int BINS_COUNT = 256;
 
     int x = get_global_id(0);
     int y = get_global_id(1);
 
-    int tileX = min(x / tileWidth, tileCount - 1);
-    int tileY = min(y / tileHeight, tileCount - 1);
+    int tileX = min(x / tileWidth, (uint)tileCount - 1);
+    int tileY = min(y / tileHeight, (uint)tileCount - 1);
 
-    // if (tileX == tileCount - 1) tileWidth = width - (tileCount - 1) * tileWidth;
-    // if (tileY == tileCount - 1) tileHeight = height - (tileCount - 1) * tileHeight;
+    int startX = tileX * tileCount;
+    int startY = tileY * tileCount;
+    int actualTileW = min(startX + tileWidth,  width) - startX;
+    int actualTileH = min(startY + tileHeight, height) - startY;
 
-    float posX = (float)x / tileWidth - 0.5f;
-    float posY = (float)y / tileHeight - 0.5f;
+    float posX = (float)x / actualTileW - 0.5f;
+    float posY = (float)y / actualTileH - 0.5f;
 
     int tileXL = clamp((int)floor(posX), 0, tileCount - 1);
     int tileYU = clamp((int)floor(posY), 0, tileCount - 1);
@@ -161,10 +182,10 @@ __kernel void clahe_interpolate(
     int iDL = tileYD * tileCount + tileXL;
     int iDR = tileYD * tileCount + tileXR;
 
-    __global const ulong *UL = map + iUL * BINS_COUNT;
-    __global const ulong *UR = map + iUR * BINS_COUNT;
-    __global const ulong *DL = map + iDL * BINS_COUNT;
-    __global const ulong *DR = map + iDR * BINS_COUNT;
+    __global const uint *UL = map + iUL * BINS_COUNT;
+    __global const uint *UR = map + iUR * BINS_COUNT;
+    __global const uint *DL = map + iDL * BINS_COUNT;
+    __global const uint *DR = map + iDR * BINS_COUNT;
 
     uchar pixel = image[y * width + x];
 

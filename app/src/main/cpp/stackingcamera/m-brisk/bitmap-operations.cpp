@@ -125,18 +125,13 @@ void CLAHE(BitmapInfo &bitmap, cl_mem &inputBuffer, uint32_t tileCount, float fC
     const uint32_t tileWidth = bitmap.width / tileCount;
     const uint32_t tileHeight = bitmap.height / tileCount;
 
-    uint64_t clipLimit = (uint64_t)(fClipLimit * (tileWidth * tileHeight) / BINS_COUNT);
+    uint64_t clipLimit = (uint64_t)(fClipLimit * (float)(tileWidth * tileHeight) / BINS_COUNT);
     size_t mapLength = tileCount * tileCount * BINS_COUNT;
-    size_t mapSize = mapLength * sizeof(uint64_t);
+    size_t mapSize = mapLength * sizeof(uint32_t);
 
     cl_mem mapBuffer = CL::createBuffer(CL_MEM_HOST_NO_ACCESS | CL_MEM_READ_WRITE,mapSize, nullptr);
 
-    cl_event fillEvent;
     cl_event lutCreatedEvent;
-
-    cl_int zero = 0;
-    clEnqueueFillBuffer(CL::queue, mapBuffer, &zero, sizeof(zero),
-                        0, mapSize, 0, nullptr, &fillEvent);
 
     cl_kernel make_lut_kernel = CL::createKernel("clahe_make_lut");
 
@@ -149,10 +144,11 @@ void CLAHE(BitmapInfo &bitmap, cl_mem &inputBuffer, uint32_t tileCount, float fC
     clSetKernelArg(make_lut_kernel, 6, sizeof(uint32_t), &tileWidth);
     clSetKernelArg(make_lut_kernel, 7, sizeof(uint32_t), &tileHeight);
 
-    size_t global1[2] { tileCount, tileCount };
+    size_t local[1] { CL::maxGroupSize };
+    size_t global1[1] { tileCount * CL::maxGroupSize * tileCount };
     clEnqueueNDRangeKernel(
-        CL::queue, make_lut_kernel, 2, nullptr, global1,
-        nullptr, 1, &fillEvent, &lutCreatedEvent
+        CL::queue, make_lut_kernel, 1, nullptr, global1,
+        local, 0, nullptr, &lutCreatedEvent
     );
 
     cl_kernel interpolate_kernel = CL::createKernel("clahe_interpolate");
@@ -165,6 +161,8 @@ void CLAHE(BitmapInfo &bitmap, cl_mem &inputBuffer, uint32_t tileCount, float fC
     clSetKernelArg(interpolate_kernel, 5, sizeof(uint32_t), &tileWidth);
     clSetKernelArg(interpolate_kernel, 6, sizeof(uint32_t), &tileHeight);
 
+    clFinish(CL::queue);
+
     size_t global2[2] { bitmap.width, bitmap.height };
     clEnqueueNDRangeKernel(
             CL::queue, interpolate_kernel, 2, nullptr, global2,
@@ -172,7 +170,6 @@ void CLAHE(BitmapInfo &bitmap, cl_mem &inputBuffer, uint32_t tileCount, float fC
     );
     clFinish(CL::queue);
 
-    clReleaseEvent(fillEvent);
     clReleaseEvent(lutCreatedEvent);
     clReleaseKernel(make_lut_kernel);
     clReleaseKernel(interpolate_kernel);
