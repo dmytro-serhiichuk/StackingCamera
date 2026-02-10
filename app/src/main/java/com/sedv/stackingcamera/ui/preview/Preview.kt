@@ -13,7 +13,7 @@ import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.core.view.GestureDetectorCompat
 import androidx.core.view.isVisible
-import com.sedv.stackingcamera.CameraViewModel
+import com.sedv.stackingcamera.viewmodels.CameraViewModel
 import com.sedv.stackingcamera.camera.settings.MeteringArea
 import com.sedv.stackingcamera.settings.BaseProperty
 import com.sedv.stackingcamera.settings.GeneralPropertyType

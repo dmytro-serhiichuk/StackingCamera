@@ -26,6 +26,8 @@ import androidx.lifecycle.lifecycleScope
 import com.sedv.stackingcamera.databinding.ActivityStackingBinding
 import com.sedv.stackingcamera.stacking.settings.Settings
 import com.sedv.stackingcamera.stacking.settings.StackingSettingsActivity
+import com.sedv.stackingcamera.viewmodels.AppViewModel
+import com.sedv.stackingcamera.viewmodels.StackingState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -35,7 +37,7 @@ import kotlin.system.exitProcess
 class StackingActivity : AppCompatActivity() {
     private lateinit var binding: ActivityStackingBinding
 
-    private val viewModel: StackingViewModel by viewModels()
+    private val viewModel: AppViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,7 +47,7 @@ class StackingActivity : AppCompatActivity() {
 
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
-        if (viewModel.state == StackingState.NOT_READY) {
+        if (viewModel.stackingViewModel.state == StackingState.NOT_READY) {
             cacheDir.listFiles()?.forEach { f ->
                 f.delete()
             }
@@ -55,21 +57,21 @@ class StackingActivity : AppCompatActivity() {
                         initStacking(applicationContext.assets)
                         Settings.initialize(getSharedPreferences("SETTINGS", MODE_PRIVATE))
                     }
-                    viewModel.state = StackingState.IDLE
+                    viewModel.stackingViewModel.state = StackingState.IDLE
                     updateButtonsState()
                 } catch (e: Exception) {
                     showFatalError(e)
                 }
             }
         } else {
-            for (bitmap in viewModel.bitmaps) {
+            for (bitmap in viewModel.stackingViewModel.bitmaps) {
                 binding.loadedImagesList.addView(BitmapListItem(
                     this, bitmap, ::handleBitmapRemoved
                 ))
             }
-            if (viewModel.bitmaps.isNotEmpty()) {
+            if (viewModel.stackingViewModel.bitmaps.isNotEmpty()) {
                 binding.loadedImagesCount.isVisible = true
-                binding.loadedImagesCount.text = "Images: ${viewModel.bitmaps.size}"
+                binding.loadedImagesCount.text = "Images: ${viewModel.stackingViewModel.bitmaps.size}"
             }
         }
 
@@ -118,16 +120,16 @@ class StackingActivity : AppCompatActivity() {
     }
 
     private fun updateButtonsState() {
-        val isIdle = viewModel.state == StackingState.IDLE
+        val isIdle = viewModel.stackingViewModel.state == StackingState.IDLE
         binding.loadImagesBtn.isEnabled = isIdle
-        binding.analyseBtn.isEnabled = isIdle && viewModel.bitmaps.isNotEmpty()
-        binding.stackBtn.isEnabled = isIdle && viewModel.canStack() && (viewModel.isAllBitmapsInitialized() || binding.disableAlignmentCheckBox.isChecked)
-        binding.saveBtn.isEnabled = isIdle && viewModel.hasStackedResult
+        binding.analyseBtn.isEnabled = isIdle && viewModel.stackingViewModel.bitmaps.isNotEmpty()
+        binding.stackBtn.isEnabled = isIdle && viewModel.stackingViewModel.canStack() && (viewModel.stackingViewModel.isAllBitmapsInitialized() || binding.disableAlignmentCheckBox.isChecked)
+        binding.saveBtn.isEnabled = isIdle && viewModel.stackingViewModel.hasStackedResult
         binding.loadedImagesList.forEach {
             val bitmapListItem = it as BitmapListItem
             bitmapListItem.setEnableMode(isIdle)
         }
-        if (viewModel.state == StackingState.BUSY) {
+        if (viewModel.stackingViewModel.state == StackingState.BUSY) {
             binding.logWindow.isVisible = true
             binding.logWindowBackground.isVisible = true
             binding.logWindow.reset()
@@ -139,11 +141,11 @@ class StackingActivity : AppCompatActivity() {
         binding.navToStackingSettingsButton.isEnabled = isIdle
     }
     private fun startAction() {
-        viewModel.state = StackingState.BUSY
+        viewModel.stackingViewModel.state = StackingState.BUSY
         updateButtonsState()
     }
     private fun endAction() {
-        viewModel.state = StackingState.IDLE
+        viewModel.stackingViewModel.state = StackingState.IDLE
         updateButtonsState()
     }
 
@@ -194,9 +196,9 @@ class StackingActivity : AppCompatActivity() {
                     }
 
                     bitmapInfo.name = fileName
-                    viewModel.bitmaps.add(bitmapInfo)
+                    viewModel.stackingViewModel.bitmaps.add(bitmapInfo)
                     binding.loadedImagesCount.isVisible = true
-                    binding.loadedImagesCount.text = "Images: ${viewModel.bitmaps.size}"
+                    binding.loadedImagesCount.text = "Images: ${viewModel.stackingViewModel.bitmaps.size}"
                     binding.loadedImagesList.addView(BitmapListItem(
                         this@StackingActivity,
                         bitmapInfo,
@@ -233,16 +235,16 @@ class StackingActivity : AppCompatActivity() {
     private fun handleBitmapRemoved(item: BitmapListItem) {
         val index = binding.loadedImagesList.indexOfChild(item)
         removeBitmap(index)
-        viewModel.bitmaps.removeAt(index)
+        viewModel.stackingViewModel.bitmaps.removeAt(index)
         binding.loadedImagesList.removeView(item)
-        binding.loadedImagesCount.text = "Images: ${viewModel.bitmaps.size}"
-        if (viewModel.bitmaps.isEmpty()) binding.loadedImagesCount.isVisible = false
+        binding.loadedImagesCount.text = "Images: ${viewModel.stackingViewModel.bitmaps.size}"
+        if (viewModel.stackingViewModel.bitmaps.isEmpty()) binding.loadedImagesCount.isVisible = false
         updateButtonsState()
     }
 
     private fun handleAnalyseButtonClicked() {
         startAction()
-        viewModel.hasStackedResult = false
+        viewModel.stackingViewModel.hasStackedResult = false
 
         lifecycleScope.launch {
             val scores = withContext(Dispatchers.Default) {
@@ -265,7 +267,7 @@ class StackingActivity : AppCompatActivity() {
                 withContext(Dispatchers.Default) {
                     stack(binding.disableAlignmentCheckBox.isChecked)
                 }
-                viewModel.hasStackedResult = true
+                viewModel.stackingViewModel.hasStackedResult = true
             }
             catch (e: RuntimeException) {
                 binding.logWindow.addMessage("Error: ${e.message}", true)

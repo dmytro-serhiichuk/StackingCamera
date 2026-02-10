@@ -13,7 +13,7 @@ import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.sedv.stackingcamera.CameraViewModel
+import com.sedv.stackingcamera.viewmodels.CameraViewModel
 import com.sedv.stackingcamera.R
 import com.sedv.stackingcamera.camera.CameraError
 import com.sedv.stackingcamera.camera.CameraType

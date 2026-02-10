@@ -1,10 +1,12 @@
-package com.sedv.stackingcamera
+package com.sedv.stackingcamera.viewmodels
 
 import android.app.Application
 import android.util.Size
-import android.view.OrientationEventListener.ORIENTATION_UNKNOWN
+import android.view.OrientationEventListener
 import android.view.Surface
 import androidx.lifecycle.AndroidViewModel
+import com.sedv.stackingcamera.Event
+import com.sedv.stackingcamera.PermissionHelper
 import com.sedv.stackingcamera.camera.CameraController
 import com.sedv.stackingcamera.camera.CameraState
 import com.sedv.stackingcamera.settings.BaseProperty
@@ -12,8 +14,9 @@ import com.sedv.stackingcamera.settings.FrameSize
 import com.sedv.stackingcamera.settings.GeneralPropertyType
 import com.sedv.stackingcamera.settings.GeneralSettings
 
-class CameraViewModel(private val application: Application) : AndroidViewModel(application) {
-    private lateinit var _cameraController: CameraController
+class CameraViewModel {
+    private val application: Application
+    private val _cameraController: CameraController
     val cameraController get() = _cameraController
     val activeCamera get() = _cameraController.activeCamera
     private var _previewSurface: Surface? = null
@@ -22,12 +25,11 @@ class CameraViewModel(private val application: Application) : AndroidViewModel(a
     private var _deviceOrientation: Int = 0
     val deviceOrientation get() = _deviceOrientation
 
-    lateinit var permissionHelper: PermissionHelper
     val onCameraSwitched = Event<() -> Unit>()
     val onProgramReady = Event<() -> Unit>()
 
-    fun init(permissionHelper: PermissionHelper) {
-        this.permissionHelper = permissionHelper
+    constructor(application: Application) {
+        this.application = application
         _cameraController = CameraController(application)
 
         GeneralSettings.onChanged += ::handleGeneralSettingsChanged
@@ -63,7 +65,7 @@ class CameraViewModel(private val application: Application) : AndroidViewModel(a
     }
 
     fun updateOrientation(newOrientation: Int) {
-        if (newOrientation == ORIENTATION_UNKNOWN) return
+        if (newOrientation == OrientationEventListener.ORIENTATION_UNKNOWN) return
 
         _deviceOrientation = when (newOrientation) {
             in 45..134 -> 270

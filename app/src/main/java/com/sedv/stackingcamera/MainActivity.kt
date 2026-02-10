@@ -34,6 +34,8 @@ import com.sedv.stackingcamera.ui.ShutterController
 import com.sedv.stackingcamera.ui.preview.Preview
 import com.sedv.stackingcamera.ui.settings.SettingsController
 import com.sedv.stackingcamera.ui.switcher.Switcher
+import com.sedv.stackingcamera.viewmodels.AppViewModel
+import com.sedv.stackingcamera.viewmodels.CameraViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
@@ -42,7 +44,7 @@ import kotlin.system.exitProcess
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
 
-    private val viewModel: CameraViewModel by viewModels()
+    private val viewModel: AppViewModel by viewModels()
     private lateinit var permissionHelper: PermissionHelper
     private var isSuccessfullyInitialized = false
     private var hasReturnedFromSettings = false
@@ -79,8 +81,8 @@ class MainActivity : AppCompatActivity() {
     private fun initializeApp() {
         try {
             viewModel.init(permissionHelper)
-            viewModel.onCameraSwitched += ::handleCameraSwitched
-            viewModel.onProgramReady += ::startCameraFlow
+            viewModel.cameraViewModel.onCameraSwitched += ::handleCameraSwitched
+            viewModel.cameraViewModel.onProgramReady += ::startCameraFlow
 
             // Shutter Button
             shutterController = ShutterController(
@@ -96,7 +98,7 @@ class MainActivity : AppCompatActivity() {
             // Camera Switcher
             cameraSwitcher = Switcher(
                 this,
-                viewModel,
+                viewModel.cameraViewModel,
                 binding.cameraSwitcher,
                 binding.cameraList,
                 previewBottomContainerManager
@@ -105,7 +107,7 @@ class MainActivity : AppCompatActivity() {
             // Camera Settings
             settingsController = SettingsController(
                 this,
-                viewModel,
+                viewModel.cameraViewModel,
                 previewBottomContainerManager,
                 binding.settingsList,
                 binding.sliderViewWrapper,
@@ -115,7 +117,7 @@ class MainActivity : AppCompatActivity() {
             // General Settings
             generalSettingsController = GeneralSettingsController(
                 this,
-                viewModel,
+                viewModel.cameraViewModel,
                 binding.generalSettings,
                 binding.generalSettingsBottomContainer
             )
@@ -123,7 +125,7 @@ class MainActivity : AppCompatActivity() {
             // Preview
             preview = Preview(
                 this,
-                viewModel,
+                viewModel.cameraViewModel,
                 binding.surfaceContainer,
                 binding.histogramView,
                 binding.meteringArea,
@@ -139,10 +141,10 @@ class MainActivity : AppCompatActivity() {
 
             val orientationListener = object : OrientationEventListener(this) {
                 override fun onOrientationChanged(orientation: Int) {
-                    val oldDeviceOrientation = viewModel.deviceOrientation
-                    viewModel.updateOrientation(orientation)
-                    if (viewModel.deviceOrientation != oldDeviceOrientation) {
-                        binding.histogramView.rotate(viewModel.deviceOrientation)
+                    val oldDeviceOrientation = viewModel.cameraViewModel.deviceOrientation
+                    viewModel.cameraViewModel.updateOrientation(orientation)
+                    if (viewModel.cameraViewModel.deviceOrientation != oldDeviceOrientation) {
+                        binding.histogramView.rotate(viewModel.cameraViewModel.deviceOrientation)
                     }
                 }
             }
@@ -233,7 +235,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startCameraFlow() {
-        val surface = viewModel.previewSurface
+        val surface = viewModel.cameraViewModel.previewSurface
 
         if (surface == null || !surface.isValid) {
             Log.e("MainActivity", "Preview surface is null or invalid")
@@ -253,13 +255,13 @@ class MainActivity : AppCompatActivity() {
 
     private fun handleCameraSwitched() {
         try {
-            viewModel.activeCamera.onPhotoCreated = ::handlePhotoCreated
-            viewModel.activeCamera.onPhotoCreatingFailed = { e ->
+            viewModel.cameraViewModel.activeCamera.onPhotoCreated = ::handlePhotoCreated
+            viewModel.cameraViewModel.activeCamera.onPhotoCreatingFailed = { e ->
                 Toast.makeText(this, e.message, Toast.LENGTH_SHORT).show()
             }
 
-            viewModel.activeCamera.onPhotoReceived += {
-                val color = if (viewModel.activeCamera.captureAnalyser.meanBrightness > 64.0) {
+            viewModel.cameraViewModel.activeCamera.onPhotoReceived += {
+                val color = if (viewModel.cameraViewModel.activeCamera.captureAnalyser.meanBrightness > 64.0) {
                     Color.BLACK
                 } else {
                     Color.WHITE
@@ -295,7 +297,7 @@ class MainActivity : AppCompatActivity() {
             val hasPermissions = permissionHelper.hasAllPermissions()
 
             if (hasPermissions && isSuccessfullyInitialized) {
-                viewModel.resume()
+                viewModel.cameraViewModel.resume()
             } else if (hasPermissions && !isSuccessfullyInitialized) {
                 initializeApp()
             } else if (!hasPermissions && hasReturnedFromSettings) {
@@ -310,7 +312,7 @@ class MainActivity : AppCompatActivity() {
         super.onPause()
 
         try {
-            viewModel.pause()
+            viewModel.cameraViewModel.pause()
         } catch (e: CameraError) {
             Toast.makeText(this, e.message, Toast.LENGTH_SHORT).show()
         }
@@ -318,7 +320,7 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
 
-        viewModel.destroy()
+        viewModel.cameraViewModel.destroy()
 
         Log.d("MainActivity", "Activity destroyed, resources cleaned up")
     }

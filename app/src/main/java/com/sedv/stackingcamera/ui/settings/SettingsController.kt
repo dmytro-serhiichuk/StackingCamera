@@ -12,7 +12,7 @@ import android.widget.LinearLayout
 import androidx.appcompat.widget.AppCompatButton
 import androidx.core.view.forEach
 import androidx.core.view.isVisible
-import com.sedv.stackingcamera.CameraViewModel
+import com.sedv.stackingcamera.viewmodels.CameraViewModel
 import com.sedv.stackingcamera.camera.settings.BaseOptionsProperty
 import com.sedv.stackingcamera.camera.settings.BaseRangeProperty
 import com.sedv.stackingcamera.camera.settings.BaseToggleProperty

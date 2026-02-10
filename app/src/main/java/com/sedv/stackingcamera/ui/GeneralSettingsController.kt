@@ -8,7 +8,7 @@ import android.widget.FrameLayout.LayoutParams
 import android.widget.HorizontalScrollView
 import android.widget.ImageView
 import android.widget.LinearLayout
-import com.sedv.stackingcamera.CameraViewModel
+import com.sedv.stackingcamera.viewmodels.CameraViewModel
 import com.sedv.stackingcamera.R
 import com.sedv.stackingcamera.camera.CameraState
 import com.sedv.stackingcamera.settings.GeneralPropertyType

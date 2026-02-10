@@ -1,8 +1,8 @@
-package com.sedv.stackingcamera.stacking
+package com.sedv.stackingcamera.viewmodels
 
-import androidx.lifecycle.ViewModel
+import com.sedv.stackingcamera.stacking.BitmapInfo
 
-class StackingViewModel : ViewModel() {
+class StackingViewModel {
     val bitmaps = arrayListOf<BitmapInfo>()
     var hasStackedResult = false
 

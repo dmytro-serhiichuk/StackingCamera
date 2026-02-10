@@ -8,12 +8,13 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.widget.AppCompatButton
 import androidx.core.view.isVisible
-import com.sedv.stackingcamera.CameraViewModel
+import com.sedv.stackingcamera.viewmodels.CameraViewModel
 import com.sedv.stackingcamera.camera.CameraError
 import com.sedv.stackingcamera.camera.CameraState
 import com.sedv.stackingcamera.settings.BaseProperty
 import com.sedv.stackingcamera.settings.GeneralPropertyType
 import com.sedv.stackingcamera.settings.GeneralSettings
+import com.sedv.stackingcamera.viewmodels.AppViewModel
 import kotlin.math.pow
 import kotlin.math.round
 import kotlin.math.sqrt
@@ -21,7 +22,7 @@ import kotlin.math.sqrt
 @SuppressLint("ClickableViewAccessibility")
 class ShutterController(
     private val context: Context,
-    private val viewModel: CameraViewModel,
+    private val viewModel: AppViewModel,
     private val shutter: AppCompatButton,
     private val additionalShutter: AppCompatButton,
     private val screenIndicator: TextView
@@ -36,8 +37,8 @@ class ShutterController(
     private var dragOffset = Pair(0f, 0f)
 
     init {
-        viewModel.onCameraSwitched += ::handleCameraSwitched
-        viewModel.onProgramReady += ::handleProgramReady
+        viewModel.cameraViewModel.onCameraSwitched += ::handleCameraSwitched
+        viewModel.cameraViewModel.onProgramReady += ::handleProgramReady
 
         GeneralSettings.onChanged += ::handleGeneralPropertyChanged
 
@@ -46,7 +47,7 @@ class ShutterController(
         }
 
         shutter.setOnLongClickListener {
-            if (viewModel.activeCamera.currentState == CameraState.OPENED) {
+            if (viewModel.cameraViewModel.activeCamera.currentState == CameraState.OPENED) {
                 additionalShutter.isVisible = true
                 additionalShutter.x = shutter.x
                 additionalShutter.y = shutter.y
@@ -107,7 +108,7 @@ class ShutterController(
     }
 
     private fun handleCameraSwitched() {
-        viewModel.activeCamera.onPhotoReceived += {
+        viewModel.cameraViewModel.activeCamera.onPhotoReceived += {
             if (remainedBurstNumber > 0) {
                 remainedBurstNumber--
                 startShutterCountDown()
@@ -120,7 +121,7 @@ class ShutterController(
     }
 
     private fun handleShutterPress() {
-        if (viewModel.activeCamera.currentState != CameraState.OPENED) return
+        if (viewModel.cameraViewModel.activeCamera.currentState != CameraState.OPENED) return
 
         if (countdown != null) {
             countdown?.cancel()
@@ -154,12 +155,12 @@ class ShutterController(
     private fun takePhoto() {
         if (viewModel.permissionHelper.hasAllPermissions()) {
             try {
-                val burstProperty = viewModel.activeCamera.cameraSettings.burstProperty
+                val burstProperty = viewModel.cameraViewModel.activeCamera.cameraSettings.burstProperty
                 if (burstProperty != null && burstProperty.value > 1) {
                     remainedBurstNumber = burstProperty.value - 1
-                    viewModel.activeCamera.takeBurst()
+                    viewModel.cameraViewModel.activeCamera.takeBurst()
                 } else {
-                    viewModel.activeCamera.takePicture()
+                    viewModel.cameraViewModel.activeCamera.takePicture()
                 }
 
                 startShutterCountDown()
@@ -179,7 +180,7 @@ class ShutterController(
     }
 
     private fun startShutterCountDown() {
-        viewModel.activeCamera.cameraSettings.exposureTimeNS?.let { speed ->
+        viewModel.cameraViewModel.activeCamera.cameraSettings.exposureTimeNS?.let { speed ->
             if (speed.value > LONG_EXPOSURE) {
                 shutter.text = (speed.value / LONG_EXPOSURE).toString()
 
