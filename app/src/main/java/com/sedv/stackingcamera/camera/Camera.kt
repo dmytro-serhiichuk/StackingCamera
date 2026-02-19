@@ -54,7 +54,7 @@ class Camera(
     private val updateIntervalMs = 100L
 
     var onPhotoReceived = Event<(() -> Unit)>()
-    var onPhotoCreated: ((ByteArray, CameraOutputFormat) -> Unit)? = null
+    var onPhotoCreated: ((ByteArray, CameraOutputFormat, PhotoType) -> Unit)? = null
     var onPhotoCreatingFailed: ((CameraError) -> Unit)? = null
 
     var onSettingsAutoChanged = Event<(() -> Unit)>()
@@ -582,13 +582,13 @@ class Camera(
         )
     }
 
-    private fun onImageReadyCallback(image: Image, captureResult: TotalCaptureResult, format: CameraOutputFormat) {
+    private fun onImageReadyCallback(image: Image, captureResult: TotalCaptureResult, format: CameraOutputFormat, photoType: PhotoType) {
         if (format == CameraOutputFormat.JPEG) {
             val buffer = image.planes[0].buffer
             val bytes = ByteArray(buffer.capacity())
             buffer.get(bytes)
 
-            onPhotoCreated?.invoke(bytes, format)
+            onPhotoCreated?.invoke(bytes, format, photoType)
         }
         else if (format == CameraOutputFormat.RAW) {
             val baos = ByteArrayOutputStream()
@@ -600,7 +600,7 @@ class Camera(
                 .use { dng ->
                     dng.writeImage(baos, image)
                 }
-            onPhotoCreated?.invoke(baos.toByteArray(), format)
+            onPhotoCreated?.invoke(baos.toByteArray(), format, photoType)
         }
     }
 
@@ -628,4 +628,11 @@ class Camera(
             throw CameraError.ClosingError("Error closing camera: ${e.message}")
         }
     }
+}
+
+enum class PhotoType {
+    REGULAR,
+    BURST_FIRST,
+    BURST_REGULAR,
+    BURST_LAST
 }

@@ -7,7 +7,7 @@ import com.sedv.stackingcamera.camera.settings.CameraOutputFormat
 
 class PhotoRequest(
     val outputFormat: CameraOutputFormat,
-    val onImageReadyCallback: (Image, TotalCaptureResult, CameraOutputFormat) -> Unit,
+    val onImageReadyCallback: (Image, TotalCaptureResult, CameraOutputFormat, PhotoType) -> Unit,
     val onFinishedCallback: () -> Unit,
     val onErrorCallback: ((CameraError) -> Unit)?
 ) {
@@ -31,7 +31,7 @@ class PhotoRequest(
 
     private fun onReady() {
         try {
-            onImageReadyCallback(image!!, this.captureResult!!, outputFormat)
+            onImageReadyCallback(image!!, this.captureResult!!, outputFormat, PhotoType.REGULAR)
         } catch (e: Exception) {
             Log.e("Camera", "Error saving image: ${e.message}")
             onErrorCallback?.invoke(CameraError.PhotoCreatingFailed("Invalid capture result"))

@@ -104,6 +104,12 @@ class StackingActivity : AppCompatActivity() {
         binding.outputFormatSelectorAutoCompleteTextView.setText(OUTPUT_FORMATS[0], false)
 
         binding.logWindow.onCloseButtonClicked = ::handleLogWindowsClosed
+
+        val uris = intent.getParcelableArrayListExtra<Uri>(Intent.EXTRA_STREAM)
+        if (!uris.isNullOrEmpty()) {
+            startAction()
+            loadImages(uris)
+        }
     }
 
     private fun showFatalError(e: Exception) {
@@ -163,7 +169,10 @@ class StackingActivity : AppCompatActivity() {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == PICK_IMAGE_REQUEST) {
             if (resultCode == RESULT_OK) {
-                loadImages(data)
+                val uris = extractUrisFromIntent(data)
+                uris?.let {
+                    loadImages(it)
+                }
             }
             if (resultCode == RESULT_CANCELED) {
                 endAction()
@@ -172,8 +181,8 @@ class StackingActivity : AppCompatActivity() {
         }
     }
 
-    private fun loadImages(data: Intent?) {
-        if (data == null || (data.data == null && data.clipData == null)) return
+    private fun extractUrisFromIntent(data: Intent?): ArrayList<Uri>? {
+        if (data == null || (data.data == null && data.clipData == null)) return null
 
         val selectedFiles = arrayListOf<Uri>()
         data.clipData?.let { clip ->
@@ -184,13 +193,17 @@ class StackingActivity : AppCompatActivity() {
             selectedFiles.add(it)
         }
 
+        return selectedFiles
+    }
+
+    private fun loadImages(uris: ArrayList<Uri>) {
         lifecycleScope.launch {
-            for (file in selectedFiles) {
-                val fileName = file.getFileName() ?: "null"
+            for (uri in uris) {
+                val fileName = uri.getFileName() ?: "null"
 
                 try {
                     val bitmapInfo = withContext(Dispatchers.IO) {
-                        contentResolver.openFileDescriptor(file, "r")!!.use {
+                        contentResolver.openFileDescriptor(uri, "r")!!.use {
                             loadBitmapWrapper(it.fd)
                         }
                     }

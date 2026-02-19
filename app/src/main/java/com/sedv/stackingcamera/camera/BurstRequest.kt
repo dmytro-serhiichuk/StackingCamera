@@ -13,7 +13,7 @@ import kotlin.collections.get
 class BurstRequest(
     val number: Int,
     val outputFormat: CameraOutputFormat,
-    val onImageReadyCallback: (Image, TotalCaptureResult, CameraOutputFormat) -> Unit,
+    val onImageReadyCallback: (Image, TotalCaptureResult, CameraOutputFormat, PhotoType) -> Unit,
     val onSequenceFinished: () -> Unit,
     val onErrorCallback: ((CameraError) -> Unit)?,
 ) {
@@ -65,7 +65,12 @@ class BurstRequest(
     private fun processPhoto(timestamp: Long, image: Image, result: TotalCaptureResult) {
         backgroundHandler.post {
             try {
-                onImageReadyCallback(image, result, outputFormat)
+                val photoType = when (processedCount) {
+                    0 -> PhotoType.BURST_FIRST
+                    number - 1 -> PhotoType.BURST_LAST
+                    else -> PhotoType.BURST_REGULAR
+                }
+                onImageReadyCallback(image, result, outputFormat, photoType)
             } catch (e: Exception) {
                 Log.e("Camera", "Error saving image: ${e.message}")
                 onErrorCallback?.invoke(CameraError.PhotoCreatingFailed("Invalid capture result"))

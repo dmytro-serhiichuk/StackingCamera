@@ -1,6 +1,7 @@
 package com.sedv.stackingcamera.viewmodels
 
 import android.app.Application
+import android.net.Uri
 import android.util.Size
 import android.view.OrientationEventListener
 import android.view.Surface
@@ -24,6 +25,8 @@ class CameraViewModel {
 
     private var _deviceOrientation: Int = 0
     val deviceOrientation get() = _deviceOrientation
+
+    val lastBurstPhotosUris = arrayListOf<Uri>()
 
     val onCameraSwitched = Event<() -> Unit>()
     val onProgramReady = Event<() -> Unit>()

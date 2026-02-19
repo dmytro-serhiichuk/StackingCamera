@@ -6,6 +6,7 @@ import android.content.ContentValues
 import android.content.Intent
 import android.graphics.Color
 import android.media.MediaScannerConnection
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
@@ -21,6 +22,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.lifecycleScope
 import com.sedv.stackingcamera.camera.CameraError
+import com.sedv.stackingcamera.camera.PhotoType
 import com.sedv.stackingcamera.camera.settings.CameraOutputFormat
 import com.sedv.stackingcamera.databinding.ActivityMainBinding
 import com.sedv.stackingcamera.settings.BaseProperty
@@ -134,8 +136,13 @@ class MainActivity : AppCompatActivity() {
                 binding.screenIndicator
             )
 
+//            TODO: add another button for photo passing
             binding.navToStackingButton.setOnClickListener {
                 val intent = Intent(this, StackingActivity::class.java)
+                if (viewModel.cameraViewModel.lastBurstPhotosUris.isNotEmpty()) {
+                    intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, ArrayList(viewModel.cameraViewModel.lastBurstPhotosUris))
+                    viewModel.cameraViewModel.lastBurstPhotosUris.clear()
+                }
                 startActivity(intent)
             }
 
@@ -325,13 +332,14 @@ class MainActivity : AppCompatActivity() {
         Log.d("MainActivity", "Activity destroyed, resources cleaned up")
     }
 
-    private fun handlePhotoCreated(bytes: ByteArray, format: CameraOutputFormat) {
+    private fun handlePhotoCreated(bytes: ByteArray, format: CameraOutputFormat, photoType: PhotoType) {
         val timestamp = System.currentTimeMillis()
         val filename = "IMG_${timestamp}${format.ext}"
 
-        saveImageToGallery(bytes, filename, format)
-    }
-    private fun saveImageToGallery(bytes: ByteArray, filename: String, format: CameraOutputFormat) {
+        if (photoType == PhotoType.BURST_FIRST) {
+            viewModel.cameraViewModel.lastBurstPhotosUris.clear()
+        }
+
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 // Android 10+ (API 29+)
@@ -349,9 +357,11 @@ class MainActivity : AppCompatActivity() {
                         outputStream.write(bytes)
                         outputStream.flush()
                     }
+                    if (photoType != PhotoType.REGULAR) {
+                        viewModel.cameraViewModel.lastBurstPhotosUris.add(uri)
+                    }
                     Log.d("Camera", "Image saved to MediaStore: $filename")
-                    true
-                } ?: false
+                }
 
             } else {
                 val picturesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM)
@@ -369,7 +379,9 @@ class MainActivity : AppCompatActivity() {
                     arrayOf(format.mimeType),
                     null
                 )
-
+                if (photoType != PhotoType.REGULAR) {
+                    viewModel.cameraViewModel.lastBurstPhotosUris.add(Uri.fromFile(file))
+                }
                 Log.d("Camera", "Image saved to: ${file.absolutePath}")
             }
         } catch (e: Exception) {
