@@ -32,7 +32,7 @@ Bitmap *MedianStacking::stack(List<BitmapPtr> &src, BitmapPtr &referenceBitmap) 
 
     size_t chunkSize = Core::MAX_MEMORY_SIZE / src.size;
     size_t chunkCount = chunkSize / depth;
-    List<uint8_t> chunks {src.size};
+    auto chunks = new uint8_t*[src.size];
     size_t offset = 0;
 
     size_t bufferLength = referenceBitmap.bufferSize / depth;
@@ -40,25 +40,29 @@ Bitmap *MedianStacking::stack(List<BitmapPtr> &src, BitmapPtr &referenceBitmap) 
     for (size_t i = 0; i < bufferLength; i++) {
         if (i % chunkCount == 0) {
             offset = i;
-            chunks = List<uint8_t>(src.size);
             for (size_t bi = 0; bi < src.size; bi++) {
-                chunks.add(src.buffer[bi]->readChunk(offset * depth, chunkSize));
+                if (i != 0) delete [] chunks[bi];
+                chunks[bi] = src.buffer[bi]->readChunk(offset * depth, chunkSize);
             }
         }
 
         if (referenceBitmap.depth == Depth::U8) {
             for (size_t j = 0; j < src.size; j++) {
-                values[j] = chunks.buffer[j][i - offset];
+                values[j] = chunks[j][i - offset];
             }
             outputBuffer[i] = findMedian8(values, src.size);
         } else {
             auto values16 = (uint16_t*)values;
             for (size_t j = 0; j < src.size; j++) {
-                values16[j] = ((uint16_t*)chunks.buffer[j])[i - offset];
+                values16[j] = ((uint16_t*)chunks[j])[i - offset];
             }
             ((uint16_t*)outputBuffer)[i] = findMedian16(values16, src.size);
         }
     }
+
+    for (size_t i = 0; i < src.size; i++) delete [] chunks[i];
+    delete [] chunks;
+    delete [] values;
 
     return new Bitmap(referenceBitmap.width, referenceBitmap.height, outputBuffer, referenceBitmap.colorSpace, referenceBitmap.depth);
 }

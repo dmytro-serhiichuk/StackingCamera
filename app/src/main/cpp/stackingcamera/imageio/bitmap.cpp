@@ -33,6 +33,4 @@ namespace ImageIO {
 
         throw std::runtime_error("Unsupported convert arguments");
     }
-
 }
-
