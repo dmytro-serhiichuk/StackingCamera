@@ -27,6 +27,20 @@
             app:layout_constraintBottom_toBottomOf="@+id/surface_container"
             android:visibility="gone"/>
 
+        <com.sedv.stackingcamera.ui.preview.GhostImageView
+            android:id="@+id/ghost_image_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone"
+            android:alpha="0.4"
+            android:clickable="false"
+            android:focusable="false"
+            android:scaleType="centerCrop"
+            app:layout_constraintStart_toStartOf="@+id/surface_container"
+            app:layout_constraintEnd_toEndOf="@+id/surface_container"
+            app:layout_constraintTop_toTopOf="@+id/surface_container"
+            app:layout_constraintBottom_toBottomOf="@+id/surface_container"/>
+
         <TextView
             android:id="@+id/screen_indicator"
             android:layout_width="0dp"

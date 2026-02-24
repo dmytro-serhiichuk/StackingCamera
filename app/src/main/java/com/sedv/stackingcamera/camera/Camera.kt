@@ -54,7 +54,7 @@ class Camera(
     private val updateIntervalMs = 100L
 
     var onPhotoReceived = Event<(() -> Unit)>()
-    var onPhotoCreated: ((ByteArray, CameraOutputFormat, PhotoType) -> Unit)? = null
+    var onPhotoCreated: ((ByteArray, CameraOutputFormat, PhotoType, Int) -> Unit)? = null
     var onPhotoCreatingFailed: ((CameraError) -> Unit)? = null
 
     var onSettingsAutoChanged = Event<(() -> Unit)>()
@@ -528,6 +528,7 @@ class Camera(
         setCaptureRequestSettings(photoRequestBuilder!!, reader.surface)
 
         val burstRequest = BurstRequest(
+            frames,
             currentFrames,
             format,
             ::onImageReadyCallback,
@@ -583,24 +584,25 @@ class Camera(
     }
 
     private fun onImageReadyCallback(image: Image, captureResult: TotalCaptureResult, format: CameraOutputFormat, photoType: PhotoType) {
+        val orientation = getOrientation()
+
         if (format == CameraOutputFormat.JPEG) {
             val buffer = image.planes[0].buffer
             val bytes = ByteArray(buffer.capacity())
             buffer.get(bytes)
 
-            onPhotoCreated?.invoke(bytes, format, photoType)
+            onPhotoCreated?.invoke(bytes, format, photoType, orientation)
         }
         else if (format == CameraOutputFormat.RAW) {
             val baos = ByteArrayOutputStream()
             val characteristics = cameraManager.getCameraCharacteristics(cameraInfo.cameraId)
-
 
             DngCreator(characteristics, captureResult)
                 .setOrientation(getRawOrientation())
                 .use { dng ->
                     dng.writeImage(baos, image)
                 }
-            onPhotoCreated?.invoke(baos.toByteArray(), format, photoType)
+            onPhotoCreated?.invoke(baos.toByteArray(), format, photoType, orientation)
         }
     }
 

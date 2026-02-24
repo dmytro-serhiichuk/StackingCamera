@@ -33,6 +33,8 @@ import com.sedv.stackingcamera.stacking.StackingActivity
 import com.sedv.stackingcamera.ui.GeneralSettingsController
 import com.sedv.stackingcamera.ui.PreviewBottomContainerManager
 import com.sedv.stackingcamera.ui.ShutterController
+import com.sedv.stackingcamera.ui.preview.GhostImageInfo
+import com.sedv.stackingcamera.ui.preview.GhostImageView
 import com.sedv.stackingcamera.ui.preview.Preview
 import com.sedv.stackingcamera.ui.settings.SettingsController
 import com.sedv.stackingcamera.ui.switcher.Switcher
@@ -133,8 +135,12 @@ class MainActivity : AppCompatActivity() {
                 binding.meteringArea,
                 binding.zoomIndicator,
                 binding.gridView,
-                binding.screenIndicator
+                binding.screenIndicator,
+                binding.ghostImageView
             )
+            viewModel.cameraViewModel.ghostImageInfo?.let { info ->
+                binding.ghostImageView.setImage(info)
+            }
 
 //            TODO: add another button for photo passing
             binding.navToStackingButton.setOnClickListener {
@@ -332,7 +338,7 @@ class MainActivity : AppCompatActivity() {
         Log.d("MainActivity", "Activity destroyed, resources cleaned up")
     }
 
-    private fun handlePhotoCreated(bytes: ByteArray, format: CameraOutputFormat, photoType: PhotoType) {
+    private fun handlePhotoCreated(bytes: ByteArray, format: CameraOutputFormat, photoType: PhotoType, orientation: Int) {
         val timestamp = System.currentTimeMillis()
         val filename = "IMG_${timestamp}${format.ext}"
 
@@ -341,7 +347,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val ghostImageUri: Uri? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 // Android 10+ (API 29+)
                 val contentValues = ContentValues().apply {
                     put(MediaStore.MediaColumns.DISPLAY_NAME, filename)
@@ -352,17 +358,13 @@ class MainActivity : AppCompatActivity() {
                 val resolver = contentResolver
                 val imageUri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
 
-                imageUri?.let { uri ->
+                imageUri?.also { uri ->
                     resolver.openOutputStream(uri)?.use { outputStream ->
                         outputStream.write(bytes)
                         outputStream.flush()
                     }
-                    if (photoType != PhotoType.REGULAR) {
-                        viewModel.cameraViewModel.lastBurstPhotosUris.add(uri)
-                    }
                     Log.d("Camera", "Image saved to MediaStore: $filename")
                 }
-
             } else {
                 val picturesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM)
                 val cameraDir = File(picturesDir, "Camera")
@@ -379,10 +381,18 @@ class MainActivity : AppCompatActivity() {
                     arrayOf(format.mimeType),
                     null
                 )
-                if (photoType != PhotoType.REGULAR) {
-                    viewModel.cameraViewModel.lastBurstPhotosUris.add(Uri.fromFile(file))
-                }
                 Log.d("Camera", "Image saved to: ${file.absolutePath}")
+                Uri.fromFile(file)
+            }
+
+            ghostImageUri?.let { uri ->
+                if (photoType != PhotoType.REGULAR) {
+                    viewModel.cameraViewModel.lastBurstPhotosUris.add(uri)
+                }
+                if (photoType == PhotoType.REGULAR || photoType == PhotoType.BURST_LAST) {
+                    viewModel.cameraViewModel.ghostImageInfo = GhostImageInfo(uri, orientation, format)
+                    binding.ghostImageView.setImage(viewModel.cameraViewModel.ghostImageInfo!!)
+                }
             }
         } catch (e: Exception) {
             Log.e("Camera", "Failed to save image: ${e.message}")

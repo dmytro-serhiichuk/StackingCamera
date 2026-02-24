@@ -5,13 +5,12 @@ import android.hardware.camera2.TotalCaptureResult
 import android.media.Image
 import android.os.Handler
 import android.os.HandlerThread
-import android.os.Looper
 import android.util.Log
 import com.sedv.stackingcamera.camera.settings.CameraOutputFormat
-import kotlin.collections.get
 
 class BurstRequest(
-    val number: Int,
+    val totalImagesLeft: Int,
+    val imagesLeftInCurrentIterations: Int,
     val outputFormat: CameraOutputFormat,
     val onImageReadyCallback: (Image, TotalCaptureResult, CameraOutputFormat, PhotoType) -> Unit,
     val onSequenceFinished: () -> Unit,
@@ -35,7 +34,7 @@ class BurstRequest(
 
     fun addImageToSequence(image: Image) {
         synchronized(lock) {
-            if (processedCount >= number) {
+            if (processedCount >= imagesLeftInCurrentIterations) {
                 image.close()
                 return
             }
@@ -50,7 +49,7 @@ class BurstRequest(
 
     fun addCaptureResultToSequence(captureResult: TotalCaptureResult) {
         synchronized(lock) {
-            if (processedCount >= number) return
+            if (processedCount >= imagesLeftInCurrentIterations) return
 
             val timestamp = captureResult.get(CaptureResult.SENSOR_TIMESTAMP) ?: return
 
@@ -67,7 +66,7 @@ class BurstRequest(
             try {
                 val photoType = when (processedCount) {
                     0 -> PhotoType.BURST_FIRST
-                    number - 1 -> PhotoType.BURST_LAST
+                    totalImagesLeft - 1 -> PhotoType.BURST_LAST
                     else -> PhotoType.BURST_REGULAR
                 }
                 onImageReadyCallback(image, result, outputFormat, photoType)
@@ -83,7 +82,7 @@ class BurstRequest(
 
                 processedCount++
 
-                if (processedCount == number && images.isEmpty() && captureResults.isEmpty()) {
+                if (processedCount == imagesLeftInCurrentIterations && images.isEmpty() && captureResults.isEmpty()) {
                     onSequenceFinished()
                     backgroundThread.quitSafely()
                 }

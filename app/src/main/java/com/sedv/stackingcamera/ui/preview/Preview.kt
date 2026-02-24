@@ -30,7 +30,8 @@ class Preview(
     private val meteringAreaIndicator: PreviewMeteringAreaIndicator,
     private val zoomIndicator: TextView,
     private val gridView: GridView,
-    private val screenIndicator: TextView
+    private val screenIndicator: TextView,
+    private val ghostImageView: GhostImageView
 ) {
     private val previewSurface: GLPreviewSurfaceView
     private var scaleGestureDetector: ScaleGestureDetector? = null
@@ -68,6 +69,7 @@ class Preview(
         previewSurface.updateSurfaceBufferSize(size.height, size.width)
 
         gridView.setSize(size.width, size.height)
+        ghostImageView.setSize(size.width, size.height)
 
         val timerLayout = screenIndicator.layoutParams
         timerLayout.width = size.width

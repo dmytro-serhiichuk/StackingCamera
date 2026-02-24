@@ -23,7 +23,6 @@ class PreviewReferenceFrame @JvmOverloads constructor(
         val frameSize = GeneralSettings.frameSize.value
         heightRatio = if (frameSize == FrameSize.FRAME_SIZE_4_3.value) 4f / 3f
         else 8f / 6.6f
-        requestLayout()
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
