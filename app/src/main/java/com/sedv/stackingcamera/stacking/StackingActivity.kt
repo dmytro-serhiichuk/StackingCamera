@@ -1,6 +1,5 @@
 package com.sedv.stackingcamera.stacking
 
-import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.content.ContentValues
 import android.content.Intent
@@ -16,7 +15,7 @@ import android.provider.OpenableColumns
 import android.view.WindowManager
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
-import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.forEach
@@ -26,8 +25,6 @@ import androidx.lifecycle.lifecycleScope
 import com.sedv.stackingcamera.databinding.ActivityStackingBinding
 import com.sedv.stackingcamera.stacking.settings.Settings
 import com.sedv.stackingcamera.stacking.settings.StackingSettingsActivity
-import com.sedv.stackingcamera.viewmodels.AppViewModel
-import com.sedv.stackingcamera.viewmodels.StackingState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -37,7 +34,17 @@ import kotlin.system.exitProcess
 class StackingActivity : AppCompatActivity() {
     private lateinit var binding: ActivityStackingBinding
 
-    private val viewModel: AppViewModel by viewModels()
+    private val viewModel: StackingViewModel by viewModels()
+
+    private val pickImagesLauncher = registerForActivityResult(ActivityResultContracts.GetMultipleContents())
+    { uris: List<Uri> ->
+        if (uris.isNotEmpty()) {
+            loadImages(uris)
+        } else {
+            endAction()
+            handleLogWindowsClosed()
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -47,7 +54,7 @@ class StackingActivity : AppCompatActivity() {
 
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
-        if (viewModel.stackingViewModel.state == StackingState.NOT_READY) {
+        if (viewModel.state == StackingState.NOT_READY) {
             cacheDir.listFiles()?.forEach { f ->
                 f.delete()
             }
@@ -57,23 +64,25 @@ class StackingActivity : AppCompatActivity() {
                         initStacking(applicationContext.assets)
                         Settings.initialize(getSharedPreferences("SETTINGS", MODE_PRIVATE))
                     }
-                    viewModel.stackingViewModel.state = StackingState.IDLE
+                    viewModel.state = StackingState.IDLE
                     updateButtonsState()
                 } catch (e: Exception) {
                     showFatalError(e)
                 }
             }
         } else {
-            for (bitmap in viewModel.stackingViewModel.bitmaps) {
+            for (bitmap in viewModel.bitmaps) {
                 binding.loadedImagesList.addView(BitmapListItem(
                     this, bitmap, ::handleBitmapRemoved
                 ))
             }
-            if (viewModel.stackingViewModel.bitmaps.isNotEmpty()) {
+            if (viewModel.bitmaps.isNotEmpty()) {
                 binding.loadedImagesCount.isVisible = true
-                binding.loadedImagesCount.text = "Images: ${viewModel.stackingViewModel.bitmaps.size}"
+                binding.loadedImagesCount.text = "Images: ${viewModel.bitmaps.size}"
             }
         }
+
+        viewModel.initPermissionHelper(this)
 
         binding.navToCameraButton.setOnClickListener {
             finish()
@@ -126,16 +135,16 @@ class StackingActivity : AppCompatActivity() {
     }
 
     private fun updateButtonsState() {
-        val isIdle = viewModel.stackingViewModel.state == StackingState.IDLE
+        val isIdle = viewModel.state == StackingState.IDLE
         binding.loadImagesBtn.isEnabled = isIdle
-        binding.analyseBtn.isEnabled = isIdle && viewModel.stackingViewModel.bitmaps.isNotEmpty()
-        binding.stackBtn.isEnabled = isIdle && viewModel.stackingViewModel.canStack() && (viewModel.stackingViewModel.isAllBitmapsInitialized() || binding.disableAlignmentCheckBox.isChecked)
-        binding.saveBtn.isEnabled = isIdle && viewModel.stackingViewModel.hasStackedResult
+        binding.analyseBtn.isEnabled = isIdle && viewModel.bitmaps.isNotEmpty()
+        binding.stackBtn.isEnabled = isIdle && viewModel.canStack() && (viewModel.isAllBitmapsInitialized() || binding.disableAlignmentCheckBox.isChecked)
+        binding.saveBtn.isEnabled = isIdle && viewModel.hasStackedResult
         binding.loadedImagesList.forEach {
             val bitmapListItem = it as BitmapListItem
             bitmapListItem.setEnableMode(isIdle)
         }
-        if (viewModel.stackingViewModel.state == StackingState.BUSY) {
+        if (viewModel.state == StackingState.BUSY) {
             binding.logWindow.isVisible = true
             binding.logWindowBackground.isVisible = true
             binding.logWindow.reset()
@@ -147,56 +156,20 @@ class StackingActivity : AppCompatActivity() {
         binding.navToStackingSettingsButton.isEnabled = isIdle
     }
     private fun startAction() {
-        viewModel.stackingViewModel.state = StackingState.BUSY
+        viewModel.state = StackingState.BUSY
         updateButtonsState()
     }
     private fun endAction() {
-        viewModel.stackingViewModel.state = StackingState.IDLE
+        viewModel.state = StackingState.IDLE
         updateButtonsState()
     }
 
     private fun handleLoadImagesButtonClicked() {
         startAction()
-        val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
-            type = "*/*"
-            addCategory(Intent.CATEGORY_OPENABLE)
-            putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
-        }
-        startActivityForResult(intent, PICK_IMAGE_REQUEST)
+        pickImagesLauncher.launch("*/*")
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == PICK_IMAGE_REQUEST) {
-            if (resultCode == RESULT_OK) {
-                val uris = extractUrisFromIntent(data)
-                uris?.let {
-                    loadImages(it)
-                }
-            }
-            if (resultCode == RESULT_CANCELED) {
-                endAction()
-                handleLogWindowsClosed()
-            }
-        }
-    }
-
-    private fun extractUrisFromIntent(data: Intent?): ArrayList<Uri>? {
-        if (data == null || (data.data == null && data.clipData == null)) return null
-
-        val selectedFiles = arrayListOf<Uri>()
-        data.clipData?.let { clip ->
-            repeat(clip.itemCount) {
-                selectedFiles.add(clip.getItemAt(it).uri)
-            }
-        } ?: data.data?.let {
-            selectedFiles.add(it)
-        }
-
-        return selectedFiles
-    }
-
-    private fun loadImages(uris: ArrayList<Uri>) {
+    private fun loadImages(uris: List<Uri>) {
         lifecycleScope.launch {
             for (uri in uris) {
                 val fileName = uri.getFileName() ?: "null"
@@ -209,9 +182,9 @@ class StackingActivity : AppCompatActivity() {
                     }
 
                     bitmapInfo.name = fileName
-                    viewModel.stackingViewModel.bitmaps.add(bitmapInfo)
+                    viewModel.bitmaps.add(bitmapInfo)
                     binding.loadedImagesCount.isVisible = true
-                    binding.loadedImagesCount.text = "Images: ${viewModel.stackingViewModel.bitmaps.size}"
+                    binding.loadedImagesCount.text = "Images: ${viewModel.bitmaps.size}"
                     binding.loadedImagesList.addView(BitmapListItem(
                         this@StackingActivity,
                         bitmapInfo,
@@ -248,16 +221,16 @@ class StackingActivity : AppCompatActivity() {
     private fun handleBitmapRemoved(item: BitmapListItem) {
         val index = binding.loadedImagesList.indexOfChild(item)
         removeBitmap(index)
-        viewModel.stackingViewModel.bitmaps.removeAt(index)
+        viewModel.bitmaps.removeAt(index)
         binding.loadedImagesList.removeView(item)
-        binding.loadedImagesCount.text = "Images: ${viewModel.stackingViewModel.bitmaps.size}"
-        if (viewModel.stackingViewModel.bitmaps.isEmpty()) binding.loadedImagesCount.isVisible = false
+        binding.loadedImagesCount.text = "Images: ${viewModel.bitmaps.size}"
+        if (viewModel.bitmaps.isEmpty()) binding.loadedImagesCount.isVisible = false
         updateButtonsState()
     }
 
     private fun handleAnalyseButtonClicked() {
         startAction()
-        viewModel.stackingViewModel.hasStackedResult = false
+        viewModel.hasStackedResult = false
 
         lifecycleScope.launch {
             val scores = withContext(Dispatchers.Default) {
@@ -280,7 +253,7 @@ class StackingActivity : AppCompatActivity() {
                 withContext(Dispatchers.Default) {
                     stack(binding.disableAlignmentCheckBox.isChecked)
                 }
-                viewModel.stackingViewModel.hasStackedResult = true
+                viewModel.hasStackedResult = true
             }
             catch (e: RuntimeException) {
                 binding.logWindow.addMessage("Error: ${e.message}", true)
@@ -394,8 +367,7 @@ class StackingActivity : AppCompatActivity() {
     external fun save(fd: Int, format: Int)
 
     companion object {
-        public const val APP_DIRECTORY = "/StackingCamera/"
-        public const val PICK_IMAGE_REQUEST = 0
+        const val APP_DIRECTORY = "/StackingCamera/"
         val OUTPUT_FORMATS = listOf(".jpg", ".png", ".tiff")
         init {
             System.loadLibrary("stackingcamera")

@@ -11,7 +11,7 @@
         android:scrollbars="none"
         android:fillViewport="false"/>
 
-    <com.sedv.stackingcamera.ui.settings.SliderMiddleLine
+    <com.sedv.stackingcamera.main.settings.ui.SliderMiddleLine
         android:id="@+id/middle_line"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />

@@ -5,7 +5,7 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity"
+    tools:context=".main.MainActivity"
     android:fitsSystemWindows="true">
 
 <!--    Preview-->
@@ -16,7 +16,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/general_settings">
-        <com.sedv.stackingcamera.ui.preview.GridView
+        <com.sedv.stackingcamera.main.preview.GridView
             android:id="@+id/grid_view"
             android:layout_width="0dp"
             android:layout_height="0dp"
@@ -27,7 +27,7 @@
             app:layout_constraintBottom_toBottomOf="@+id/surface_container"
             android:visibility="gone"/>
 
-        <com.sedv.stackingcamera.ui.preview.GhostImageView
+        <com.sedv.stackingcamera.main.preview.GhostImageView
             android:id="@+id/ghost_image_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -55,7 +55,7 @@
             android:gravity="center" />
     </FrameLayout>
 
-    <com.sedv.stackingcamera.ui.preview.HistogramView
+    <com.sedv.stackingcamera.main.preview.HistogramView
         android:id="@+id/histogram_view"
         android:layout_width="@dimen/histogram_width"
         android:layout_height="@dimen/histogram_height"
@@ -75,7 +75,7 @@
         app:layout_constraintTop_toTopOf="@+id/general_settings_bottom_container"
         android:layout_margin="@dimen/histogram_margin"/>
 
-    <com.sedv.stackingcamera.ui.preview.PreviewReferenceFrame
+    <com.sedv.stackingcamera.main.preview.PreviewReferenceFrame
         android:id="@+id/surface_reference_frame"
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -83,7 +83,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/general_settings">
 
-        <com.sedv.stackingcamera.ui.preview.PreviewMeteringAreaIndicator
+        <com.sedv.stackingcamera.main.preview.PreviewMeteringAreaIndicator
             android:id="@+id/metering_area"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -92,7 +92,7 @@
             app:layout_constraintEnd_toEndOf="@+id/surface_container"
             app:layout_constraintTop_toTopOf="@+id/surface_container"
             app:layout_constraintBottom_toBottomOf="@+id/surface_container"/>
-    </com.sedv.stackingcamera.ui.preview.PreviewReferenceFrame>
+    </com.sedv.stackingcamera.main.preview.PreviewReferenceFrame>
 
 <!--    General Settings-->
     <HorizontalScrollView

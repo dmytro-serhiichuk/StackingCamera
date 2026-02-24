@@ -48,7 +48,7 @@
         </provider>
 
         <activity
-            android:name=".MainActivity"
+            android:name=".main.MainActivity"
             android:exported="true"
             android:screenOrientation="portrait"
             android:theme="@style/Base.Theme.Camera">
