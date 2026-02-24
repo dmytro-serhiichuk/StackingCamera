@@ -1,15 +1,21 @@
 package com.sedv.stackingcamera.viewmodels
 
 import android.app.Application
+import androidx.activity.ComponentActivity
 import androidx.lifecycle.AndroidViewModel
 import com.sedv.stackingcamera.PermissionHelper
 
-class AppViewModel(private val application: Application) : AndroidViewModel(application) {
+class AppViewModel(application: Application) : AndroidViewModel(application) {
     val stackingViewModel = SharedData.stackingViewModel
     val cameraViewModel = CameraViewModel(application)
-    lateinit var permissionHelper: PermissionHelper
+    private lateinit var _permissionHelper: PermissionHelper
+    val permissionHelper get() = _permissionHelper
 
-    fun init(permissionHelper: PermissionHelper) {
-        this.permissionHelper = permissionHelper
+    var isReady = false
+
+    fun init(activity: ComponentActivity) {
+        if (!isReady) {
+            _permissionHelper = PermissionHelper(activity)
+        }
     }
 }

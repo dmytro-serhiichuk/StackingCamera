@@ -1,42 +1,45 @@
 package com.sedv.stackingcamera
 
 import android.Manifest
-import android.app.Activity
 import android.app.AlertDialog
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
-import androidx.core.app.ActivityCompat
+import androidx.activity.ComponentActivity
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 
-class PermissionHelper(private val activity: Activity) {
-    companion object {
-        const val STORAGE_PERMISSION_REQUEST_CODE = 100
-        const val CAMERA_PERMISSION_REQUEST_CODE = 101
-        const val ALL_PERMISSIONS_REQUEST_CODE = 102
+class PermissionHelper(private val activity: ComponentActivity) {
+    private var isDialogShowing = false
+
+    private val launcher = activity.registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissionsMap ->
+        val allGranted = permissionsMap.values.all { it }
+
+        if (!allGranted) {
+            showPermissionDeniedDialog()
+        }
     }
 
-    fun hasCameraPermission(): Boolean {
+    private fun hasCameraPermission(): Boolean {
         return ContextCompat.checkSelfPermission(
             activity,
             Manifest.permission.CAMERA
         ) == PackageManager.PERMISSION_GRANTED
     }
 
-    fun hasStoragePermission(): Boolean {
+    private fun hasStoragePermission(): Boolean {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            // Android 13+ (API 33+)
             ContextCompat.checkSelfPermission(
                 activity,
                 Manifest.permission.READ_MEDIA_IMAGES
             ) == PackageManager.PERMISSION_GRANTED
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            // Android 10-12 (API 29-32)
             true
         } else {
-            // Android 9- (API 28-)
             ContextCompat.checkSelfPermission(
                 activity,
                 Manifest.permission.WRITE_EXTERNAL_STORAGE
@@ -52,26 +55,9 @@ class PermissionHelper(private val activity: Activity) {
         return hasCameraPermission() && hasStoragePermission()
     }
 
-    fun requestCameraPermission() {
-        ActivityCompat.requestPermissions(
-            activity,
-            arrayOf(Manifest.permission.CAMERA),
-            CAMERA_PERMISSION_REQUEST_CODE
-        )
-    }
-
-    fun requestStoragePermission() {
-        val permissions = getRequiredStoragePermissions()
-        if (permissions.isNotEmpty()) {
-            ActivityCompat.requestPermissions(
-                activity,
-                permissions,
-                STORAGE_PERMISSION_REQUEST_CODE
-            )
-        }
-    }
-
     fun requestAllPermissions() {
+        if (isDialogShowing) return
+
         val permissions = mutableListOf<String>()
 
         if (!hasCameraPermission()) {
@@ -83,26 +69,19 @@ class PermissionHelper(private val activity: Activity) {
         }
 
         if (permissions.isNotEmpty()) {
-            ActivityCompat.requestPermissions(
-                activity,
-                permissions.toTypedArray(),
-                ALL_PERMISSIONS_REQUEST_CODE
-            )
+            launcher.launch(permissions.toTypedArray())
         }
     }
 
     private fun getRequiredStoragePermissions(): Array<String> {
         return when {
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU -> {
-                // Android 13+ (API 33+)
                 arrayOf(Manifest.permission.READ_MEDIA_IMAGES)
             }
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q -> {
-                // Android 10-12 (API 29-32)
                 emptyArray()
             }
             else -> {
-                // Android 9- (API 28-)
                 arrayOf(
                     Manifest.permission.WRITE_EXTERNAL_STORAGE,
                     Manifest.permission.READ_EXTERNAL_STORAGE
@@ -111,66 +90,19 @@ class PermissionHelper(private val activity: Activity) {
         }
     }
 
-    fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray,
-        onResult: (Boolean) -> Unit
-    ) {
-        when (requestCode) {
-            CAMERA_PERMISSION_REQUEST_CODE -> {
-                val granted = grantResults.isNotEmpty() &&
-                        grantResults[0] == PackageManager.PERMISSION_GRANTED
-
-                if (granted) {
-                    onResult(true)
-                } else {
-                    showPermissionDeniedDialog { onResult(false) }
-                }
-            }
-
-            STORAGE_PERMISSION_REQUEST_CODE -> {
-                val allGranted = grantResults.isNotEmpty() &&
-                        grantResults.all { it == PackageManager.PERMISSION_GRANTED }
-
-                if (allGranted) {
-                    onResult(true)
-                } else {
-                    showPermissionDeniedDialog { onResult(false) }
-                }
-            }
-
-            ALL_PERMISSIONS_REQUEST_CODE -> {
-                val allGranted = grantResults.isNotEmpty() &&
-                        grantResults.all { it == PackageManager.PERMISSION_GRANTED }
-
-                if (allGranted) {
-                    onResult(true)
-                } else {
-                    showPermissionDeniedDialog {
-                        onResult(false) }
-                }
-            }
-        }
-    }
-
-    private fun showPermissionDeniedDialog(
-        onDismiss: (() -> Unit)? = null
-    ) {
+    private fun showPermissionDeniedDialog() {
+        isDialogShowing = true
         AlertDialog.Builder(activity)
             .setTitle("Required permissions")
             .setMessage("The app requires Camera and Storage permissions to work properly. You can grant them in the settings")
             .setPositiveButton("Open Settings") { dialog, _ ->
                 dialog.dismiss()
                 openAppSettings()
-                if (activity is MainActivity) {
-                    activity.onReturnFromSettings()
-                }
-                onDismiss?.invoke()
+                isDialogShowing = false
             }
             .setNegativeButton("Exit") { dialog, _ ->
                 dialog.dismiss()
-                activity.finish()
+                activity.finishAffinity()
             }
             .setCancelable(false)
             .show()

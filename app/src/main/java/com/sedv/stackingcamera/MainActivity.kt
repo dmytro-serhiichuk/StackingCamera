@@ -34,12 +34,10 @@ import com.sedv.stackingcamera.ui.GeneralSettingsController
 import com.sedv.stackingcamera.ui.PreviewBottomContainerManager
 import com.sedv.stackingcamera.ui.ShutterController
 import com.sedv.stackingcamera.ui.preview.GhostImageInfo
-import com.sedv.stackingcamera.ui.preview.GhostImageView
 import com.sedv.stackingcamera.ui.preview.Preview
 import com.sedv.stackingcamera.ui.settings.SettingsController
 import com.sedv.stackingcamera.ui.switcher.Switcher
 import com.sedv.stackingcamera.viewmodels.AppViewModel
-import com.sedv.stackingcamera.viewmodels.CameraViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
@@ -49,9 +47,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
 
     private val viewModel: AppViewModel by viewModels()
-    private lateinit var permissionHelper: PermissionHelper
-    private var isSuccessfullyInitialized = false
-    private var hasReturnedFromSettings = false
 
     private lateinit var preview: Preview
     private lateinit var shutterController: ShutterController
@@ -72,19 +67,18 @@ class MainActivity : AppCompatActivity() {
 
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
-        permissionHelper = PermissionHelper(this)
+        viewModel.init(this)
         GeneralSettings.onChanged += ::handleGeneralSettingsChanged
 
-        if (permissionHelper.hasAllPermissions()) {
-            initializeApp()
+        if (viewModel.permissionHelper.hasAllPermissions()) {
+            initViews()
         } else {
-            permissionHelper.requestAllPermissions()
+            viewModel.permissionHelper.requestAllPermissions()
         }
     }
 
-    private fun initializeApp() {
+    private fun initViews() {
         try {
-            viewModel.init(permissionHelper)
             viewModel.cameraViewModel.onCameraSwitched += ::handleCameraSwitched
             viewModel.cameraViewModel.onProgramReady += ::startCameraFlow
 
@@ -164,7 +158,7 @@ class MainActivity : AppCompatActivity() {
 
             orientationListener.enable()
 
-            isSuccessfullyInitialized = true
+            viewModel.isReady = true
         }
 //    catch (e: CameraError) {
 //        showAlert(
@@ -180,24 +174,6 @@ class MainActivity : AppCompatActivity() {
                 { exitProcess(-1) }
             )
         }
-    }
-
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-
-        permissionHelper.onRequestPermissionsResult(requestCode, permissions, grantResults) { granted ->
-            if (granted && !isSuccessfullyInitialized) {
-                initializeApp()
-            }
-        }
-    }
-
-    fun onReturnFromSettings() {
-        hasReturnedFromSettings = true
     }
 
     override fun dispatchTouchEvent(ev: MotionEvent?): Boolean {
@@ -307,15 +283,14 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
 
         try {
-            val hasPermissions = permissionHelper.hasAllPermissions()
+            val hasPermissions = viewModel.permissionHelper.hasAllPermissions()
 
-            if (hasPermissions && isSuccessfullyInitialized) {
+            if (hasPermissions && viewModel.isReady) {
                 viewModel.cameraViewModel.resume()
-            } else if (hasPermissions && !isSuccessfullyInitialized) {
-                initializeApp()
-            } else if (!hasPermissions && hasReturnedFromSettings) {
-                permissionHelper.requestAllPermissions()
-                hasReturnedFromSettings = false
+            } else if (hasPermissions && !viewModel.isReady) {
+                initViews()
+            } else if (!hasPermissions) {
+                viewModel.permissionHelper.requestAllPermissions()
             }
         } catch (e: CameraError) {
             Toast.makeText(this, e.message, Toast.LENGTH_SHORT).show()
@@ -348,7 +323,6 @@ class MainActivity : AppCompatActivity() {
 
         try {
             val ghostImageUri: Uri? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                // Android 10+ (API 29+)
                 val contentValues = ContentValues().apply {
                     put(MediaStore.MediaColumns.DISPLAY_NAME, filename)
                     put(MediaStore.MediaColumns.MIME_TYPE, format.mimeType)
