@@ -14,7 +14,7 @@ import android.hardware.camera2.CaptureRequest
 import android.hardware.camera2.CaptureResult
 import android.hardware.camera2.DngCreator
 import android.hardware.camera2.TotalCaptureResult
-import android.media.ExifInterface
+import androidx.exifinterface.media.ExifInterface
 import android.media.Image
 import android.os.Handler
 import android.os.SystemClock
@@ -473,7 +473,6 @@ class Camera(
             throw CameraError.SessionError("Camera device in invalid state: ${e.message}")
         }
     }
-
     fun takeBurst() {
         val device = _cameraDevice
         val session = captureSession
