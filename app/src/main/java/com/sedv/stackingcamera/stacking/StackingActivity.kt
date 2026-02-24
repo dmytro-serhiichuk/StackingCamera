@@ -54,6 +54,8 @@ class StackingActivity : AppCompatActivity() {
 
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
+        updateButtonsState()
+
         if (viewModel.state == StackingState.NOT_READY) {
             cacheDir.listFiles()?.forEach { f ->
                 f.delete()
@@ -66,19 +68,21 @@ class StackingActivity : AppCompatActivity() {
                     }
                     viewModel.state = StackingState.IDLE
                     updateButtonsState()
+                    val uris = intent.getParcelableArrayListExtra<Uri>(Intent.EXTRA_STREAM)
+                    if (!uris.isNullOrEmpty()) {
+                        startAction()
+                        loadImages(uris)
+                    }
                 } catch (e: Exception) {
                     showFatalError(e)
                 }
             }
         } else {
-            for (bitmap in viewModel.bitmaps) {
-                binding.loadedImagesList.addView(BitmapListItem(
-                    this, bitmap, ::handleBitmapRemoved
-                ))
-            }
-            if (viewModel.bitmaps.isNotEmpty()) {
-                binding.loadedImagesCount.isVisible = true
-                binding.loadedImagesCount.text = "Images: ${viewModel.bitmaps.size}"
+            updateButtonsState()
+            val uris = intent.getParcelableArrayListExtra<Uri>(Intent.EXTRA_STREAM)
+            if (!uris.isNullOrEmpty()) {
+                startAction()
+                loadImages(uris)
             }
         }
 
@@ -92,7 +96,6 @@ class StackingActivity : AppCompatActivity() {
             val intent = Intent(this, StackingSettingsActivity::class.java)
             startActivity(intent)
         }
-        updateButtonsState()
 
         binding.loadImagesBtn.setOnClickListener { handleLoadImagesButtonClicked() }
         binding.analyseBtn.setOnClickListener { handleAnalyseButtonClicked() }
@@ -114,10 +117,14 @@ class StackingActivity : AppCompatActivity() {
 
         binding.logWindow.onCloseButtonClicked = ::handleLogWindowsClosed
 
-        val uris = intent.getParcelableArrayListExtra<Uri>(Intent.EXTRA_STREAM)
-        if (!uris.isNullOrEmpty()) {
-            startAction()
-            loadImages(uris)
+        for (bitmap in viewModel.bitmaps) {
+            binding.loadedImagesList.addView(BitmapListItem(
+                this, bitmap, ::handleBitmapRemoved
+            ))
+        }
+        if (viewModel.bitmaps.isNotEmpty()) {
+            binding.loadedImagesCount.isVisible = true
+            binding.loadedImagesCount.text = "Images: ${viewModel.bitmaps.size}"
         }
     }
 
