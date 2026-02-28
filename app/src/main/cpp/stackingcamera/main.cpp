@@ -126,3 +126,9 @@ Java_com_sedv_stackingcamera_stacking_StackingActivity_save(JNIEnv *env, jobject
         env->ThrowNew(env->FindClass("java/lang/RuntimeException"), e.what());
     }
 }
+extern "C"
+JNIEXPORT jint JNICALL
+Java_com_sedv_stackingcamera_stacking_StackingActivity_getIndexOfReferenceFrame(JNIEnv *env,
+                                                                                jobject thiz) {
+    return Core::updateReferenceFrameIndex();
+}

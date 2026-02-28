@@ -20,6 +20,7 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.forEach
 import androidx.core.view.forEachIndexed
+import androidx.core.view.get
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import com.sedv.stackingcamera.databinding.ActivityStackingBinding
@@ -117,14 +118,14 @@ class StackingActivity : AppCompatActivity() {
 
         binding.logWindow.onCloseButtonClicked = ::handleLogWindowsClosed
 
-        for (bitmap in viewModel.bitmaps) {
+        for (bitmap in viewModel.bitmapHandler.bitmaps) {
             binding.loadedImagesList.addView(BitmapListItem(
                 this, bitmap, ::handleBitmapRemoved
             ))
         }
-        if (viewModel.bitmaps.isNotEmpty()) {
+        if (viewModel.bitmapHandler.bitmaps.isNotEmpty()) {
             binding.loadedImagesCount.isVisible = true
-            binding.loadedImagesCount.text = "Images: ${viewModel.bitmaps.size}"
+            binding.loadedImagesCount.text = "Images: ${viewModel.bitmapHandler.bitmaps.size}"
         }
     }
 
@@ -144,7 +145,7 @@ class StackingActivity : AppCompatActivity() {
     private fun updateButtonsState() {
         val isIdle = viewModel.state == StackingState.IDLE
         binding.loadImagesBtn.isEnabled = isIdle
-        binding.analyseBtn.isEnabled = isIdle && viewModel.bitmaps.isNotEmpty()
+        binding.analyseBtn.isEnabled = isIdle && viewModel.bitmapHandler.bitmaps.isNotEmpty()
         binding.stackBtn.isEnabled = isIdle && viewModel.canStack() && (viewModel.isAllBitmapsInitialized() || binding.disableAlignmentCheckBox.isChecked)
         binding.saveBtn.isEnabled = isIdle && viewModel.hasStackedResult
         binding.loadedImagesList.forEach {
@@ -189,9 +190,9 @@ class StackingActivity : AppCompatActivity() {
                     }
 
                     bitmapInfo.name = fileName
-                    viewModel.bitmaps.add(bitmapInfo)
+                    viewModel.bitmapHandler.bitmaps.add(bitmapInfo)
                     binding.loadedImagesCount.isVisible = true
-                    binding.loadedImagesCount.text = "Images: ${viewModel.bitmaps.size}"
+                    binding.loadedImagesCount.text = "Images: ${viewModel.bitmapHandler.bitmaps.size}"
                     binding.loadedImagesList.addView(BitmapListItem(
                         this@StackingActivity,
                         bitmapInfo,
@@ -228,11 +229,18 @@ class StackingActivity : AppCompatActivity() {
     private fun handleBitmapRemoved(item: BitmapListItem) {
         val index = binding.loadedImagesList.indexOfChild(item)
         removeBitmap(index)
-        viewModel.bitmaps.removeAt(index)
+        val bitmapInfo = viewModel.bitmapHandler.bitmaps[index]
+        val isReferenceFrame = bitmapInfo == viewModel.bitmapHandler.referenceBitmap
+        viewModel.bitmapHandler.bitmaps.remove(bitmapInfo)
         binding.loadedImagesList.removeView(item)
-        binding.loadedImagesCount.text = "Images: ${viewModel.bitmaps.size}"
-        if (viewModel.bitmaps.isEmpty()) binding.loadedImagesCount.isVisible = false
+        binding.loadedImagesCount.text = "Images: ${viewModel.bitmapHandler.bitmaps.size}"
+        if (viewModel.bitmapHandler.bitmaps.isEmpty()) binding.loadedImagesCount.isVisible = false
         updateButtonsState()
+
+        if (isReferenceFrame) {
+            viewModel.bitmapHandler.referenceBitmap = null
+            updateReferenceFrame()
+        }
     }
 
     private fun handleAnalyseButtonClicked() {
@@ -248,8 +256,24 @@ class StackingActivity : AppCompatActivity() {
                 bitmapListItem.bitmapInfo.score = scores[index]
                 bitmapListItem.updateScore()
             }
+            updateReferenceFrame()
             endAction()
         }
+    }
+    private fun updateReferenceFrame() {
+        val index = getIndexOfReferenceFrame()
+        if (viewModel.bitmapHandler.bitmaps.isEmpty()) return
+        val bitmapInfo = viewModel.bitmapHandler.bitmaps[index]
+        bitmapInfo.isReferenceFrame = true
+
+        viewModel.bitmapHandler.referenceBitmap?.let {
+            it.isReferenceFrame = false
+            val oldIndex = viewModel.bitmapHandler.bitmaps.indexOf(it)
+            (binding.loadedImagesList[oldIndex] as BitmapListItem).updateReferenceFrameLabel()
+        }
+
+        viewModel.bitmapHandler.referenceBitmap = bitmapInfo
+        (binding.loadedImagesList[index] as BitmapListItem).updateReferenceFrameLabel()
     }
 
     private fun handleStackButtonClicked() {
@@ -370,6 +394,7 @@ class StackingActivity : AppCompatActivity() {
     external fun loadBitmap(fd: Int): Long
     external fun removeBitmap(index: Int)
     external fun analyse(reanalyse: Boolean): IntArray
+    external fun getIndexOfReferenceFrame(): Int
     external fun stack(disableAlignment: Boolean)
     external fun save(fd: Int, format: Int)
 

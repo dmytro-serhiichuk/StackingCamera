@@ -135,7 +135,7 @@
             android:text="Images: "
             android:visibility="gone"/>
         <ScrollView
-            android:layout_marginTop="@dimen/big_margin"
+            android:layout_marginVertical="@dimen/big_margin"
             android:layout_width="match_parent"
             android:layout_height="match_parent">
             <LinearLayout

@@ -4,7 +4,8 @@ class BitmapInfo(
     val width: Int,
     val height: Int,
     var name: String = "null",
-    var score: Int = -1
+    var score: Int = -1,
+    var isReferenceFrame: Boolean = false
 ) {
     val isAnalyzed: Boolean get() = score > 0
 }

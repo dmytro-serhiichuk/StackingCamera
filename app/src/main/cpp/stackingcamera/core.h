@@ -47,6 +47,7 @@ namespace Core {
                        int tiles_per_side, int max_keypoints, int max_matches,
                        float brisk_pattern_scale, bool use16_bit, bool use_images,
                        int image_format, bool save_keypoints, bool save_matches);
+    int32_t updateReferenceFrameIndex();
     void analyse(bool reanalyse);
     void stack(bool disableAlignment);
     void save(int fd, int format);

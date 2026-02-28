@@ -42,7 +42,7 @@ namespace Core {
     List<Data>* sources = new List<Data>(10);
     Bitmap* stackedResult = nullptr;
 
-    int32_t bestBitmapIndex = 0;
+    int32_t referenceFrameIndex = 0;
 
     void init(AAssetManager *aam) {
         CL::init(aam);
@@ -80,14 +80,15 @@ namespace Core {
         SAVE_MATCHES = save_matches;
     }
 
-    static void updateBestBitmapIndex() {
+    int32_t updateReferenceFrameIndex() {
         size_t n = 0;
         for (int32_t i = 0; i < sources->size; i++) {
             if (sources->buffer[i]->keyPoints->size > n) {
                 n = sources->buffer[i]->keyPoints->size;
-                bestBitmapIndex = i;
+                referenceFrameIndex = i;
             }
         }
+        return referenceFrameIndex;
     }
 
     void analyse(bool reanalyse) {
@@ -150,31 +151,31 @@ namespace Core {
             return;
         }
 
-        updateBestBitmapIndex();
-        JNIHelper::getInstance()->writeMessageToLog(false, "Index of the reference frame: %d\n", bestBitmapIndex);
+        updateReferenceFrameIndex();
+        JNIHelper::getInstance()->writeMessageToLog(false, "Index of the reference frame: %d\n", referenceFrameIndex);
 
-        Buffer<Buffer<Matching::Match>> *matches = Matching::match(*sources, bestBitmapIndex);
+        Buffer<Buffer<Matching::Match>> *matches = Matching::match(*sources, referenceFrameIndex);
 
         if (SAVE_MATCHES) {
-            Utils::drawAllMatches(*matches, bestBitmapIndex);
+            Utils::drawAllMatches(*matches, referenceFrameIndex);
         }
 
-        Buffer<Eigen::Matrix3d> *matrices = RANSAC::computeHomographyMatrices(*sources, bestBitmapIndex, *matches);
+        Buffer<Eigen::Matrix3d> *matrices = RANSAC::computeHomographyMatrices(*sources, referenceFrameIndex, *matches);
         delete matches;
 
-        auto warpManager = new WarpManager(*sources->buffer[bestBitmapIndex]->bitmapPtr);
-        List<BitmapPtr> *warpedBitmaps = warpManager->warp(*sources, bestBitmapIndex, *matrices);
+        auto warpManager = new WarpManager(*sources->buffer[referenceFrameIndex]->bitmapPtr);
+        List<BitmapPtr> *warpedBitmaps = warpManager->warp(*sources, referenceFrameIndex, *matrices);
         delete warpManager;
         delete matrices;
 
         auto stackedSrc = List<BitmapPtr>(sources->size, false);
-        stackedSrc.add(sources->buffer[bestBitmapIndex]->bitmapPtr);
+        stackedSrc.add(sources->buffer[referenceFrameIndex]->bitmapPtr);
         for (size_t i = 0; i < warpedBitmaps->size; i++) {
             stackedSrc.add(warpedBitmaps->buffer[i]);
         }
 
         JNIHelper::getInstance()->writeMessageToLog(false, "Starting median stacking");
-        stackedResult = MedianStacking::stack(stackedSrc, *sources->buffer[bestBitmapIndex]->bitmapPtr);
+        stackedResult = MedianStacking::stack(stackedSrc, *sources->buffer[referenceFrameIndex]->bitmapPtr);
         delete warpedBitmaps;
         JNIHelper::getInstance()->writeMessageToLog(false, "Median stacking completed");
     }

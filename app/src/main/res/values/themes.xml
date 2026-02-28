@@ -14,12 +14,4 @@
         <item name="colorSecondary">@color/secondary</item>
         <item name="android:windowBackground">@color/white</item>
     </style>
-
-    <style name="LogWindowStyle">
-        <item name="cornerFamily">rounded</item>
-        <item name="cornerSizeTopLeft">@dimen/cardview_default_radius</item>
-        <item name="cornerSizeTopRight">@dimen/cardview_default_radius</item>
-        <item name="cornerSizeBottomLeft">0dp</item>
-        <item name="cornerSizeBottomRight">0dp</item>
-    </style>
 </resources>

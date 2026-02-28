@@ -18,6 +18,8 @@
 
     <color name="info_icon_tint">#E9E900</color>
 
+    <color name="reference_frame_label_color">#E9E900</color>
+
 <!--    Night-->
     <color name="primary_night">#2B2845</color>
     <color name="secondary_night">#282838</color>

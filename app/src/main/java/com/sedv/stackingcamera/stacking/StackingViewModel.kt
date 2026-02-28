@@ -2,13 +2,12 @@ package com.sedv.stackingcamera.stacking
 
 import androidx.activity.ComponentActivity
 import androidx.lifecycle.ViewModel
-import com.sedv.stackingcamera.stacking.LoadedBitmapsHandler
 import com.sedv.stackingcamera.PermissionHelper
 
 class StackingViewModel : ViewModel() {
     private lateinit var _permissionHelper: PermissionHelper
     val permissionHelper get() = _permissionHelper
-    val bitmaps = LoadedBitmapsHandler.bitmaps
+    val bitmapHandler = LoadedBitmapsHandler
     var hasStackedResult = false
 
     var state = StackingState.NOT_READY
@@ -18,10 +17,10 @@ class StackingViewModel : ViewModel() {
     }
 
     fun canStack(): Boolean {
-        return bitmaps.size >= 2
+        return bitmapHandler.bitmaps.size >= 2
     }
     fun isAllBitmapsInitialized(): Boolean {
-        for (bitmap in bitmaps) {
+        for (bitmap in bitmapHandler.bitmaps) {
             if (!bitmap.isAnalyzed) return false
         }
         return true

@@ -12,6 +12,14 @@
         android:gravity="center_vertical"
         android:layout_marginRight="@dimen/medium_margin">
         <TextView
+            android:id="@+id/reference_frame_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/reference_frame_label"
+            android:textStyle="bold"
+            android:textColor="@color/reference_frame_label_color"
+            android:visibility="gone"/>
+        <TextView
             android:id="@+id/bitmap_name"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -20,17 +28,17 @@
             android:id="@+id/bitmap_width"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="bitmap name"/>
+            android:text="width"/>
         <TextView
             android:id="@+id/bitmap_height"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="bitmap name"/>
+            android:text="height"/>
         <TextView
             android:id="@+id/bitmap_score"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="bitmap name"
+            android:text="score"
             android:visibility="invisible"/>
     </LinearLayout>
 
