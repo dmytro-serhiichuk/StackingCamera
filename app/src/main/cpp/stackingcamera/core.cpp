@@ -43,6 +43,7 @@ namespace Core {
     Bitmap* stackedResult = nullptr;
 
     int32_t referenceFrameIndex = 0;
+    Buffer<Eigen::Matrix3d> *matrices = nullptr;
 
     void init(AAssetManager *aam) {
         CL::init(aam);
@@ -91,9 +92,17 @@ namespace Core {
         return referenceFrameIndex;
     }
 
+    void removeBitmapAt(int32_t index) {
+        sources->removeAt(index);
+        delete matrices;
+        matrices = nullptr;
+    }
+
     void analyse(bool reanalyse) {
         delete stackedResult;
         stackedResult = nullptr;
+        delete matrices;
+        matrices = nullptr;
 
         if (reanalyse) {
             for (size_t i = 0; i < sources->size; i++) {
@@ -127,6 +136,23 @@ namespace Core {
         }
     }
 
+    void match() {
+        if (sources->size < 2) {
+            throw std::runtime_error("Matching requires at least 2 images");
+        }
+
+        updateReferenceFrameIndex();
+
+        Buffer<Buffer<Matching::Match>> *matches = Matching::match(*sources, referenceFrameIndex);
+
+        if (SAVE_MATCHES) {
+            Utils::drawAllMatches(*matches, referenceFrameIndex);
+        }
+
+        matrices = RANSAC::computeHomographyMatrices(*sources, referenceFrameIndex, *matches);
+        delete matches;
+    }
+
     static void stackWithoutAlignment() {
         size_t bufferSize = sources->buffer[0]->bitmapPtr->bufferSize;
         auto stackedSrc = List<BitmapPtr>(sources->size, false);
@@ -149,24 +175,13 @@ namespace Core {
         if (disableAlignment) {
             stackWithoutAlignment();
             return;
+        } else if (matrices == nullptr) {
+            throw std::runtime_error("Matching was not performed");
         }
-
-        updateReferenceFrameIndex();
-        JNIHelper::getInstance()->writeMessageToLog(false, "Index of the reference frame: %d\n", referenceFrameIndex);
-
-        Buffer<Buffer<Matching::Match>> *matches = Matching::match(*sources, referenceFrameIndex);
-
-        if (SAVE_MATCHES) {
-            Utils::drawAllMatches(*matches, referenceFrameIndex);
-        }
-
-        Buffer<Eigen::Matrix3d> *matrices = RANSAC::computeHomographyMatrices(*sources, referenceFrameIndex, *matches);
-        delete matches;
 
         auto warpManager = new WarpManager(*sources->buffer[referenceFrameIndex]->bitmapPtr);
         List<BitmapPtr> *warpedBitmaps = warpManager->warp(*sources, referenceFrameIndex, *matrices);
         delete warpManager;
-        delete matrices;
 
         auto stackedSrc = List<BitmapPtr>(sources->size, false);
         stackedSrc.add(sources->buffer[referenceFrameIndex]->bitmapPtr);

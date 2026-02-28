@@ -48,7 +48,9 @@ namespace Core {
                        float brisk_pattern_scale, bool use16_bit, bool use_images,
                        int image_format, bool save_keypoints, bool save_matches);
     int32_t updateReferenceFrameIndex();
+    void removeBitmapAt(int32_t index);
     void analyse(bool reanalyse);
+    void match();
     void stack(bool disableAlignment);
     void save(int fd, int format);
 }

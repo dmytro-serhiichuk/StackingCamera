@@ -8,6 +8,7 @@ class StackingViewModel : ViewModel() {
     private lateinit var _permissionHelper: PermissionHelper
     val permissionHelper get() = _permissionHelper
     val bitmapHandler = LoadedBitmapsHandler
+    var hasMatches = false
     var hasStackedResult = false
 
     var state = StackingState.NOT_READY
@@ -16,7 +17,7 @@ class StackingViewModel : ViewModel() {
         _permissionHelper = PermissionHelper(activity)
     }
 
-    fun canStack(): Boolean {
+    fun hasEnoughBitmaps(): Boolean {
         return bitmapHandler.bitmaps.size >= 2
     }
     fun isAllBitmapsInitialized(): Boolean {

@@ -84,7 +84,7 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_com_sedv_stackingcamera_stacking_StackingActivity_removeBitmap(JNIEnv *env, jobject thiz,
                                                                     jint index) {
-    Core::sources->removeAt(index);
+    Core::removeBitmapAt(index);
 }
 extern "C"
 JNIEXPORT jintArray JNICALL
@@ -104,6 +104,16 @@ Java_com_sedv_stackingcamera_stacking_StackingActivity_analyse(JNIEnv *env, jobj
 
     delete [] scores;
     return jscores;
+}
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_sedv_stackingcamera_stacking_StackingActivity_match(JNIEnv *env, jobject thiz) {
+    try {
+        JNIHelper::getInstance()->updateHelper(env, thiz);
+        Core::match();
+    } catch (std::exception &e) {
+        env->ThrowNew(env->FindClass("java/lang/RuntimeException"), e.what());
+    }
 }
 extern "C"
 JNIEXPORT void JNICALL

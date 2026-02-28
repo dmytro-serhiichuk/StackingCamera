@@ -89,11 +89,20 @@
                 android:layout_column="1"/>
 
             <Button
+                android:id="@+id/match_btn"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Match"
+                android:layout_row="2"
+                android:layout_column="0"
+                android:layout_gravity="fill_horizontal"/>
+
+            <Button
                 android:id="@+id/stack_btn"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Stack"
-                android:layout_row="2"
+                android:layout_row="3"
                 android:layout_column="0"
                 android:layout_gravity="fill_horizontal"/>
             <CheckBox
@@ -101,7 +110,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Disable Alignment"
-                android:layout_row="2"
+                android:layout_row="3"
                 android:layout_column="1"/>
 
             <Button
@@ -109,7 +118,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Save Result"
-                android:layout_row="3"
+                android:layout_row="4"
                 android:layout_column="0"
                 android:layout_gravity="fill_horizontal"/>
             <com.google.android.material.textfield.TextInputLayout
@@ -117,7 +126,7 @@
                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_row="3"
+                android:layout_row="4"
                 android:layout_column="1">
                 <AutoCompleteTextView
                     android:id="@+id/output_format_selector_auto_complete_text_view"
