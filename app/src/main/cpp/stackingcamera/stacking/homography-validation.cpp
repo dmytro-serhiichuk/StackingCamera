@@ -190,7 +190,7 @@ namespace HomographyValidation {
             info.shear = Status::OK;
         }
 
-        if (mat.svd_ratio >= MAX_WARN_ANISOTROPY_DEFORMATION) {
+        if (mat.svd_ratio >= MAX_BAD_ANISOTROPY_DEFORMATION) {
             info.anisotropy = Status::BAD;
         } else if (mat.svd_ratio >= MAX_WARN_ANISOTROPY_DEFORMATION) {
             info.anisotropy = Status::WARNING;

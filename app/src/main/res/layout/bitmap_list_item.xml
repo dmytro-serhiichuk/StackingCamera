@@ -40,6 +40,13 @@
             android:layout_height="wrap_content"
             android:text="score"
             android:visibility="invisible"/>
+        <TextView
+            android:id="@+id/bitmap_warning_message"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textStyle="bold"
+            android:text="@string/bitmap_warning_message"
+            android:visibility="gone"/>
     </LinearLayout>
 
     <Button

@@ -52,8 +52,7 @@ namespace Core {
     int32_t updateReferenceFrameIndex();
     void removeBitmapAt(int32_t index);
     void analyse(bool reanalyse);
-    void match();
-    std::vector<HomographyValidation::ValidationInfo> validateMatrices();
+    std::vector<HomographyValidation::ValidationInfo> match();
     void stack(bool disableAlignment);
     void save(int fd, int format);
 }

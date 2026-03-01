@@ -201,6 +201,8 @@ class StackingActivity : AppCompatActivity() {
                         ::handleBitmapRemoved
                     ))
 
+                    removeReferenceFrame()
+
                     binding.logWindow.addMessage("Image: $fileName loaded")
                 }
                 catch (e: NullPointerException) {
@@ -229,6 +231,8 @@ class StackingActivity : AppCompatActivity() {
         return BitmapInfo(width, height)
     }
     private fun handleBitmapRemoved(item: BitmapListItem) {
+        val allWereInitialized = viewModel.isAllBitmapsInitialized()
+
         val index = binding.loadedImagesList.indexOfChild(item)
         removeBitmap(index)
         val bitmapInfo = viewModel.bitmapHandler.bitmaps[index]
@@ -238,12 +242,20 @@ class StackingActivity : AppCompatActivity() {
         binding.loadedImagesCount.text = "Images: ${viewModel.bitmapHandler.bitmaps.size}"
         if (viewModel.bitmapHandler.bitmaps.isEmpty()) binding.loadedImagesCount.isVisible = false
 
+        // TODO: keep matches and warnings if not reference frame was removed
         viewModel.hasMatches = false
+        viewModel.bitmapHandler.bitmaps.forEach { it.homographyValidationInfo = null }
+        binding.loadedImagesList.forEach { (it as BitmapListItem).updateWarningMessage() }
+
         updateButtonsState()
 
         if (isReferenceFrame) {
             viewModel.bitmapHandler.referenceBitmap = null
-            updateReferenceFrame()
+        }
+        if (!allWereInitialized && viewModel.isAllBitmapsInitialized()) {
+            lifecycleScope.launch {
+                updateReferenceFrame()
+            }
         }
     }
 
@@ -265,20 +277,26 @@ class StackingActivity : AppCompatActivity() {
             endAction()
         }
     }
-    private fun updateReferenceFrame() {
-        val index = getIndexOfReferenceFrame()
+    private suspend fun updateReferenceFrame() {
+        val index = withContext(Dispatchers.Default) {
+            getIndexOfReferenceFrame()
+        }
         if (viewModel.bitmapHandler.bitmaps.isEmpty()) return
+
+        removeReferenceFrame()
+
         val bitmapInfo = viewModel.bitmapHandler.bitmaps[index]
         bitmapInfo.isReferenceFrame = true
 
+        viewModel.bitmapHandler.referenceBitmap = bitmapInfo
+        (binding.loadedImagesList[index] as BitmapListItem).updateReferenceFrameLabel()
+    }
+    private fun removeReferenceFrame() {
         viewModel.bitmapHandler.referenceBitmap?.let {
             it.isReferenceFrame = false
             val oldIndex = viewModel.bitmapHandler.bitmaps.indexOf(it)
             (binding.loadedImagesList[oldIndex] as BitmapListItem).updateReferenceFrameLabel()
         }
-
-        viewModel.bitmapHandler.referenceBitmap = bitmapInfo
-        (binding.loadedImagesList[index] as BitmapListItem).updateReferenceFrameLabel()
     }
 
     private fun handleMatchButtonClicked() {
@@ -287,10 +305,26 @@ class StackingActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             try {
-                withContext(Dispatchers.Default) {
+                val flat = withContext(Dispatchers.Default) {
                     match()
                 }
                 viewModel.hasMatches = true
+
+                flat.toList().chunked(FIELDS_PER_MATCH_RESULT) { chunk ->
+                    viewModel.bitmapHandler.bitmaps[chunk[0]].apply {
+                        homographyValidationInfo = HomographyValidationInfo(
+                            HomographyValidationStatus.fromInt(chunk[1]),
+                            HomographyValidationStatus.fromInt(chunk[2]),
+                            HomographyValidationStatus.fromInt(chunk[3]),
+                            HomographyValidationStatus.fromInt(chunk[4]),
+                            HomographyValidationStatus.fromInt(chunk[5]),
+                            HomographyValidationStatus.fromInt(chunk[6]),
+                            chunk[7] != 0,
+                            chunk[8] != 0
+                        )
+                        (binding.loadedImagesList[chunk[0]] as BitmapListItem).updateWarningMessage()
+                    }
+                }
             }
             catch (e: RuntimeException) {
                 binding.logWindow.addMessage("Error: ${e.message}", true)
@@ -418,13 +452,14 @@ class StackingActivity : AppCompatActivity() {
     external fun removeBitmap(index: Int)
     external fun analyse(reanalyse: Boolean): IntArray
     external fun getIndexOfReferenceFrame(): Int
-    external fun match()
+    external fun match(): IntArray
     external fun stack(disableAlignment: Boolean)
     external fun save(fd: Int, format: Int)
 
     companion object {
         const val APP_DIRECTORY = "/StackingCamera/"
         val OUTPUT_FORMATS = listOf(".jpg", ".png", ".tiff")
+        const val FIELDS_PER_MATCH_RESULT = 9;
         init {
             System.loadLibrary("stackingcamera")
         }

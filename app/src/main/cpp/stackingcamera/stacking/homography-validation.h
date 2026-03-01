@@ -16,6 +16,8 @@ namespace HomographyValidation {
     };
 
     typedef struct ValidationInfo {
+        static const int32_t FIELDS_NUMBER = 9;
+
         Status scale;
         Status translationX;
         Status translationY;
@@ -24,6 +26,7 @@ namespace HomographyValidation {
         Status anisotropy;
         bool isConvex;
         bool mirrored;
+        int32_t bitmapIndex;
     } ValidationInfo;
 
     ValidationInfo validate(Eigen::Matrix3d &matrix, int32_t width, int32_t height);

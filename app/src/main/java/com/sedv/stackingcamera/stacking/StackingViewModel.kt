@@ -8,7 +8,9 @@ class StackingViewModel : ViewModel() {
     private lateinit var _permissionHelper: PermissionHelper
     val permissionHelper get() = _permissionHelper
     val bitmapHandler = LoadedBitmapsHandler
+    // TODO: move to static object
     var hasMatches = false
+    // TODO: move to static object
     var hasStackedResult = false
 
     var state = StackingState.NOT_READY

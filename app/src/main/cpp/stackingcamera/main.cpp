@@ -106,13 +106,35 @@ Java_com_sedv_stackingcamera_stacking_StackingActivity_analyse(JNIEnv *env, jobj
     return jscores;
 }
 extern "C"
-JNIEXPORT void JNICALL
+JNIEXPORT jintArray JNICALL
 Java_com_sedv_stackingcamera_stacking_StackingActivity_match(JNIEnv *env, jobject thiz) {
     try {
         JNIHelper::getInstance()->updateHelper(env, thiz);
-        Core::match();
+        auto infos = Core::match();
+
+        int totalSize = HomographyValidation::ValidationInfo::FIELDS_NUMBER * infos.size();
+
+        jintArray result = env->NewIntArray(totalSize);
+        std::vector<jint> flat;
+        flat.reserve(totalSize);
+
+        for(const auto& info : infos) {
+            flat.push_back(info.bitmapIndex);
+            flat.push_back(static_cast<int>(info.scale));
+            flat.push_back(static_cast<int>(info.translationX));
+            flat.push_back(static_cast<int>(info.translationY));
+            flat.push_back(static_cast<int>(info.perspective));
+            flat.push_back(static_cast<int>(info.shear));
+            flat.push_back(static_cast<int>(info.anisotropy));
+            flat.push_back(info.isConvex ? 1 : 0);
+            flat.push_back(info.mirrored ? 1 : 0);
+        }
+
+        env->SetIntArrayRegion(result, 0, totalSize, flat.data());
+        return result;
     } catch (std::exception &e) {
         env->ThrowNew(env->FindClass("java/lang/RuntimeException"), e.what());
+        return nullptr;
     }
 }
 extern "C"

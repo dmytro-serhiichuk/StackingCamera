@@ -20,6 +20,9 @@
 
     <color name="reference_frame_label_color">#E9E900</color>
 
+    <color name="warning_text_color">#E9C200</color>
+    <color name="error_text_color">#FF0000</color>
+
 <!--    Night-->
     <color name="primary_night">#2B2845</color>
     <color name="secondary_night">#282838</color>

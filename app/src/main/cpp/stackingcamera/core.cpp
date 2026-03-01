@@ -136,7 +136,32 @@ namespace Core {
         }
     }
 
-    void match() {
+    static std::vector<HomographyValidation::ValidationInfo> validateMatrices() {
+        if (matrices == nullptr || matrices->size == 0) {
+            throw std::runtime_error("Homography estimation was not performed");
+        }
+
+        std::vector<HomographyValidation::ValidationInfo> infos {};
+        infos.reserve(matrices->size);
+
+        int32_t matrixIndex = 0;
+        for (int32_t i = 0; i < sources->size; i++) {
+            if (i == referenceFrameIndex) continue;
+            auto bmp = sources->buffer[i]->bitmapPtr;
+            auto info = HomographyValidation::validate(
+                    (*matrices)[matrixIndex],
+                    (int32_t)bmp->width,
+                    (int32_t)bmp->height
+            );
+            info.bitmapIndex = i;
+            infos.push_back(info);
+            matrixIndex++;
+        }
+
+        return infos;
+    }
+
+    std::vector<HomographyValidation::ValidationInfo> match() {
         if (sources->size < 2) {
             throw std::runtime_error("Matching requires at least 2 images");
         }
@@ -151,29 +176,8 @@ namespace Core {
 
         matrices = RANSAC::computeHomographyMatrices(*sources, referenceFrameIndex, *matches);
         delete matches;
-    }
 
-    std::vector<HomographyValidation::ValidationInfo> validateMatrices() {
-        if (matrices == nullptr || matrices->size == 0) {
-            throw std::runtime_error("Homography estimation was not performed");
-        }
-
-        std::vector<HomographyValidation::ValidationInfo> infos {};
-        infos.reserve(matrices->size);
-
-        size_t matrixIndex = 0;
-        for (size_t i = 0; i < sources->size; i++) {
-            if (i == referenceFrameIndex) continue;
-            auto bmp = sources->buffer[i]->bitmapPtr;
-            infos.push_back(HomographyValidation::validate(
-                (*matrices)[matrixIndex],
-                (int32_t)bmp->width,
-                (int32_t)bmp->height
-            ));
-            matrixIndex++;
-        }
-
-        return infos;
+        return validateMatrices();
     }
 
     static void stackWithoutAlignment() {
