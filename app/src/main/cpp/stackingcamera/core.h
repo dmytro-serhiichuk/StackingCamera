@@ -9,6 +9,8 @@
 #include "jni-helper.h"
 #include "m-brisk/m-brisk.h"
 #include "collections/list.h"
+#include <vector>
+#include "stacking/homography-validation.h"
 
 using namespace ImageIO;
 
@@ -51,6 +53,7 @@ namespace Core {
     void removeBitmapAt(int32_t index);
     void analyse(bool reanalyse);
     void match();
+    std::vector<HomographyValidation::ValidationInfo> validateMatrices();
     void stack(bool disableAlignment);
     void save(int fd, int format);
 }
