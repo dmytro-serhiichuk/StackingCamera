@@ -2,57 +2,58 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="horizontal">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical">
 
     <LinearLayout
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:orientation="vertical"
-        android:gravity="center_vertical"
-        android:layout_marginRight="@dimen/medium_margin">
-        <TextView
-            android:id="@+id/reference_frame_label"
+        android:orientation="horizontal">
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/reference_frame_label"
-            android:textStyle="bold"
-            android:textColor="@color/reference_frame_label_color"
-            android:visibility="gone"/>
-        <TextView
-            android:id="@+id/bitmap_name"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center_vertical"
+            android:layout_marginRight="@dimen/medium_margin">
+            <TextView
+                android:id="@+id/bitmap_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="@dimen/bitmap_list_item_name_text_size"
+                android:textStyle="bold"/>
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/reference_frame_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginVertical="@dimen/reference_frame_label_margin_v"
+                android:text="@string/reference_frame_label"
+                android:textStyle="bold"
+                android:textColor="@color/reference_frame_label_color"
+                android:textSize="@dimen/reference_frame_label_size"
+                android:visibility="gone"
+                android:background="@drawable/reference_frame_label"
+                android:gravity="center"/>
+            <TextView
+                android:id="@+id/bitmap_additional_info"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="@dimen/bitmap_list_item_text_size"/>
+        </LinearLayout>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/remove_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="bitmap name"/>
-        <TextView
-            android:id="@+id/bitmap_width"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="width"/>
-        <TextView
-            android:id="@+id/bitmap_height"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="height"/>
-        <TextView
-            android:id="@+id/bitmap_score"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="score"
-            android:visibility="invisible"/>
-        <TextView
-            android:id="@+id/bitmap_warning_message"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textStyle="bold"
-            android:text="@string/bitmap_warning_message"
-            android:visibility="gone"/>
+            android:layout_gravity="center"
+            app:icon="@drawable/outline_close_24"
+            app:iconTint="@color/white"
+            style="@style/Widget.Material3.Button.IconButton.Filled"/>
     </LinearLayout>
 
-    <Button
-        android:id="@+id/remove_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:text="Remove"/>
+    <com.sedv.stackingcamera.stacking.BitmapWarningView
+        android:id="@+id/bitmap_warning_message"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
 </LinearLayout>

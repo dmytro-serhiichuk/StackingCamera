@@ -18,10 +18,15 @@
 
     <color name="info_icon_tint">#E9E900</color>
 
-    <color name="reference_frame_label_color">#E9E900</color>
+    <color name="reference_frame_label_color">@color/white</color>
 
-    <color name="warning_text_color">#E9C200</color>
-    <color name="error_text_color">#FF0000</color>
+    <color name="warning_bg">#FFFBEB</color>
+    <color name="warning_border">#F0B429</color>
+    <color name="warning_text">#8A6200</color>
+
+    <color name="error_bg">#FDECEA</color>
+    <color name="error_border">#E74C3C</color>
+    <color name="error_text">#C0392B</color>
 
 <!--    Night-->
     <color name="primary_night">#2B2845</color>

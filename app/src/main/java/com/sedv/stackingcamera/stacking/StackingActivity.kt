@@ -252,7 +252,7 @@ class StackingActivity : AppCompatActivity() {
         if (isReferenceFrame) {
             viewModel.bitmapHandler.referenceBitmap = null
         }
-        if (!allWereInitialized && viewModel.isAllBitmapsInitialized()) {
+        if ((!allWereInitialized && viewModel.isAllBitmapsInitialized()) || (allWereInitialized && isReferenceFrame)) {
             lifecycleScope.launch {
                 updateReferenceFrame()
             }
@@ -271,7 +271,7 @@ class StackingActivity : AppCompatActivity() {
             binding.loadedImagesList.forEachIndexed { index, item ->
                 val bitmapListItem = item as BitmapListItem
                 bitmapListItem.bitmapInfo.score = scores[index]
-                bitmapListItem.updateScore()
+                bitmapListItem.updateAdditionalInfoText()
             }
             updateReferenceFrame()
             endAction()

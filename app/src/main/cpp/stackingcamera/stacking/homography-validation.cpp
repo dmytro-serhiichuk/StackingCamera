@@ -63,7 +63,7 @@ namespace {
         double shear = q0.dot(col1);
         double sy = (col1 - shear * q0).norm();
 
-        m.shear_angle = std::atan2(shear, sy) * 180.0 / M_PI;
+        m.shear_angle = std::abs(std::atan2(shear, sy) * 180.0 / M_PI);
 
         return m;
     }

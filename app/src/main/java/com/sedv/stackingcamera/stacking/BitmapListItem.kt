@@ -17,10 +17,8 @@ class BitmapListItem(
     private val binding = BitmapListItemBinding.inflate(LayoutInflater.from(context), this, true)
 
     init {
-        binding.bitmapName.text   = "Name: ${bitmapInfo.name}"
-        binding.bitmapWidth.text  = "Width: ${bitmapInfo.width}"
-        binding.bitmapHeight.text = "Height: ${bitmapInfo.height}"
-        updateScore()
+        binding.bitmapName.text = "${bitmapInfo.name}"
+        updateAdditionalInfoText()
         updateReferenceFrameLabel()
         updateWarningMessage()
 
@@ -29,12 +27,11 @@ class BitmapListItem(
         }
     }
 
-    fun updateScore() {
+    fun updateAdditionalInfoText() {
         if (bitmapInfo.score != -1) {
-            binding.bitmapScore.visibility = VISIBLE
-            binding.bitmapScore.text  = "Score: ${bitmapInfo.score}"
+            binding.bitmapAdditionalInfo.text = "${bitmapInfo.width} x ${bitmapInfo.height} | Keypoints: ${bitmapInfo.score}"
         } else {
-            binding.bitmapScore.visibility = INVISIBLE
+            binding.bitmapAdditionalInfo.text = "${bitmapInfo.width} x ${bitmapInfo.height}"
         }
     }
 
@@ -53,10 +50,8 @@ class BitmapListItem(
             if (hasBadStatus || hasWarningStatus) {
                 binding.bitmapWarningMessage.isVisible = true
 
-                binding.bitmapWarningMessage.setTextColor(
-                    if (hasBadStatus) ContextCompat.getColor(context, R.color.error_text_color)
-                    else ContextCompat.getColor(context, R.color.warning_text_color)
-                )
+                val level = if (hasBadStatus) WarningLevel.BAD else WarningLevel.WARNING
+                binding.bitmapWarningMessage.setValues(level, vInfo.getMessage())
             } else {
                 binding.bitmapWarningMessage.isVisible = false
             }

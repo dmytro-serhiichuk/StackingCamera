@@ -75,4 +75,18 @@
 <!--    Stacking Settings-->
     <dimen name="stacking_settings_switch_description_text_size">12sp</dimen>
     <dimen name="stacking_settings_slider_thumb_height">25dp</dimen>
+
+<!--    Bitmap List Item-->
+    <dimen name="reference_frame_label_margin_v">4dp</dimen>
+    <dimen name="reference_frame_label_padding_v">4dp</dimen>
+    <dimen name="reference_frame_label_padding_h">7dp</dimen>
+    <dimen name="reference_frame_label_corner_radius">12dp</dimen>
+    <dimen name="reference_frame_label_size">11sp</dimen>
+    <dimen name="bitmap_list_item_name_text_size">14sp</dimen>
+    <dimen name="bitmap_list_item_text_size">11sp</dimen>
+    <dimen name="bitmap_warning_height">36dp</dimen>
+    <dimen name="bitmap_warning_padding_h">10dp</dimen>
+    <dimen name="bitmap_warning_padding_v">8dp</dimen>
+    <dimen name="bitmap_warning_text_size">12sp</dimen>
+    <dimen name="bitmap_warning_chevron_text_size">10sp</dimen>
 </resources>

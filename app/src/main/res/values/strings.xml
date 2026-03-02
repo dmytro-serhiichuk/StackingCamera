@@ -1,5 +1,5 @@
 <resources>
     <string name="app_name">StackingCamera</string>
-    <string name="reference_frame_label">⭐ Reference Frame</string>
+    <string name="reference_frame_label">✦ REFERENCE</string>
     <string name="bitmap_warning_message">⚠ Warning</string>
 </resources>

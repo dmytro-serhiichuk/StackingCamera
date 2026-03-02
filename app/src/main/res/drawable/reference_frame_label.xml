@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="?attr/colorPrimary"/>
+    <corners android:radius="@dimen/reference_frame_label_corner_radius"/>
+    <padding
+        android:left="@dimen/reference_frame_label_padding_h"
+        android:top="@dimen/reference_frame_label_padding_v"
+        android:right="@dimen/reference_frame_label_padding_h"
+        android:bottom="@dimen/reference_frame_label_padding_v"/>
+</shape>
