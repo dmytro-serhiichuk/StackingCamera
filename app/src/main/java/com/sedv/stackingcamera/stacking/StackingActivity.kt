@@ -202,6 +202,7 @@ class StackingActivity : AppCompatActivity() {
                     ))
 
                     removeReferenceFrame()
+                    removeMatchesInfo()
 
                     binding.logWindow.addMessage("Image: $fileName loaded")
                 }
@@ -230,6 +231,11 @@ class StackingActivity : AppCompatActivity() {
         val height = packedData.toInt()
         return BitmapInfo(width, height)
     }
+    private fun removeMatchesInfo() {
+        viewModel.hasMatches = false
+        viewModel.bitmapHandler.bitmaps.forEach { it.homographyValidationInfo = null }
+        binding.loadedImagesList.forEach { (it as BitmapListItem).updateWarningMessage() }
+    }
     private fun handleBitmapRemoved(item: BitmapListItem) {
         val allWereInitialized = viewModel.isAllBitmapsInitialized()
 
@@ -242,15 +248,11 @@ class StackingActivity : AppCompatActivity() {
         binding.loadedImagesCount.text = "Images: ${viewModel.bitmapHandler.bitmaps.size}"
         if (viewModel.bitmapHandler.bitmaps.isEmpty()) binding.loadedImagesCount.isVisible = false
 
-        // TODO: keep matches and warnings if not reference frame was removed
-        viewModel.hasMatches = false
-        viewModel.bitmapHandler.bitmaps.forEach { it.homographyValidationInfo = null }
-        binding.loadedImagesList.forEach { (it as BitmapListItem).updateWarningMessage() }
-
         updateButtonsState()
 
         if (isReferenceFrame) {
             viewModel.bitmapHandler.referenceBitmap = null
+            removeMatchesInfo()
         }
         if ((!allWereInitialized && viewModel.isAllBitmapsInitialized()) || (allWereInitialized && isReferenceFrame)) {
             lifecycleScope.launch {
@@ -261,7 +263,7 @@ class StackingActivity : AppCompatActivity() {
 
     private fun handleAnalyseButtonClicked() {
         startAction()
-        viewModel.hasMatches = false
+        removeMatchesInfo()
         viewModel.hasStackedResult = false
 
         lifecycleScope.launch {

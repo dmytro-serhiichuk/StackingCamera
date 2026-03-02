@@ -54,6 +54,8 @@ namespace Core {
         auto data = new Data();
         data->bitmapPtr = bitmapPtr;
         sources->add(data);
+        delete matrices;
+        matrices = nullptr;
     }
 
     void applySettings(int fast_threshold, float ransac_threshold, int ransac_iterations,
@@ -94,8 +96,10 @@ namespace Core {
 
     void removeBitmapAt(int32_t index) {
         sources->removeAt(index);
-        delete matrices;
-        matrices = nullptr;
+        if (index == referenceFrameIndex) {
+            delete matrices;
+            matrices = nullptr;
+        }
     }
 
     void analyse(bool reanalyse) {
