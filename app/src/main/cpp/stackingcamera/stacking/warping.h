@@ -5,7 +5,7 @@
 #ifndef STACKINGCAMERA_WARPING_H
 #define STACKINGCAMERA_WARPING_H
 
-#include <eigen3/Eigen/Dense>
+#include <matching/ransac.h>
 #include "core.h"
 
 using namespace ImageIO;
@@ -21,7 +21,7 @@ public:
 
     WarpManager(BitmapPtr& baseBitmap);
     ~WarpManager();
-    List<BitmapPtr> *warp(List<Core::Data> &sources, uint32_t bestIndex, Buffer<Eigen::Matrix3d> &matrices);
+    List<BitmapPtr> *warp(List<Core::Data> &sources, uint32_t bestIndex, Buffer<RANSAC::Result> &homographies);
 
 private:
     BitmapPtr *warpSingleBitmap(Bitmap &bitmap, const Eigen::Matrix3d &H);

@@ -112,7 +112,7 @@ Java_com_sedv_stackingcamera_stacking_StackingActivity_match(JNIEnv *env, jobjec
         JNIHelper::getInstance()->updateHelper(env, thiz);
         auto infos = Core::match();
 
-        int totalSize = HomographyValidation::ValidationInfo::FIELDS_NUMBER * infos.size();
+        int totalSize = Validation::ValidationInfo::FIELDS_NUMBER * infos.size();
 
         jintArray result = env->NewIntArray(totalSize);
         std::vector<jint> flat;
@@ -120,14 +120,18 @@ Java_com_sedv_stackingcamera_stacking_StackingActivity_match(JNIEnv *env, jobjec
 
         for(const auto& info : infos) {
             flat.push_back(info.bitmapIndex);
-            flat.push_back(static_cast<int>(info.scale));
-            flat.push_back(static_cast<int>(info.translationX));
-            flat.push_back(static_cast<int>(info.translationY));
-            flat.push_back(static_cast<int>(info.perspective));
-            flat.push_back(static_cast<int>(info.shear));
-            flat.push_back(static_cast<int>(info.anisotropy));
-            flat.push_back(info.isConvex ? 1 : 0);
-            flat.push_back(info.mirrored ? 1 : 0);
+            flat.push_back(static_cast<int>(info.homographyValidationInfo.scale));
+            flat.push_back(static_cast<int>(info.homographyValidationInfo.translationX));
+            flat.push_back(static_cast<int>(info.homographyValidationInfo.translationY));
+            flat.push_back(static_cast<int>(info.homographyValidationInfo.perspective));
+            flat.push_back(static_cast<int>(info.homographyValidationInfo.shear));
+            flat.push_back(static_cast<int>(info.homographyValidationInfo.anisotropy));
+            flat.push_back(info.homographyValidationInfo.isConvex ? 1 : 0);
+            flat.push_back(info.homographyValidationInfo.mirrored ? 1 : 0);
+
+            flat.push_back(static_cast<int>(info.matchesValidationInfo.inliersPercentage));
+            flat.push_back(static_cast<int>(info.matchesValidationInfo.inliersNumber));
+            flat.push_back(static_cast<int>(info.matchesValidationInfo.evenDistribution));
         }
 
         env->SetIntArrayRegion(result, 0, totalSize, flat.data());

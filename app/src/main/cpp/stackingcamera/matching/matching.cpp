@@ -19,31 +19,39 @@ namespace Matching {
         distance = _dist;
     }
 
-    MatchingCLBuffers::MatchingCLBuffers(size_t c) {
-        count = c;
-        size = count * sizeof(int32_t);
+    typedef struct MatchingCLBuffers {
+        cl_mem closestIndicesBuffer;
+        cl_mem distancesBuffer;
+        int32_t* closestIndices;
+        int32_t* distances;
 
-        closestIndices = new int32_t[count]();
-        distances      = new int32_t[count]();
+        size_t size;
+        size_t count;
 
-        closestIndicesBuffer = CL::createBuffer(
-                CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR,
-                size, nullptr
-        );
-        distancesBuffer = CL::createBuffer(
-                CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR,
-                size, nullptr
-        );
-    }
+        MatchingCLBuffers(size_t c) {
+            count = c;
+            size = count * sizeof(int32_t);
 
-    MatchingCLBuffers::~MatchingCLBuffers() {
-        delete [] closestIndices;
-        delete [] distances;
+            closestIndices = new int32_t[count]();
+            distances      = new int32_t[count]();
 
-        clReleaseMemObject(closestIndicesBuffer);
-        clReleaseMemObject(distancesBuffer);
-    }
+            closestIndicesBuffer = CL::createBuffer(
+                    CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR,
+                    size, nullptr
+            );
+            distancesBuffer = CL::createBuffer(
+                    CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR,
+                    size, nullptr
+            );
+        }
+        ~MatchingCLBuffers() {
+            delete [] closestIndices;
+            delete [] distances;
 
+            clReleaseMemObject(closestIndicesBuffer);
+            clReleaseMemObject(distancesBuffer);
+        }
+    } MatchingCLBuffers;
 
     Buffer<Buffer<Match>> *match(List<Core::Data> &sources, uint32_t bestIndex) {
         auto &bmp = *sources.buffer[bestIndex]->bitmapPtr;

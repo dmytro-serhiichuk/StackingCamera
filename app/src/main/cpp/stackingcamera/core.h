@@ -10,7 +10,7 @@
 #include "m-brisk/m-brisk.h"
 #include "collections/list.h"
 #include <vector>
-#include "stacking/homography-validation.h"
+#include "matching/validation/validation.h"
 
 using namespace ImageIO;
 
@@ -52,7 +52,7 @@ namespace Core {
     int32_t updateReferenceFrameIndex();
     void removeBitmapAt(int32_t index);
     void analyse(bool reanalyse);
-    std::vector<HomographyValidation::ValidationInfo> match();
+    std::vector<Validation::ValidationInfo> match();
     void stack(bool disableAlignment);
     void save(int fd, int format);
 }

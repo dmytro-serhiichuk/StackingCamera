@@ -9,12 +9,6 @@
 
 namespace RANSAC {
     namespace {
-        typedef struct InlierInfo {
-            int32_t count = 0;
-            double errorFactor = 0.0;
-            std::vector<bool> mask;
-        } InlierInfo;
-
         void shuffleMatches(Buffer<Matching::Match> &matches, int32_t* indices) {
             auto seed = std::chrono::system_clock::now().time_since_epoch().count();
             std::default_random_engine generator(seed);
@@ -52,13 +46,13 @@ namespace RANSAC {
             return Eigen::Vector2d(projected[0] / projected[2], projected[1] / projected[2]);
         }
 
-        InlierInfo findInliers(
+        InliersInfo findInliers(
                 Buffer<Matching::Match> &matches,
                 Buffer<KeyPoint> &kps1,
                 Buffer<KeyPoint> &kps2,
                 Eigen::Matrix3d &H
         ) {
-            InlierInfo info;
+            InliersInfo info;
             info.mask.resize(matches.size, false);
             info.count = 0;
             info.errorFactor = 0.0;
@@ -84,7 +78,7 @@ namespace RANSAC {
                 Buffer<Matching::Match> &matches,
                 Buffer<KeyPoint> &kps1,
                 Buffer<KeyPoint> &kps2,
-                InlierInfo &inliersMask
+                InliersInfo &inliersMask
         ) {
             Eigen::MatrixXd A(inliersMask.count * 2, 9);
             int rowIdx = 0;
@@ -114,10 +108,10 @@ namespace RANSAC {
             return H;
         }
 
-        Eigen::Matrix3d computeHomography(Buffer<Matching::Match> &matches, Buffer<KeyPoint> &kps1,
+        Result computeHomography(Buffer<Matching::Match> &matches, Buffer<KeyPoint> &kps1,
                                           Buffer<KeyPoint> &kps2) {
             Eigen::Matrix3d bestH;
-            InlierInfo bestInliers;
+            InliersInfo bestInliers;
 
             int32_t* indices = new int32_t[matches.size];
             for (size_t i = 0; i < matches.size; i++) {
@@ -127,7 +121,7 @@ namespace RANSAC {
             for (size_t i = 0; i < Core::RANSAC_ITERATIONS; i++) {
                 shuffleMatches(matches, indices);
                 Eigen::Matrix3d H = findHomography(matches, kps1, kps2, indices);
-                InlierInfo inlierInfo = findInliers(matches, kps1, kps2, H);
+                InliersInfo inlierInfo = findInliers(matches, kps1, kps2, H);
 
                 if ((inlierInfo.count > bestInliers.count) || (inlierInfo.count == bestInliers.count && inlierInfo.errorFactor < bestInliers.errorFactor)) {
                     bestH = H;
@@ -137,7 +131,7 @@ namespace RANSAC {
 
             Eigen::Matrix3d refinedH = refineHomographyWithInliers(matches, kps1, kps2, bestInliers);
 
-            InlierInfo refinedInfo = findInliers(matches, kps1, kps2, refinedH);
+            InliersInfo refinedInfo = findInliers(matches, kps1, kps2, refinedH);
 
             if (refinedInfo.count >= bestInliers.count && refinedInfo.errorFactor <= bestInliers.errorFactor) {
                 bestH = refinedH;
@@ -148,21 +142,21 @@ namespace RANSAC {
 
             delete [] indices;
 
-            return bestH;
+            return { bestInliers, bestH };
         }
     }
 
-    Buffer<Eigen::Matrix3d> *
+    Buffer<Result> *
     computeHomographyMatrices(List<Core::Data> &sources, uint32_t bestIndex, Buffer<Buffer<Matching::Match>> &matches) {
-        Buffer<Eigen::Matrix3d>* matrices = new Buffer<Eigen::Matrix3d>(matches.size);
-        matrices->size = matches.size;
+        auto results = new Buffer<Result>(matches.size);
+        results->size = matches.size;
 
         size_t matchesIndex = 0;
         for (size_t i = 0; i < sources.size; i++) {
             if (i == bestIndex) continue;
             JNIHelper::getInstance()->writeMessageToLog(false, "Starting computing homography for image %zd", i);
 
-            matrices->buffer[matchesIndex] = computeHomography(
+            results->buffer[matchesIndex] = computeHomography(
                 matches[matchesIndex],
                 *sources.buffer[i]->keyPoints,
                 *sources.buffer[bestIndex]->keyPoints
@@ -170,7 +164,7 @@ namespace RANSAC {
             matchesIndex++;
         }
 
-        return matrices;
+        return results;
     }
 }
 

@@ -3,11 +3,13 @@
 //
 
 #include "core.h"
-#include "stacking/matching.h"
-#include "stacking/ransac.h"
+#include "matching/matching.h"
+#include "matching/ransac.h"
 #include "stacking/warping.h"
 #include "stacking/median-stacking.h"
 #include "utils.h"
+#include "matching/validation/homography-validation.h"
+#include "matching/validation/matches-validation.h"
 
 namespace Core {
     enum class ImageFormat {
@@ -43,7 +45,7 @@ namespace Core {
     Bitmap* stackedResult = nullptr;
 
     int32_t referenceFrameIndex = 0;
-    Buffer<Eigen::Matrix3d> *matrices = nullptr;
+    Buffer<RANSAC::Result> *homographies = nullptr;
 
     void init(AAssetManager *aam) {
         CL::init(aam);
@@ -54,8 +56,8 @@ namespace Core {
         auto data = new Data();
         data->bitmapPtr = bitmapPtr;
         sources->add(data);
-        delete matrices;
-        matrices = nullptr;
+        delete homographies;
+        homographies = nullptr;
     }
 
     void applySettings(int fast_threshold, float ransac_threshold, int ransac_iterations,
@@ -97,16 +99,16 @@ namespace Core {
     void removeBitmapAt(int32_t index) {
         sources->removeAt(index);
         if (index == referenceFrameIndex) {
-            delete matrices;
-            matrices = nullptr;
+            delete homographies;
+            homographies = nullptr;
         }
     }
 
     void analyse(bool reanalyse) {
         delete stackedResult;
         stackedResult = nullptr;
-        delete matrices;
-        matrices = nullptr;
+        delete homographies;
+        homographies = nullptr;
 
         if (reanalyse) {
             for (size_t i = 0; i < sources->size; i++) {
@@ -140,32 +142,7 @@ namespace Core {
         }
     }
 
-    static std::vector<HomographyValidation::ValidationInfo> validateMatrices() {
-        if (matrices == nullptr || matrices->size == 0) {
-            throw std::runtime_error("Homography estimation was not performed");
-        }
-
-        std::vector<HomographyValidation::ValidationInfo> infos {};
-        infos.reserve(matrices->size);
-
-        int32_t matrixIndex = 0;
-        for (int32_t i = 0; i < sources->size; i++) {
-            if (i == referenceFrameIndex) continue;
-            auto bmp = sources->buffer[i]->bitmapPtr;
-            auto info = HomographyValidation::validate(
-                    (*matrices)[matrixIndex],
-                    (int32_t)bmp->width,
-                    (int32_t)bmp->height
-            );
-            info.bitmapIndex = i;
-            infos.push_back(info);
-            matrixIndex++;
-        }
-
-        return infos;
-    }
-
-    std::vector<HomographyValidation::ValidationInfo> match() {
+    std::vector<Validation::ValidationInfo> match() {
         if (sources->size < 2) {
             throw std::runtime_error("Matching requires at least 2 images");
         }
@@ -174,14 +151,29 @@ namespace Core {
 
         Buffer<Buffer<Matching::Match>> *matches = Matching::match(*sources, referenceFrameIndex);
 
-        if (SAVE_MATCHES) {
-            Utils::drawAllMatches(*matches, referenceFrameIndex);
-        }
+        if (SAVE_MATCHES) Utils::drawAllMatches(*matches, referenceFrameIndex);
 
-        matrices = RANSAC::computeHomographyMatrices(*sources, referenceFrameIndex, *matches);
+        homographies = RANSAC::computeHomographyMatrices(*sources, referenceFrameIndex, *matches);
+        auto matchesValidationInfo = Validation::validateMatches(*sources, *matches, *homographies, referenceFrameIndex);
         delete matches;
 
-        return validateMatrices();
+        auto homographiesValidationInfo = Validation::validateMatrices(*sources, *homographies, referenceFrameIndex);
+
+        std::vector<Validation::ValidationInfo> validationInfos {};
+        validationInfos.reserve(matchesValidationInfo.size());
+
+        int32_t index = 0;
+        for (int32_t i = 0; i < sources->size; i++) {
+            if (i == referenceFrameIndex) continue;
+            validationInfos.push_back({
+                homographiesValidationInfo[index],
+                matchesValidationInfo[index],
+                i
+            });
+            index++;
+        }
+
+        return validationInfos;
     }
 
     static void stackWithoutAlignment() {
@@ -206,12 +198,12 @@ namespace Core {
         if (disableAlignment) {
             stackWithoutAlignment();
             return;
-        } else if (matrices == nullptr) {
+        } else if (homographies == nullptr) {
             throw std::runtime_error("Matching was not performed");
         }
 
         auto warpManager = new WarpManager(*sources->buffer[referenceFrameIndex]->bitmapPtr);
-        List<BitmapPtr> *warpedBitmaps = warpManager->warp(*sources, referenceFrameIndex, *matrices);
+        List<BitmapPtr> *warpedBitmaps = warpManager->warp(*sources, referenceFrameIndex, *homographies);
         delete warpManager;
 
         auto stackedSrc = List<BitmapPtr>(sources->size, false);

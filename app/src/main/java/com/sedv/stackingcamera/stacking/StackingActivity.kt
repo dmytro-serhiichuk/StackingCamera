@@ -233,7 +233,7 @@ class StackingActivity : AppCompatActivity() {
     }
     private fun removeMatchesInfo() {
         StackingHandler.hasMatches = false
-        StackingHandler.bitmaps.forEach { it.homographyValidationInfo = null }
+        StackingHandler.bitmaps.forEach { it.bitmapValidationInfo = null }
         binding.loadedImagesList.forEach { (it as BitmapListItem).updateWarningMessage() }
     }
     private fun handleBitmapRemoved(item: BitmapListItem) {
@@ -312,17 +312,20 @@ class StackingActivity : AppCompatActivity() {
                 }
                 StackingHandler.hasMatches = true
 
-                flat.toList().chunked(FIELDS_PER_MATCH_RESULT) { chunk ->
+                flat.toList().chunked(BitmapValidationInfo.FIELDS_PER_MATCH_RESULT) { chunk ->
                     StackingHandler.bitmaps[chunk[0]].apply {
-                        homographyValidationInfo = HomographyValidationInfo(
-                            HomographyValidationStatus.fromInt(chunk[1]),
-                            HomographyValidationStatus.fromInt(chunk[2]),
-                            HomographyValidationStatus.fromInt(chunk[3]),
-                            HomographyValidationStatus.fromInt(chunk[4]),
-                            HomographyValidationStatus.fromInt(chunk[5]),
-                            HomographyValidationStatus.fromInt(chunk[6]),
+                        bitmapValidationInfo = BitmapValidationInfo(
+                            BitmapValidationStatus.fromInt(chunk[1]),
+                            BitmapValidationStatus.fromInt(chunk[2]),
+                            BitmapValidationStatus.fromInt(chunk[3]),
+                            BitmapValidationStatus.fromInt(chunk[4]),
+                            BitmapValidationStatus.fromInt(chunk[5]),
+                            BitmapValidationStatus.fromInt(chunk[6]),
                             chunk[7] != 0,
-                            chunk[8] != 0
+                            chunk[8] != 0,
+                            BitmapValidationStatus.fromInt(chunk[9]),
+                            BitmapValidationStatus.fromInt(chunk[10]),
+                            BitmapValidationStatus.fromInt(chunk[11]),
                         )
                         (binding.loadedImagesList[chunk[0]] as BitmapListItem).updateWarningMessage()
                     }
@@ -461,7 +464,6 @@ class StackingActivity : AppCompatActivity() {
     companion object {
         const val APP_DIRECTORY = "/StackingCamera/"
         val OUTPUT_FORMATS = listOf(".jpg", ".png", ".tiff")
-        const val FIELDS_PER_MATCH_RESULT = 9;
         init {
             System.loadLibrary("stackingcamera")
         }

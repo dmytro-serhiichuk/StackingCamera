@@ -82,8 +82,8 @@ BitmapPtr *WarpManager::warpSingleBitmap(Bitmap &bitmap, const Eigen::Matrix3d &
 }
 
 List<BitmapPtr> *WarpManager::warp(List<Core::Data> &sources, uint32_t bestIndex,
-                                   Buffer<Eigen::Matrix3d> &matrices) {
-    auto warpedBitmaps = new List<BitmapPtr>(matrices.size);
+                                   Buffer<RANSAC::Result> &homographies) {
+    auto warpedBitmaps = new List<BitmapPtr>(homographies.size);
 
     size_t matrixIndex = 0;
     for (size_t i = 0; i < sources.size; i++) {
@@ -91,7 +91,7 @@ List<BitmapPtr> *WarpManager::warp(List<Core::Data> &sources, uint32_t bestIndex
         JNIHelper::getInstance()->writeMessageToLog(false, "Starting warping image %zd", i);
 
         auto bitmap = sources.buffer[i]->bitmapPtr->read();
-        warpedBitmaps->add(warpSingleBitmap(*bitmap, matrices[matrixIndex]));
+        warpedBitmaps->add(warpSingleBitmap(*bitmap, homographies[matrixIndex].matrix));
         delete bitmap;
         matrixIndex++;
         JNIHelper::getInstance()->writeMessageToLog(false, "Image %zd warping completed\n", i);

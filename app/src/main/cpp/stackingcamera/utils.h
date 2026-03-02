@@ -6,7 +6,7 @@
 #define STACKINGCAMERA_UTILS_H
 
 #include "core.h"
-#include "stacking/matching.h"
+#include "matching/matching.h"
 
 using namespace ImageIO;
 

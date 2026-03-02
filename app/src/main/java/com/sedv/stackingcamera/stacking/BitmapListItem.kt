@@ -3,9 +3,7 @@ package com.sedv.stackingcamera.stacking
 import android.content.Context
 import android.view.LayoutInflater
 import android.widget.LinearLayout
-import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
-import com.sedv.stackingcamera.R
 import com.sedv.stackingcamera.databinding.BitmapListItemBinding
 
 class BitmapListItem(
@@ -40,12 +38,12 @@ class BitmapListItem(
     }
 
     fun updateWarningMessage() {
-        if (bitmapInfo.homographyValidationInfo == null) {
+        if (bitmapInfo.bitmapValidationInfo == null) {
             binding.bitmapWarningMessage.isVisible = false
         } else {
-            val vInfo = bitmapInfo.homographyValidationInfo!!
-            val hasWarningStatus = vInfo.props.any { it == HomographyValidationStatus.WARNING }
-            val hasBadStatus = vInfo.props.any { it == HomographyValidationStatus.BAD } || !vInfo.isConvex || vInfo.mirrored
+            val vInfo = bitmapInfo.bitmapValidationInfo!!
+            val hasWarningStatus = vInfo.props.any { it == BitmapValidationStatus.WARNING }
+            val hasBadStatus = vInfo.props.any { it == BitmapValidationStatus.BAD } || !vInfo.isConvex || vInfo.mirrored
 
             if (hasBadStatus || hasWarningStatus) {
                 binding.bitmapWarningMessage.isVisible = true
