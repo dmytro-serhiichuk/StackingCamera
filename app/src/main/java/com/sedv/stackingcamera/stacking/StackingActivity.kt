@@ -203,8 +203,9 @@ class StackingActivity : AppCompatActivity() {
 
                 try {
                     val bitmapInfo = withContext(Dispatchers.IO) {
-                        val fd = contentResolver.openFileDescriptor(uri, "r")!!.detachFd()
-                        loadBitmapWrapper(fd)
+                        contentResolver.openFileDescriptor(uri, "r")!!.use {
+                            loadBitmapWrapper(it.fd)
+                        }
                     }
 
                     bitmapInfo.name = fileName

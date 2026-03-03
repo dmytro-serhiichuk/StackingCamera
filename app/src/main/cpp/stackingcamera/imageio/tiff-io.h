@@ -8,7 +8,7 @@
 #include "imageio.h"
 
 namespace ImageIO {
-    BitmapPtr* loadTIFF(int fd, ColorSpace colorSpace, Depth depth);
+    BitmapPtr* loadTIFF(uint8_t* fileData, size_t fileSize, ColorSpace colorSpace, Depth depth);
 
     void saveTIFF(int fd, Bitmap &bmp, SaveProperties props);
 }

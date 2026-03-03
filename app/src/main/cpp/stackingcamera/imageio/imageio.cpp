@@ -88,18 +88,14 @@ namespace ImageIO {
         try {
             if (format == Format::JPG) {
                 bitmapPtr = loadJPEG(buffer, size, colorSpace, depth);
-                close(fd);
             } else if (format == Format::PNG) {
                 bitmapPtr = loadPNG(buffer, size, colorSpace, depth);
-                close(fd);
             } else if (format == Format::TIFF) {
-                bitmapPtr = loadTIFF(fd, colorSpace, depth);
+                bitmapPtr = loadTIFF(buffer, size, colorSpace, depth);
             } else if (format == Format::RAW) {
                 bitmapPtr = loadRAW(buffer, size, colorSpace, depth);
-                close(fd);
             }
         } catch (std::exception &e) {
-            close(fd);
             delete [] buffer;
             throw std::runtime_error("File read failed");
         }

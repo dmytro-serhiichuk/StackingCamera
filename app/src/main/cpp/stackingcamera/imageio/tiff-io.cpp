@@ -7,9 +7,59 @@
 #include <stdexcept>
 
 namespace ImageIO {
-    // TODO: function cannot open fd
-    BitmapPtr* loadTIFF(int fd, ColorSpace colorSpace, Depth depth) {
-        TIFF* tiff = TIFFFdOpen(fd, "IMAGE", "r");
+    namespace {
+        typedef struct {
+            unsigned char* data;
+            toff_t size;
+            toff_t pos;
+        } MemTIFF;
+
+        tsize_t mem_read(thandle_t handle, tdata_t buf, tsize_t size) {
+            MemTIFF* mem = (MemTIFF*)handle;
+
+            if (mem->pos + size > mem->size) {
+                size = mem->size - mem->pos;
+            }
+
+            memcpy(buf, mem->data + mem->pos, size);
+            mem->pos += size;
+            return size;
+        }
+
+        tsize_t mem_write(thandle_t handle, tdata_t buf, tsize_t size) {
+            return 0;
+        }
+
+        toff_t mem_seek(thandle_t handle, toff_t off, int whence) {
+            MemTIFF* mem = (MemTIFF*)handle;
+            switch (whence) {
+                case SEEK_SET: mem->pos = off; break;
+                case SEEK_CUR: mem->pos += off; break;
+                case SEEK_END: mem->pos = mem->size + off; break;
+            }
+            return mem->pos;
+        }
+
+        int mem_close(thandle_t handle) {
+            return 0;
+        }
+
+        toff_t mem_size(thandle_t handle) {
+            MemTIFF* mem = (MemTIFF*)handle;
+            return mem->size;
+        }
+
+        int mem_map(thandle_t handle, tdata_t* pbase, toff_t* psize) {
+            return 0;
+        }
+
+        void mem_unmap(thandle_t handle, tdata_t base, toff_t size) {}
+    }
+
+    BitmapPtr* loadTIFF(uint8_t* fileData, size_t fileSize, ColorSpace colorSpace, Depth depth) {
+        MemTIFF mem = { fileData, fileSize, 0 };
+
+        TIFF* tiff = TIFFClientOpen("MEM_TIFF", "r", (thandle_t)&mem, mem_read, mem_write, mem_seek, mem_close, mem_size, mem_map, mem_unmap);
         if (!tiff) {
             throw std::runtime_error("Failed to open file");
         }
