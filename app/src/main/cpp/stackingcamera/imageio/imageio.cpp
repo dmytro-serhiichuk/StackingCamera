@@ -88,14 +88,18 @@ namespace ImageIO {
         try {
             if (format == Format::JPG) {
                 bitmapPtr = loadJPEG(buffer, size, colorSpace, depth);
+                close(fd);
             } else if (format == Format::PNG) {
                 bitmapPtr = loadPNG(buffer, size, colorSpace, depth);
+                close(fd);
             } else if (format == Format::TIFF) {
                 bitmapPtr = loadTIFF(fd, colorSpace, depth);
             } else if (format == Format::RAW) {
                 bitmapPtr = loadRAW(buffer, size, colorSpace, depth);
+                close(fd);
             }
         } catch (std::exception &e) {
+            close(fd);
             delete [] buffer;
             throw std::runtime_error("File read failed");
         }
@@ -113,9 +117,11 @@ namespace ImageIO {
         switch (props.outputFormat) {
             case OutputFormat::JPEG:
                 saveJPEG(fd, bitmap, props);
+                close(fd);
                 break;
             case OutputFormat::PNG:
                 savePNG(fd, bitmap, props);
+                close(fd);
                 break;
             default:
                 saveTIFF(fd, bitmap, props);

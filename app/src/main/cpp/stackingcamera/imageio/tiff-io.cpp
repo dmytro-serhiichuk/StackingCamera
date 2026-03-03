@@ -7,6 +7,7 @@
 #include <stdexcept>
 
 namespace ImageIO {
+    // TODO: function cannot open fd
     BitmapPtr* loadTIFF(int fd, ColorSpace colorSpace, Depth depth) {
         TIFF* tiff = TIFFFdOpen(fd, "IMAGE", "r");
         if (!tiff) {

@@ -8,6 +8,7 @@
 #include <cmath>
 #include <unistd.h>
 
+// TODO: completely change the implementation
 namespace ImageIO {
     BitmapPtr *loadPNG(uint8_t *fileData, size_t fileSize, ColorSpace colorSpace, Depth depth) {
         png_image image;

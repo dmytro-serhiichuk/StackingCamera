@@ -4,7 +4,6 @@
 
 #include "utils.h"
 #include <random>
-#include <unistd.h>
 
 namespace {
     void drawCircle(Bitmap &bmp, int x, int y, int r, int g, int b) {
@@ -109,7 +108,6 @@ namespace {
         SaveProperties props {};
         props.outputFormat = OutputFormat::JPEG;
         save(fd, *bmp, props);
-        close(fd);
         delete bmp;
     }
 }
@@ -126,7 +124,6 @@ void Utils::drawKeyPoints(Bitmap &bmp, Buffer<KeyPoint> &kps) {
     SaveProperties props {};
     props.outputFormat = OutputFormat::JPEG;
     save(fd, *bitmap8, props);
-    close(fd);
     delete bitmap8;
 }
 

@@ -186,9 +186,8 @@ class StackingActivity : AppCompatActivity() {
 
                 try {
                     val bitmapInfo = withContext(Dispatchers.IO) {
-                        contentResolver.openFileDescriptor(uri, "r")!!.use {
-                            loadBitmapWrapper(it.fd)
-                        }
+                        val fd = contentResolver.openFileDescriptor(uri, "r")!!.detachFd()
+                        loadBitmapWrapper(fd)
                     }
 
                     bitmapInfo.name = fileName
@@ -379,9 +378,8 @@ class StackingActivity : AppCompatActivity() {
 
                     val imageUri = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
                     withContext(Dispatchers.IO) {
-                        contentResolver.openFileDescriptor(imageUri!!, "w")!!.use {
-                            save(it.fd, OUTPUT_FORMATS.indexOf(ext))
-                        }
+                        val fd = contentResolver.openFileDescriptor(imageUri!!, "w")!!.detachFd()
+                        save(fd, OUTPUT_FORMATS.indexOf(ext))
                     }
                 } else {
                     // Android 9-
