@@ -12,6 +12,7 @@ import android.os.Environment
 import android.os.ParcelFileDescriptor
 import android.provider.MediaStore
 import android.provider.OpenableColumns
+import android.util.Log
 import android.view.WindowManager
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
@@ -127,6 +128,22 @@ class StackingActivity : AppCompatActivity() {
         if (StackingHandler.bitmaps.isNotEmpty()) {
             binding.loadedImagesCount.isVisible = true
             binding.loadedImagesCount.text = "Images: ${StackingHandler.bitmaps.size}"
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        updateButtonsState()
+        if (StackingHandler.isAnalyseResultsRemoved) {
+            StackingHandler.bitmaps.forEach { it.bitmapValidationInfo = null }
+            binding.loadedImagesList.forEach {
+                val bli = it as BitmapListItem
+                bli.updateAdditionalInfoText()
+                bli.updateReferenceFrameLabel()
+                bli.updateWarningMessage()
+            }
+            StackingHandler.isAnalyseResultsRemoved = false
         }
     }
 
@@ -252,6 +269,7 @@ class StackingActivity : AppCompatActivity() {
         if (isReferenceFrame) {
             StackingHandler.referenceBitmap = null
             removeMatchesInfo()
+            updateButtonsState()
         }
         if ((!allWereInitialized && StackingHandler.isAllBitmapsInitialized()) || (allWereInitialized && isReferenceFrame)) {
             lifecycleScope.launch {

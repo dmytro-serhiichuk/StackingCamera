@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
 import com.sedv.stackingcamera.databinding.ActivityStackingSettingsBinding
+import com.sedv.stackingcamera.stacking.StackingHandler
 import kotlin.math.roundToInt
 
 class StackingSettingsActivity : AppCompatActivity() {
@@ -20,12 +21,12 @@ class StackingSettingsActivity : AppCompatActivity() {
         }
 
         binding.root.post {
-            binding.useImages.isChecked = Settings.USE_IMAGES.value
+            binding.useImages.init(Settings.USE_IMAGES.value)
             binding.useImages.onChangeCallback = { isChecked ->
                 binding.imageFormat.setEnable(isChecked)
                 binding.use16BitData.setEnable(!isChecked)
             }
-            binding.use16BitData.isChecked = Settings.USE_16_BIT.value
+            binding.use16BitData.init(Settings.USE_16_BIT.value)
             binding.imageFormat.init(
                 Settings.IMAGES_FORMAT.options.map { ImageFormat.fromInt(it).nameValue },
                 ImageFormat.fromInt(Settings.IMAGES_FORMAT.value).nameValue
@@ -78,7 +79,7 @@ class StackingSettingsActivity : AppCompatActivity() {
                     value.roundToInt().toString()
                 }
             )
-            binding.saveMatches.isChecked = Settings.SAVE_MATCHES.value
+            binding.saveMatches.init(Settings.SAVE_MATCHES.value)
 
             binding.ransacThreshold.init(
                 Settings.RANSAC_THRESHOLD.range.lower,
@@ -132,6 +133,8 @@ class StackingSettingsActivity : AppCompatActivity() {
 
         binding.ransacThreshold.value = Settings.RANSAC_THRESHOLD.value
         binding.ransacIterations.value = Settings.RANSAC_ITERATIONS.value.toFloat()
+
+        applyNewValues()
     }
 
     private fun handleSaveButtonClicked() {
@@ -151,6 +154,26 @@ class StackingSettingsActivity : AppCompatActivity() {
         Settings.RANSAC_THRESHOLD.value = binding.ransacThreshold.value
         Settings.RANSAC_ITERATIONS.value = binding.ransacIterations.value.toInt()
 
+        applyNewValues()
         Settings.updateSettings()
+    }
+
+    private fun applyNewValues() {
+        if (binding.numberOfTiles.isChanged || binding.use16BitData.isChanged) {
+            StackingHandler.hasMatches = false
+            StackingHandler.removeAnalyseResults()
+        }
+
+        binding.useImages.applyNewValue()
+        binding.use16BitData.applyNewValue()
+        binding.numberOfTiles.applyNewValue()
+        binding.maxKeypoints.applyNewValue()
+        binding.fastThreshold.applyNewValue()
+        binding.mBriskPatternScaleFactor.applyNewValue()
+        binding.saveKeypoints.applyNewValue()
+        binding.maxMatches.applyNewValue()
+        binding.saveMatches.applyNewValue()
+        binding.ransacThreshold.applyNewValue()
+        binding.ransacIterations.applyNewValue()
     }
 }

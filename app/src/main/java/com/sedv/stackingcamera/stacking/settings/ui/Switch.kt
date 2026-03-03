@@ -22,6 +22,9 @@ class Switch @JvmOverloads constructor(
         get() = binding.switcher.isChecked
         set(value) { binding.switcher.isChecked = value }
 
+    private var _currentActiveValue = true
+    val isChanged get() = isChecked != _currentActiveValue
+
     init {
         context.theme.obtainStyledAttributes(
             attrs,
@@ -43,6 +46,15 @@ class Switch @JvmOverloads constructor(
         binding.switcher.setOnCheckedChangeListener { _, isChecked ->
             onChangeCallback?.invoke(isChecked)
         }
+    }
+
+    fun init(startValue: Boolean) {
+        isChecked = startValue
+        _currentActiveValue = startValue
+    }
+
+    fun applyNewValue() {
+        _currentActiveValue = isChecked
     }
 
     fun setEnable(enable: Boolean) {

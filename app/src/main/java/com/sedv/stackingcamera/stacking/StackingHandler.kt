@@ -8,6 +8,8 @@ object StackingHandler {
 
     var state = StackingState.NOT_READY
 
+    var isAnalyseResultsRemoved = false
+
     fun hasEnoughBitmaps(): Boolean {
         return bitmaps.size >= 2
     }
@@ -16,6 +18,14 @@ object StackingHandler {
             if (!bitmap.isAnalyzed) return false
         }
         return true
+    }
+
+    fun removeAnalyseResults() {
+        for (bitmap in bitmaps) {
+            bitmap.score = -1
+            bitmap.isReferenceFrame = false
+        }
+        isAnalyseResultsRemoved = true
     }
 }
 

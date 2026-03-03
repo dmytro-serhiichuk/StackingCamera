@@ -64,6 +64,16 @@ namespace Core {
                        int tiles_per_side, int max_keypoints, int max_matches,
                        float brisk_pattern_scale, bool use16_bit, bool use_images,
                        int image_format, bool save_keypoints, bool save_matches) {
+        auto newDepth = use16_bit ? Depth::U16 : Depth::U8;
+
+        if (TILES_PER_SIDE != tiles_per_side || BITMAP_DEPTH != newDepth) {
+            for (size_t i = 0; i < sources->size; i++) {
+                sources->buffer[i]->removeAnalysedData();
+            }
+            delete homographies;
+            homographies = nullptr;
+        }
+
         FAST_THRESHOLD = fast_threshold;
         RANSAC_THRESHOLD = ransac_threshold;
         RANSAC_ITERATIONS = ransac_iterations;
@@ -78,7 +88,7 @@ namespace Core {
             mBrisk = new M_BRISK(8, BRISK_PATTERN_SCALE_FACTOR);
         }
 
-        BITMAP_DEPTH = use16_bit ? Depth::U16 : Depth::U8;
+        BITMAP_DEPTH = newDepth;
         BITMAP_COLOR_SPACE = ColorSpace::RGB;
         // TODO: handle images
         SAVE_KEYPOINTS = save_keypoints;

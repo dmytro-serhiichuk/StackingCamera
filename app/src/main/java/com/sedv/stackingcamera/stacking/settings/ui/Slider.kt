@@ -22,6 +22,9 @@ class Slider @JvmOverloads constructor(
         get() = binding.slider.value
         set(value) { binding.slider.value = value }
 
+    private var _currentActiveValue = 0.0f
+    val isChanged get() = value != _currentActiveValue
+
     init {
         context.theme.obtainStyledAttributes(
             attrs,
@@ -49,6 +52,8 @@ class Slider @JvmOverloads constructor(
         binding.slider.stepSize  = step
         binding.slider.value     = startValue
 
+        _currentActiveValue      = startValue
+
         binding.sliderValue.text = formatValue(startValue)
 
         binding.slider.addOnChangeListener { _, value, _ ->
@@ -58,6 +63,10 @@ class Slider @JvmOverloads constructor(
         if ((to - from) / step > MAX_VISIBLE_STEPS) {
             binding.slider.isTickVisible = false
         }
+    }
+
+    fun applyNewValue() {
+        _currentActiveValue = value
     }
 
     companion object {
