@@ -280,6 +280,8 @@ class StackingActivity : AppCompatActivity() {
     }
 
     private fun handleAnalyseButtonClicked() {
+        if (!binding.analyseCheckBox.isChecked && StackingHandler.isAllBitmapsInitialized()) return
+
         startAction()
         removeMatchesInfo()
         StackingHandler.hasStackedResult = false

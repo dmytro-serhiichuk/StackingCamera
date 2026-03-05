@@ -26,11 +26,11 @@ namespace ImageIO {
         // TODO: still bad brightness (especially .DNG)
         processor.imgdata.params.output_bps = depth == Depth::U16 ? 16 : 8;
         processor.imgdata.params.use_camera_wb = 1;
+        processor.imgdata.params.use_camera_matrix = 1;
         processor.imgdata.params.output_tiff = 1;
-        processor.imgdata.params.no_auto_bright = 0;
-        processor.imgdata.params.auto_bright_thr = 0.0;
+        processor.imgdata.params.no_auto_bright = 1;
 
-        processor.imgdata.params.output_color = 1; // sRGB
+        processor.imgdata.params.output_color = LIBRAW_COLORSPACE_sRGB;
 
         // Unpack the raw data
         if (processor.unpack() != LIBRAW_SUCCESS) {
@@ -50,23 +50,32 @@ namespace ImageIO {
         int32_t bigWidth = processed_image->width;
         int32_t bigHeight = processed_image->height;
 
-        bool wh = bigWidth > bigHeight;
+        int32_t leftOffset   = processor.imgdata.sizes.raw_inset_crops[0].cleft - processor.imgdata.sizes.left_margin;
+        int32_t topOffset    = processor.imgdata.sizes.raw_inset_crops[0].ctop - processor.imgdata.sizes.top_margin;
 
-        // TODO: use correct orientation (start/back offsets can be different)
-        int32_t leftOffset = wh ?
-                             processor.imgdata.sizes.raw_inset_crops[0].cleft - processor.imgdata.sizes.left_margin :
-                             processor.imgdata.sizes.raw_inset_crops[0].ctop - processor.imgdata.sizes.top_margin;
+        int32_t cropWidth    = processor.imgdata.sizes.raw_inset_crops[0].cwidth;
+        int32_t cropHeight   = processor.imgdata.sizes.raw_inset_crops[0].cheight;
 
-        int32_t topOffset = wh ?
-                            processor.imgdata.sizes.raw_inset_crops[0].ctop - processor.imgdata.sizes.top_margin :
-                            processor.imgdata.sizes.raw_inset_crops[0].cleft - processor.imgdata.sizes.left_margin;
+        int32_t rightOffset  = bigWidth - cropWidth - leftOffset;
+        int32_t bottomOffset = bigHeight - cropHeight - topOffset;
 
-        int32_t cropWidth = wh ?
-                            processor.imgdata.sizes.raw_inset_crops[0].cwidth :
-                            processor.imgdata.sizes.raw_inset_crops[0].cheight;
-        int32_t cropHeight = wh ?
-                             processor.imgdata.sizes.raw_inset_crops[0].cheight :
-                             processor.imgdata.sizes.raw_inset_crops[0].cwidth;
+        auto orientation = processor.imgdata.sizes.flip;
+        if (orientation == 3) { // 180 deg
+            leftOffset = rightOffset;
+            topOffset = bottomOffset;
+        } else if (orientation == 5) { // 90 deg counter-clockwise
+            leftOffset = topOffset;
+            topOffset = rightOffset;
+            int32_t cw = cropWidth;
+            cropWidth = cropHeight;
+            cropHeight = cw;
+        } else if (orientation == 6) { // 90 deg clockwise
+            topOffset = leftOffset;
+            leftOffset = bottomOffset;
+            int32_t cw = cropWidth;
+            cropWidth = cropHeight;
+            cropHeight = cw;
+        }
 
         size_t bytesPerSample = depth == Depth::U16 ? sizeof(uint16_t) : sizeof(uint8_t);
 
