@@ -8,53 +8,6 @@
 namespace CL {
     static char logBuffer[256];
 
-    static bool isImageFormatSupported(
-            cl_mem_flags flags,
-            cl_channel_order channel_order,
-            cl_channel_type channel_type
-    ) {
-        cl_image_format supported_formats[1000];
-        cl_uint num_formats;
-
-        clGetSupportedImageFormats(context, flags, CL_MEM_OBJECT_IMAGE2D,
-                                   1000, supported_formats, &num_formats);
-
-        for (cl_uint i = 0; i < num_formats; i++) {
-            if (supported_formats[i].image_channel_order == channel_order &&
-                supported_formats[i].image_channel_data_type == channel_type) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    static ImageChannelOrderSupportInfo getImageChannelSupportInfo(cl_channel_order channel_order) {
-        ImageChannelOrderSupportInfo channelSupportInfo {};
-        channelSupportInfo.order = channel_order;
-
-        if (isImageFormatSupported(CL_MEM_READ_ONLY, channel_order, CL_UNORM_INT8)) {
-            channelSupportInfo.UNORM_INT8_SUPPORT.SUPPORT_READ_ONLY = true;
-        }
-        if (isImageFormatSupported(CL_MEM_WRITE_ONLY, channel_order, CL_UNORM_INT8)) {
-            channelSupportInfo.UNORM_INT8_SUPPORT.SUPPORT_WRITE_ONLY = true;
-        }
-        if (isImageFormatSupported(CL_MEM_READ_WRITE, channel_order, CL_UNORM_INT8)) {
-            channelSupportInfo.UNORM_INT8_SUPPORT.SUPPORT_READ_WRITE = true;
-        }
-
-        if (isImageFormatSupported(CL_MEM_READ_ONLY, channel_order, CL_UNORM_INT16)) {
-            channelSupportInfo.UNORM_INT16_SUPPORT.SUPPORT_READ_ONLY = true;
-        }
-        if (isImageFormatSupported(CL_MEM_WRITE_ONLY, channel_order, CL_UNORM_INT16)) {
-            channelSupportInfo.UNORM_INT16_SUPPORT.SUPPORT_WRITE_ONLY = true;
-        }
-        if (isImageFormatSupported(CL_MEM_READ_WRITE, channel_order, CL_UNORM_INT16)) {
-            channelSupportInfo.UNORM_INT16_SUPPORT.SUPPORT_READ_WRITE = true;
-        }
-
-        return channelSupportInfo;
-    }
-
     static char* readProgramSource(AAssetManager *aam) {
         AAsset* asset = AAssetManager_open(aam, "program.cl", AASSET_MODE_BUFFER);
         if (!asset) {
@@ -72,10 +25,6 @@ namespace CL {
     cl_command_queue queue = nullptr;
     cl_program program = nullptr;
     size_t maxGroupSize = 0;
-
-    ImageChannelOrderSupportInfo grayscaleInfo = {};
-    ImageChannelOrderSupportInfo rgbInfo = {};
-    ImageChannelOrderSupportInfo rgbaInfo = {};
 
     void init(AAssetManager *aam) {
         // Step 1.1: Getting platforms num
@@ -155,11 +104,6 @@ namespace CL {
         if (status != CL_SUCCESS) {
             throw std::runtime_error("Cannot get max work group size");
         }
-
-        // Step 12: Check image support
-        grayscaleInfo = getImageChannelSupportInfo(CL_R);
-        rgbInfo = getImageChannelSupportInfo(CL_RGB);
-        rgbaInfo = getImageChannelSupportInfo(CL_RGBA);
     }
 
     cl_mem createBuffer(cl_mem_flags flags, size_t size, void *data) {

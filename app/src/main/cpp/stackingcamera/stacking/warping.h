@@ -14,17 +14,17 @@ class WarpManager {
 public:
     cl_mem outputBuffer;
     cl_kernel kernel;
-    int32_t outputWidth;
-    int32_t outputHeight;
+    uint32_t outputWidth;
+    uint32_t outputHeight;
     size_t outputBufferLength;
     size_t outputBufferSize;
 
-    WarpManager(BitmapPtr& baseBitmap);
+    explicit WarpManager(BitmapPtr& baseBitmap);
     ~WarpManager();
-    List<BitmapPtr> *warp(List<Core::Data> &sources, uint32_t bestIndex, Buffer<RANSAC::Result> &homographies);
+    List<BitmapPtr> *warp(List<Core::Data> &sources, uint32_t bestIndex, Buffer<RANSAC::Result> &homographies) const;
 
 private:
-    BitmapPtr *warpSingleBitmap(Bitmap &bitmap, const Eigen::Matrix3d &H);
+    BitmapPtr *warpSingleBitmap(Bitmap &bitmap, const Eigen::Matrix3d &H) const;
 };
 
 #endif //STACKINGCAMERA_WARPING_H

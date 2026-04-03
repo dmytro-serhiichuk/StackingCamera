@@ -56,8 +56,4 @@ class Switch @JvmOverloads constructor(
     fun applyNewValue() {
         _currentActiveValue = isChecked
     }
-
-    fun setEnable(enable: Boolean) {
-        binding.switcher.isEnabled = enable
-    }
 }

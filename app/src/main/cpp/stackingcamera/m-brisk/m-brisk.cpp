@@ -198,9 +198,9 @@ inline void M_BRISK::filterKeypointsAfterRefining(Bitmap &bmp, Buffer<KeyPoint> 
 Buffer<KeyPoint> *M_BRISK::detect(Bitmap &inputBitmap) {
     cl_mem buffer = CL::createBuffer(
             CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR | CL_MEM_HOST_NO_ACCESS,
-            inputBitmap.sizeOfBuffer(), inputBitmap.buffer
+            inputBitmap.bufferSize, inputBitmap.buffer
     );
-    BitmapInfo bitmapInfo {inputBitmap.width, inputBitmap.height, inputBitmap.colorSpace, inputBitmap.depth};
+    BitmapInfo bitmapInfo {inputBitmap.width, inputBitmap.height, inputBitmap.depth, inputBitmap.colorModel};
     toGray8(bitmapInfo, buffer);
     CLAHE(bitmapInfo, buffer);
 
@@ -283,12 +283,12 @@ Buffer<KeyPoint> *M_BRISK::detect(Bitmap &inputBitmap) {
 Descriptors *M_BRISK::compute(Bitmap &inputBitmap, Buffer<KeyPoint> &keyPoints) {
     cl_mem buffer = CL::createBuffer(
             CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR | CL_MEM_HOST_NO_ACCESS,
-            inputBitmap.sizeOfBuffer(), inputBitmap.buffer
+            inputBitmap.bufferSize, inputBitmap.buffer
     );
-    Bitmap* bitmap = toGray8WithReading(inputBitmap, buffer);
+    Bitmap bitmap = toGray8WithReading(inputBitmap, buffer);
 
-    int32_t* integral = getIntegralImage(*bitmap);
-    size_t integralSize = (bitmap->width + 1) * (bitmap->height + 1) * sizeof(int32_t);
+    int32_t* integral = getIntegralImage(bitmap);
+    size_t integralSize = (bitmap.width + 1) * (bitmap.height + 1) * sizeof(int32_t);
 
     cl_mem integralBuffer = CL::createBuffer(
         CL_MEM_HOST_NO_ACCESS | CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
@@ -327,7 +327,7 @@ Descriptors *M_BRISK::compute(Bitmap &inputBitmap, Buffer<KeyPoint> &keyPoints) 
     cl_kernel kernel = CL::createKernel("brisk");
 
     clSetKernelArg(kernel, 0, sizeof(cl_mem), &buffer);
-    clSetKernelArg(kernel, 1, sizeof(uint32_t), &bitmap->width);
+    clSetKernelArg(kernel, 1, sizeof(uint32_t), &bitmap.width);
     clSetKernelArg(kernel, 2, sizeof(cl_mem), &integralBuffer);
     clSetKernelArg(kernel, 3, sizeof(cl_mem), &kpBuffer);
     clSetKernelArg(kernel, 4, sizeof(cl_mem), &descBuffer);
@@ -358,7 +358,6 @@ Descriptors *M_BRISK::compute(Bitmap &inputBitmap, Buffer<KeyPoint> &keyPoints) 
     clReleaseMemObject(lp);
 
     delete[] integral;
-    delete bitmap;
 
     return descriptors;
 }

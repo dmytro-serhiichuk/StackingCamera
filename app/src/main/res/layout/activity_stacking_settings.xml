@@ -66,13 +66,6 @@
                 android:showDividers="middle"
                 android:divider="@drawable/vertical_divider">
                 <com.sedv.stackingcamera.stacking.settings.ui.Switch
-                    android:id="@+id/use_images"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    app:titleText="Use images instead of buffers"
-                    app:descriptionText="Operations in OpenCL may perform faster using images instead of buffers"/>
-
-                <com.sedv.stackingcamera.stacking.settings.ui.Switch
                     android:id="@+id/use_16_bit_data"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -80,11 +73,11 @@
                     app:descriptionText="Using 16-bit format instead of 8-bit avoids data loss when decoding images, but consumes more device memory"/>
 
                 <com.sedv.stackingcamera.stacking.settings.ui.DropDown
-                    android:id="@+id/image_format"
+                    android:id="@+id/color_space"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    app:titleText="OpenCL image format"
-                    app:descriptionText="Specifies the image format that OpenCL will work with. Using a 16-bit format avoids data loss during image decoding, but uses more device memory. RGB format consumes less memory, but may have worse GPU support than RGBA"/>
+                    app:titleText="Color Space"
+                    app:descriptionText="Specifies the color space that all images will be processed in. Note that the resulting image is always saved with the sRGB color space"/>
 
                 <com.sedv.stackingcamera.stacking.settings.ui.Slider
                     android:id="@+id/number_of_tiles"

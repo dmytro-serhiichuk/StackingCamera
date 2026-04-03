@@ -47,8 +47,8 @@ namespace Core {
     void loadBitmap(int fd);
     void applySettings(int fast_threshold, float ransac_threshold, int ransac_iterations,
                        int tiles_per_side, int max_keypoints, int max_matches,
-                       float brisk_pattern_scale, bool use16_bit, bool use_images,
-                       int image_format, bool save_keypoints, bool save_matches);
+                       float brisk_pattern_scale, bool use16_bit,
+                       int color_space, bool save_keypoints, bool save_matches);
     int32_t updateReferenceFrameIndex();
     void removeBitmapAt(int32_t index);
     void analyse(bool reanalyse);

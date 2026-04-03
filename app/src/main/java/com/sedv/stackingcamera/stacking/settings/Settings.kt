@@ -4,16 +4,16 @@ import android.content.SharedPreferences
 import android.util.Range
 import kotlin.collections.arrayListOf
 
-enum class ImageFormat(val value: Int, val nameValue: String) {
-    NONE(0, "Not Supported"),
-    RGB_8(1, "8-Bit RGB"),
-    RGB_16(2, "16-Bit RGB"),
-    RGBA_8(3, "8-Bit RGBA"),
-    RGBA_16(4, "16-Bit RGBA");
+enum class ColorSpace(val value: Int, val nameValue: String) {
+    sRGB(0, "sRGB"),
+    Linear_sRGB(1, "Linear sRGB"),
+    AdobeRGB(2, "Adobe RGB"),
+    WideGamut(3, "WideGamut"),
+    ProPhoto(4, "ProPhoto");
 
     companion object {
-        fun fromInt(value: Int) = ImageFormat.entries.first { it.value == value }
-        fun fromString(value: String) = ImageFormat.entries.first { it.nameValue == value }
+        fun fromInt(value: Int) = ColorSpace.entries.first { it.value == value }
+        fun fromString(value: String) = ColorSpace.entries.first { it.nameValue == value }
     }
 }
 
@@ -26,23 +26,28 @@ object Settings {
     val MAX_MATCHES = RangedProperty("MAX_MATCHES", 500, Range(50, 2000), 10)
     val BRISK_PATTERNS_SCALE = RangedProperty("BRISK_PATTERNS_SCALE", 10.0f, Range(1.0f, 20.0f), 0.5f)
     val USE_16_BIT = BoolProperty("USE_16_BIT", true)
-    val USE_IMAGES = BoolProperty("USE_IMAGES", false)
-    val IMAGES_FORMAT: OptionsProperty
+    val COLOR_SPACE: OptionsProperty
     val SAVE_KEYPOINTS = BoolProperty("SAVE_KEYPOINTS", false)
     val SAVE_MATCHES = BoolProperty("SAVE_MATCHES", false)
 
     val properties: ArrayList<Property<*>>
 
-    private val availableImageSettings: AvailableImageSettings
     private lateinit var sharedPreferences: SharedPreferences
 
     init {
         System.loadLibrary("stackingcamera")
 
-        availableImageSettings = getAvailableImageSettings()
-        val imageFormats = createImageFormatOptions()
-
-        IMAGES_FORMAT = OptionsProperty("IMAGES_FORMAT", imageFormats.toList()[0], imageFormats)
+        COLOR_SPACE = OptionsProperty(
+            "COLOR_SPACE",
+            ColorSpace.sRGB.value,
+            linkedSetOf(
+                ColorSpace.sRGB.value,
+                ColorSpace.Linear_sRGB.value,
+                ColorSpace.AdobeRGB.value,
+                ColorSpace.WideGamut.value,
+                ColorSpace.ProPhoto.value
+            )
+        )
 
         properties = arrayListOf(
             FAST_THRESHOLD,
@@ -53,8 +58,7 @@ object Settings {
             MAX_MATCHES,
             BRISK_PATTERNS_SCALE,
             USE_16_BIT,
-            USE_IMAGES,
-            IMAGES_FORMAT,
+            COLOR_SPACE,
             SAVE_KEYPOINTS,
             SAVE_MATCHES
         )
@@ -68,32 +72,6 @@ object Settings {
         }
 
         callApplySettings()
-    }
-    private fun createImageFormatOptions(): LinkedHashSet<Int> {
-        val options = linkedSetOf<Int>()
-        if (availableImageSettings.IMAGE_RGB_SUPPORT == ImageFormatSupport.FULL) {
-            options.add(ImageFormat.RGB_8.value)
-            options.add(ImageFormat.RGB_16.value)
-        } else if (availableImageSettings.IMAGE_RGB_SUPPORT == ImageFormatSupport.UINT8) {
-            options.add(ImageFormat.RGB_8.value)
-        } else if (availableImageSettings.IMAGE_RGB_SUPPORT == ImageFormatSupport.UINT16) {
-            options.add(ImageFormat.RGB_16.value)
-        }
-
-        if (availableImageSettings.IMAGE_RGBA_SUPPORT == ImageFormatSupport.FULL) {
-            options.add(ImageFormat.RGBA_8.value)
-            options.add(ImageFormat.RGBA_16.value)
-        } else if (availableImageSettings.IMAGE_RGBA_SUPPORT == ImageFormatSupport.UINT8) {
-            options.add(ImageFormat.RGBA_8.value)
-        } else if (availableImageSettings.IMAGE_RGBA_SUPPORT == ImageFormatSupport.UINT16) {
-            options.add(ImageFormat.RGBA_16.value)
-        }
-
-        if (options.isEmpty()) {
-            options.add(ImageFormat.NONE.value)
-        }
-
-        return options
     }
 
     fun updateSettings() {
@@ -118,7 +96,7 @@ object Settings {
         callApplySettings()
     }
 
-    inline private fun callApplySettings() {
+    private fun callApplySettings() {
         applySettings(
             FAST_THRESHOLD.value,
             RANSAC_THRESHOLD.value,
@@ -128,15 +106,13 @@ object Settings {
             MAX_MATCHES.value,
             BRISK_PATTERNS_SCALE.value,
             USE_16_BIT.value,
-            USE_IMAGES.value,
-            IMAGES_FORMAT.value,
+            COLOR_SPACE.value,
             SAVE_KEYPOINTS.value,
             SAVE_MATCHES.value
         )
     }
 
     // Native functions
-    external private fun getAvailableImageSettings(): AvailableImageSettings
     external private fun applySettings(
         fastThreshold: Int,
         ransacThreshold: Float,
@@ -146,8 +122,7 @@ object Settings {
         maxMatches: Int,
         briskPatternScale: Float,
         use16Bit: Boolean,
-        useImages: Boolean,
-        imageFormat: Int,
+        colorSpace: Int,
         saveKeypoints: Boolean,
         saveMatches: Boolean
     )

@@ -49,6 +49,10 @@ add_library(libraw SHARED IMPORTED)
 set_target_properties(libraw PROPERTIES IMPORTED_LOCATION
         ${JNI_LIBS}/libraw.so)
 
+add_library(lcms2 SHARED IMPORTED)
+set_target_properties(lcms2 PROPERTIES IMPORTED_LOCATION
+        ${JNI_LIBS}/liblcms2.so)
+
 add_library(OpenCL SHARED IMPORTED)
 set_target_properties(OpenCL PROPERTIES IMPORTED_LOCATION
         ${JNI_LIBS}/libOpenCL.so)
@@ -76,6 +80,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
         libpng
         libtiff
         libraw
+        lcms2
         android
         log
         OpenMP::OpenMP_CXX)

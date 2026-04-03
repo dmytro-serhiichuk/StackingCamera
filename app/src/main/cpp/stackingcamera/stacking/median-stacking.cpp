@@ -64,5 +64,12 @@ Bitmap *MedianStacking::stack(List<BitmapPtr> &src, BitmapPtr &referenceBitmap) 
     delete [] chunks;
     delete [] values;
 
-    return new Bitmap(referenceBitmap.width, referenceBitmap.height, outputBuffer, referenceBitmap.colorSpace, referenceBitmap.depth);
+    return new Bitmap(
+            referenceBitmap.width,
+            referenceBitmap.height,
+            outputBuffer,
+            referenceBitmap.depth,
+            referenceBitmap.colorModel,
+            referenceBitmap.colorSpace
+    );
 }

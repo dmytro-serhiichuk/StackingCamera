@@ -64,7 +64,7 @@ namespace {
             }
         }
 
-        Bitmap *bmp = new Bitmap{width,height,buffer,bmp1.colorSpace,bmp1.depth};
+        Bitmap bmp { width, height, buffer, bmp1.depth, bmp1.colorModel, bmp1.colorSpace };
 
         for (const Matching::Match &match : matches) {
             const KeyPoint &kp1 = keyPoints1[match.index1];
@@ -84,13 +84,13 @@ namespace {
             int kx = kp2.x - kp1.x + bmp1.width > 0 ? 1 : -1;
             int ky = kp2.y - kp1.y > 0 ? 1 : -1;
 
-            drawCircle(*bmp, x, y, r, g, b);
+            drawCircle(bmp, x, y, r, g, b);
 
             for (size_t j = 0; j < max; j++) {
                 int bufferIndex = (((int)y) * width + ((int)x)) * 3;
-                bmp->buffer[bufferIndex + 0] = r;
-                bmp->buffer[bufferIndex + 1] = g;
-                bmp->buffer[bufferIndex + 2] = b;
+                bmp.buffer[bufferIndex + 0] = r;
+                bmp.buffer[bufferIndex + 1] = g;
+                bmp.buffer[bufferIndex + 2] = b;
 
                 if (d) {
                     x+=1*kx;
@@ -102,13 +102,12 @@ namespace {
                 }
             }
 
-            drawCircle(*bmp, x, y, r, g, b);
+            drawCircle(bmp, x, y, r, g, b);
         }
 
         SaveProperties props {};
         props.outputFormat = OutputFormat::JPEG;
-        save(fd, *bmp, props);
-        delete bmp;
+        save(fd, bmp, props);
     }
 }
 
@@ -116,41 +115,36 @@ void Utils::drawKeyPoints(Bitmap &bmp, Buffer<KeyPoint> &kps) {
     const char *fileName = "keyPoints.jpg";
     int fd = JNIHelper::getInstance()->createImageFile(fileName);
 
-    auto bitmap8 = bmp.convertTo(Depth::U8, ColorSpace::RGB);
+    auto bitmap8 = bmp.convertDepth(Depth::U8);
 
     for (KeyPoint &kp : kps) {
-        drawCircle(*bitmap8, kp.x, kp.y, 0, 255, 0);
+        drawCircle(bitmap8, kp.x, kp.y, 0, 255, 0);
     }
     SaveProperties props {};
     props.outputFormat = OutputFormat::JPEG;
-    save(fd, *bitmap8, props);
-    delete bitmap8;
+    save(fd, bitmap8, props);
 }
 
 void Utils::drawAllMatches(Buffer<Buffer<Matching::Match>> &matches, uint32_t bestIndex) {
     size_t index = 0;
-    Bitmap *bmp2 = Core::sources->buffer[bestIndex]->bitmapPtr->read();
-    Bitmap *bmp2_8 = bmp2->convertTo(Depth::U8, ColorSpace::RGB);
-    delete bmp2;
+    Bitmap bmp2_8 = Core::sources->buffer[bestIndex]->bitmapPtr->read();
+    bmp2_8 = bmp2_8.convertDepth(Depth::U8);
     for (size_t i = 0; i < Core::sources->size; i++) {
         if (i == bestIndex) continue;
 
-        Bitmap *bmp1 = Core::sources->buffer[i]->bitmapPtr->read();
-        Bitmap *bmp1_8 = bmp1->convertTo(Depth::U8, ColorSpace::RGB);
-        delete bmp1;
+        Bitmap bmp1_8 = Core::sources->buffer[i]->bitmapPtr->read();
+        bmp1_8 = bmp1_8.convertDepth(Depth::U8);
         drawMatches(
-                *bmp1_8,
-                *bmp2_8,
+                bmp1_8,
+                bmp2_8,
                 matches[index],
                 *Core::sources->buffer[i]->keyPoints,
                 *Core::sources->buffer[bestIndex]->keyPoints,
                 index
         );
         index++;
-        delete bmp1_8;
 
         JNIHelper::getInstance()->writeMessageToLog(false, "Drawing matches with image %zd completed", i);
     }
-    delete bmp2_8;
     JNIHelper::getInstance()->writeMessageToLog(false, "Drawing completed\n");
 }

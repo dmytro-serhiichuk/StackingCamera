@@ -12,14 +12,6 @@
 #include "matching/validation/matches-validation.h"
 
 namespace Core {
-    enum class ImageFormat {
-        NONE    = 0,
-        RGB_8   = 1,
-        RGB_16  = 2,
-        RGBA_8  = 3,
-        RGBA_16 = 4
-    };
-
     void Data::removeAnalysedData() {
         delete keyPoints;
         delete descriptors;
@@ -37,7 +29,7 @@ namespace Core {
     float BRISK_PATTERN_SCALE_FACTOR = .0f;
     bool SAVE_KEYPOINTS = false;
     bool SAVE_MATCHES = false;
-    ColorSpace BITMAP_COLOR_SPACE = ColorSpace::RGB;
+    ColorSpace BITMAP_COLOR_SPACE = ColorSpace::sRGB;
     Depth BITMAP_DEPTH = Depth::U16;
 
     M_BRISK* mBrisk = nullptr;
@@ -62,8 +54,8 @@ namespace Core {
 
     void applySettings(int fast_threshold, float ransac_threshold, int ransac_iterations,
                        int tiles_per_side, int max_keypoints, int max_matches,
-                       float brisk_pattern_scale, bool use16_bit, bool use_images,
-                       int image_format, bool save_keypoints, bool save_matches) {
+                       float brisk_pattern_scale, bool use16_bit,
+                       int color_space, bool save_keypoints, bool save_matches) {
         auto newDepth = use16_bit ? Depth::U16 : Depth::U8;
 
         if (TILES_PER_SIDE != tiles_per_side || BITMAP_DEPTH != newDepth) {
@@ -89,8 +81,7 @@ namespace Core {
         }
 
         BITMAP_DEPTH = newDepth;
-        BITMAP_COLOR_SPACE = ColorSpace::RGB;
-        // TODO: handle images
+        BITMAP_COLOR_SPACE = (ColorSpace)color_space;
         SAVE_KEYPOINTS = save_keypoints;
         SAVE_MATCHES = save_matches;
     }
@@ -132,17 +123,16 @@ namespace Core {
                 try {
                     JNIHelper::getInstance()->writeMessageToLog(false, "Starting analysis of image %zd", i);
 
-                    Bitmap* bitmap   = src->bitmapPtr->read();
-                    src->keyPoints   = mBrisk->detect(*bitmap);
-                    src->descriptors = mBrisk->compute(*bitmap, *src->keyPoints);
+                    Bitmap bitmap    = src->bitmapPtr->read();
+                    src->keyPoints   = mBrisk->detect(bitmap);
+                    src->descriptors = mBrisk->compute(bitmap, *src->keyPoints);
                     JNIHelper::getInstance()->writeMessageToLog(false, "\tDescriptors computing completed");
 
                     if (SAVE_KEYPOINTS) {
-                        Utils::drawKeyPoints(*bitmap, *src->keyPoints);
+                        Utils::drawKeyPoints(bitmap, *src->keyPoints);
                         JNIHelper::getInstance()->writeMessageToLog(false, "\tDrawing completed");
                     }
 
-                    delete bitmap;
                     JNIHelper::getInstance()->writeMessageToLog(false, "Analysis of image %zd completed\n", i);
                 }
                 catch (std::exception &e) {

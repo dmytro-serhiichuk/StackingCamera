@@ -69,10 +69,6 @@ namespace ImageIO {
     }
 
     BitmapPtr *open(int fd, ColorSpace colorSpace, Depth depth) {
-        if (colorSpace != ColorSpace::RGB && colorSpace != ColorSpace::RGBA) {
-            throw std::runtime_error("Invalid input color space");
-        }
-
         size_t size = 0;
         uint8_t *buffer = readFile(fd, size);
 
@@ -97,7 +93,7 @@ namespace ImageIO {
             }
         } catch (std::exception &e) {
             delete [] buffer;
-            throw std::runtime_error("File read failed");
+            throw std::runtime_error(e.what());
         }
 
         delete [] buffer;
@@ -117,7 +113,6 @@ namespace ImageIO {
                 break;
             case OutputFormat::PNG:
                 savePNG(fd, bitmap, props);
-                close(fd);
                 break;
             default:
                 saveTIFF(fd, bitmap, props);

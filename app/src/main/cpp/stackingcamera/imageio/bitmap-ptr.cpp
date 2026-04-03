@@ -6,9 +6,10 @@
 #include "jni-helper.h"
 
 namespace ImageIO {
-    BitmapPtr::BitmapPtr(uint32_t w, uint32_t h, void *b, ColorSpace cs, Depth d) :
-        width(w), height(h), colorSpace(cs), depth(d), bufferSize(w * h * (size_t)cs * (size_t)d)
+    BitmapPtr::BitmapPtr(uint32_t w, uint32_t h, void* b, Depth d, ColorModel cm, ColorSpace cs) :
+        width(w), height(h), depth(d), colorModel(cm), colorSpace(cs)
     {
+        bufferSize = width * height * (size_t)depth * getSamplesPerPixel(colorModel);
         filePath = JNIHelper::getInstance()->createTempFile();
 
         FILE *file = fopen(filePath, "w");
@@ -19,8 +20,8 @@ namespace ImageIO {
     }
 
     BitmapPtr::BitmapPtr(Bitmap &bitmap) :
-        width(bitmap.width), height(bitmap.height),
-        colorSpace(bitmap.colorSpace), depth(bitmap.depth), bufferSize(bitmap.sizeOfBuffer())
+        width(bitmap.width), height(bitmap.height), colorModel(bitmap.colorModel),
+        colorSpace(bitmap.colorSpace), depth(bitmap.depth), bufferSize(bitmap.bufferSize)
     {
         filePath = JNIHelper::getInstance()->createTempFile();
 
@@ -37,14 +38,14 @@ namespace ImageIO {
         bufferSize = 0;
     }
 
-    Bitmap *BitmapPtr::read() const {
+    Bitmap BitmapPtr::read() const {
         auto buffer = new uint8_t[bufferSize];
 
         FILE *file = fopen(filePath, "r");
         fread(buffer, sizeof(uint8_t), bufferSize, file);
         fclose(file);
 
-        return new Bitmap{width,height,buffer,colorSpace,depth};
+        return Bitmap {width, height, buffer, depth, colorModel, colorSpace};
     }
 
     uint8_t *BitmapPtr::readChunk(size_t offset, size_t size) const {

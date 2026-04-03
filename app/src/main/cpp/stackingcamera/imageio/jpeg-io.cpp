@@ -6,57 +6,110 @@
 #include <turbojpeg.h>
 #include <stdexcept>
 #include <unistd.h>
+#include "profiles-manager.h"
 
 namespace ImageIO {
+    namespace {
+        struct ICCProfileData {
+            size_t size = 0;
+            uint8_t* buffer = nullptr;
+
+            [[nodiscard]] bool isValid() const {
+                return size > 0 && buffer != nullptr;
+            }
+            void free() const {
+                delete [] buffer;
+            }
+        };
+
+        ICCProfileData retrieveICCProfile(tjhandle decompressor) {
+            ICCProfileData icc {};
+
+            if (tj3GetICCProfile(decompressor, &icc.buffer, &icc.size) < 0 &&
+                tj3GetErrorCode(decompressor) != 0) {
+                tj3Destroy(decompressor);
+                icc.free();
+                throw std::runtime_error("Failed to get icc profile");
+            }
+
+            return icc;
+        }
+    }
+
     BitmapPtr *loadJPEG(uint8_t *fileData, size_t fileSize, ColorSpace colorSpace, Depth depth) {
-        tjhandle decompressor = tjInitDecompress();
+        tjhandle decompressor = tj3Init(TJINIT_DECOMPRESS);
         if (decompressor == nullptr) {
             throw std::runtime_error("Failed to init jpeg decompressor");
         }
+        tj3Set(decompressor, TJPARAM_SAVEMARKERS, 2);
 
-        int32_t width, height, jpegSubsamp;
-        if (tjDecompressHeader2(decompressor, fileData, fileSize, &width, &height, &jpegSubsamp) < 0) {
-            tjDestroy(decompressor);
+        if (tj3DecompressHeader(decompressor, fileData, fileSize) < 0) {
+            tj3Destroy(decompressor);
             throw std::runtime_error("Failed to decompress jpeg header");
         }
 
-        size_t bufferLength = width * height * (size_t)colorSpace;
-        uint8_t* buffer = new uint8_t[bufferLength];
+        uint32_t width     = tj3Get(decompressor, TJPARAM_JPEGWIDTH);
+        uint32_t height    = tj3Get(decompressor, TJPARAM_JPEGHEIGHT);
+        TJCS jpgColorSpace = (TJCS)tj3Get(decompressor, TJPARAM_COLORSPACE);
 
-        int pixelFormat = colorSpace == ColorSpace::RGB ? TJPF_RGB :
-                          colorSpace == ColorSpace::RGBA ? TJPF_RGBA :
-                          TJPF_GRAY;
+        if (jpgColorSpace != TJCS_RGB && jpgColorSpace != TJCS_YCbCr) {
+            tj3Destroy(decompressor);
+            throw std::runtime_error("Failed to decompress jpeg (only RGB format is supported)");
+        }
 
-        if (tjDecompress2(decompressor, fileData, fileSize, buffer, width, 0, height, pixelFormat, TJFLAG_FASTDCT) < 0) {
-            tjDestroy(decompressor);
-            delete[] buffer;
+        auto icc = retrieveICCProfile(decompressor);
+        bool isIccValid = icc.isValid();
+        ColorSpace srcColorSpace = isIccValid ? ColorSpace::Other : ColorSpace::sRGB;
+
+        const TJPF pixelFormat = TJPF_RGB;
+        const ColorModel colorModel = ColorModel::RGB;
+
+        size_t bufferSize = width * height * getSamplesPerPixel(colorModel);
+        auto buffer = new uint8_t[bufferSize];
+
+        if (tj3Decompress8(decompressor, fileData, fileSize, buffer, 0, pixelFormat) < 0) {
+            tj3Destroy(decompressor);
+            icc.free();
             throw std::runtime_error("Failed to decompress jpeg");
         }
 
-        tjDestroy(decompressor);
+        tj3Destroy(decompressor);
 
-        Bitmap* bmp = new Bitmap(width, height, buffer, colorSpace, Depth::U8);
-        if (depth != Depth::U8) {
-            Bitmap* temp = bmp;
-            bmp = temp->convertDepth(Depth::U16);
-            delete temp;
+        auto bmp = Bitmap { width, height, buffer, Depth::U8, colorModel, srcColorSpace };
+
+        if (srcColorSpace == colorSpace && depth != Depth::U8) {
+            bmp = bmp.convertDepth(depth);
+        } else if (srcColorSpace != colorSpace) {
+            cmsHPROFILE profile = isIccValid
+                    ? cmsOpenProfileFromMem(icc.buffer, icc.size)
+                    : cmsCreate_sRGBProfile();
+            bmp = bmp.normalize(depth, colorSpace, profile);
+            cmsCloseProfile(profile);
         }
 
-        BitmapPtr* bitmapPtr = new BitmapPtr(*bmp);
-        delete bmp;
-        return bitmapPtr;
+        icc.free();
+        return new BitmapPtr(bmp);
     }
 
     void saveJPEG(int fd, Bitmap &bmp, SaveProperties props) {
-        Bitmap* bp = &bmp;
-        if (bp->depth != Depth::U8) {
-            bp = bp->convertDepth(Depth::U8);
+        Bitmap _converted {};
+        Bitmap* bitmapPtr = nullptr;
+        if (bmp.depth != Depth::U8 && bmp.colorSpace == ColorSpace::sRGB) {
+            _converted = bmp.convertDepth(Depth::U8);
+            bitmapPtr = &_converted;
+        } else if (bmp.colorSpace != ColorSpace::sRGB) {
+            auto p = createProfileFromColorSpace(bmp.colorSpace);
+            _converted = bmp.normalize(Depth::U8, ColorSpace::sRGB, p);
+            cmsCloseProfile(p);
+            bitmapPtr = &_converted;
+        } else {
+            bitmapPtr = &bmp;
         }
 
         unsigned long jpegSize = 0;
         uint8_t* jpegBuf = nullptr;
 
-        tjhandle jpegCompressor = tjInitCompress();
+        tjhandle jpegCompressor = tj3Init(TJINIT_COMPRESS);
         if (!jpegCompressor) {
             throw std::runtime_error("Failed to init jpeg compressor");
         }
@@ -64,31 +117,26 @@ namespace ImageIO {
         jpegSize = 0;
         jpegBuf = nullptr;
 
-        int pixelFormat = bp->colorSpace == ColorSpace::RGB ? TJPF_RGB :
-                          bp->colorSpace == ColorSpace::RGBA ? TJPF_RGBA :
-                          TJPF_GRAY;
+        int pixelFormat = TJPF_RGB;
+        int subsamp = TJSAMP_444;
+        int colorSpace = TJCS_RGB;
 
-        int subsamp = (bp->colorSpace == ColorSpace::RGB ||
-                       bp->colorSpace == ColorSpace::RGBA)
-                       ? TJSAMP_444
-                       : TJSAMP_GRAY;
+        tj3Set(jpegCompressor, TJPARAM_QUALITY, props.jpegQuality);
+        tj3Set(jpegCompressor, TJPARAM_SUBSAMP , subsamp);
+        tj3Set(jpegCompressor, TJPARAM_COLORSPACE, colorSpace);
 
-        if (tjCompress2(
-                jpegCompressor, bp->buffer, bp->width, 0, bp->height,
-                pixelFormat, &jpegBuf, &jpegSize, subsamp, props.jpegQuality, TJFLAG_FASTDCT) < 0)
-        {
-            tjDestroy(jpegCompressor);
+        auto profile = getProfileFromColorSpace(bitmapPtr->colorSpace);
+        tj3SetICCProfile(jpegCompressor, profile.data(), profile.size());
+
+        if (tj3Compress8(jpegCompressor, bitmapPtr->buffer, bitmapPtr->width, 0,
+                         bitmapPtr->height, pixelFormat, &jpegBuf, &jpegSize) < 0) {
+            tj3Destroy(jpegCompressor);
             throw std::runtime_error("Failed to compress jpeg");
         }
 
+        tj3Destroy(jpegCompressor);
         write(fd, jpegBuf, jpegSize);
-
-        tjDestroy(jpegCompressor);
         tjFree(jpegBuf);
-
-        if (bp->depth != bmp.depth) {
-            delete bp;
-        }
     }
 }
 

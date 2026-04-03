@@ -8,7 +8,7 @@
 WarpManager::WarpManager(BitmapPtr &baseBitmap) {
     outputWidth = baseBitmap.width;
     outputHeight = baseBitmap.height;
-    outputBufferLength = baseBitmap.width * baseBitmap.height * (size_t)baseBitmap.colorSpace;
+    outputBufferLength = baseBitmap.width * baseBitmap.height * getSamplesPerPixel(baseBitmap.colorModel);
     outputBufferSize = outputBufferLength * (size_t)baseBitmap.depth;
 
     outputBuffer = CL::createBuffer(CL_MEM_WRITE_ONLY, outputBufferSize, nullptr);
@@ -20,8 +20,6 @@ WarpManager::WarpManager(BitmapPtr &baseBitmap) {
 
     clSetKernelArg(kernel, 5, sizeof(int32_t), &outputWidth);
     clSetKernelArg(kernel, 6, sizeof(int32_t), &outputHeight);
-    int32_t channels = (int32_t)baseBitmap.colorSpace;
-    clSetKernelArg(kernel, 7, sizeof(int32_t), &channels);
 }
 
 WarpManager::~WarpManager() {
@@ -45,12 +43,12 @@ static inline cl_mem initHBuffer(const Eigen::Matrix3d &H) {
     return buffer;
 }
 
-BitmapPtr *WarpManager::warpSingleBitmap(Bitmap &bitmap, const Eigen::Matrix3d &H) {
+BitmapPtr *WarpManager::warpSingleBitmap(Bitmap &bitmap, const Eigen::Matrix3d &H) const {
     cl_mem HBuffer = initHBuffer(H);
 
     cl_mem inputBuffer = CL::createBuffer(
         CL_MEM_COPY_HOST_PTR | CL_MEM_READ_ONLY | CL_MEM_HOST_NO_ACCESS,
-        bitmap.sizeOfBuffer(), bitmap.buffer
+        bitmap.bufferSize, bitmap.buffer
     );
 
     clSetKernelArg(kernel, 0, sizeof(cl_mem), &inputBuffer);
@@ -78,11 +76,11 @@ BitmapPtr *WarpManager::warpSingleBitmap(Bitmap &bitmap, const Eigen::Matrix3d &
     clReleaseMemObject(inputBuffer);
     clReleaseMemObject(HBuffer);
 
-    return new BitmapPtr(outputWidth, outputHeight, outputBitmapBuffer, bitmap.colorSpace, bitmap.depth);
+    return new BitmapPtr {outputWidth, outputHeight, outputBitmapBuffer, bitmap.depth, bitmap.colorModel, bitmap.colorSpace};
 }
 
 List<BitmapPtr> *WarpManager::warp(List<Core::Data> &sources, uint32_t bestIndex,
-                                   Buffer<RANSAC::Result> &homographies) {
+                                   Buffer<RANSAC::Result> &homographies) const {
     auto warpedBitmaps = new List<BitmapPtr>(homographies.size);
 
     size_t matrixIndex = 0;
@@ -91,8 +89,7 @@ List<BitmapPtr> *WarpManager::warp(List<Core::Data> &sources, uint32_t bestIndex
         JNIHelper::getInstance()->writeMessageToLog(false, "Starting warping image %zd", i);
 
         auto bitmap = sources.buffer[i]->bitmapPtr->read();
-        warpedBitmaps->add(warpSingleBitmap(*bitmap, homographies[matrixIndex].matrix));
-        delete bitmap;
+        warpedBitmaps->add(warpSingleBitmap(bitmap, homographies[matrixIndex].matrix));
         matrixIndex++;
         JNIHelper::getInstance()->writeMessageToLog(false, "Image %zd warping completed\n", i);
     }

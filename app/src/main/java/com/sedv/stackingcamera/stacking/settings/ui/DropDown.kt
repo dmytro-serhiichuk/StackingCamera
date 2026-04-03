@@ -22,6 +22,9 @@ class DropDown @JvmOverloads constructor(
         get() = binding.autoCompleteTextView.text.toString()
         set(value) { binding.autoCompleteTextView.setText(value, false) }
 
+    private var _currentActiveValue = ""
+    val isChanged get() = value != _currentActiveValue
+
     init {
         context.theme.obtainStyledAttributes(
             attrs,
@@ -45,9 +48,10 @@ class DropDown @JvmOverloads constructor(
         val adapter = ArrayAdapter(context, android.R.layout.simple_list_item_1, options)
         (binding.menuLayout.editText as? AutoCompleteTextView)?.setAdapter(adapter)
         binding.autoCompleteTextView.setText(startValue, false)
+        _currentActiveValue = startValue
     }
 
-    fun setEnable(enable: Boolean) {
-        binding.menuLayout.isEnabled = enable
+    fun applyNewValue() {
+        _currentActiveValue = value
     }
 }

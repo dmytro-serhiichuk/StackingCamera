@@ -8,14 +8,10 @@
 #include <cstdint>
 #include <cstring>
 #include <stdexcept>
+#include "color-model.h"
+#include "color-space.h"
 
 namespace ImageIO {
-    enum class ColorSpace {
-        Grayscale = 1,
-        RGB = 3,
-        RGBA = 4
-    };
-
     enum class Depth {
         U8 = 1,
         U16 = 2
@@ -23,117 +19,40 @@ namespace ImageIO {
 
     class Bitmap {
     public:
-        uint8_t* buffer;
-        uint32_t width;
-        uint32_t height;
-        size_t bufferLength;
-        uint32_t stride;
-        ColorSpace colorSpace;
-        Depth depth;
+        uint8_t *buffer = nullptr;
+        uint32_t width = 0;
+        uint32_t height = 0;
+        size_t totalSamples = 0;
+        size_t bufferSize = 0;
+        size_t stride = 0;
+        ColorModel colorModel = ColorModel::RGB;
+        ColorSpace colorSpace = ColorSpace::Other;
+        Depth depth = Depth::U8;
 
-        Bitmap(uint32_t w, uint32_t h, void* b, ColorSpace cs, Depth d) :
-            width(w), height(h), buffer((uint8_t*)b), colorSpace(cs), depth(d)
-        {
-            bufferLength = width * height * (size_t)colorSpace;
-            stride = width * (uint32_t)colorSpace;
+        Bitmap() = default;
+
+        Bitmap(uint32_t w, uint32_t h, void *b, Depth d, ColorModel cm, ColorSpace cs) :
+                width(w), height(h), buffer((uint8_t *) b), depth(d), colorModel(cm),
+                colorSpace(cs) {
+            size_t spp = getSamplesPerPixel(colorModel);
+            totalSamples = width * height * spp;
+            bufferSize = totalSamples * (size_t) depth;
+            stride = width * spp * (size_t) depth;
         }
-        Bitmap(const Bitmap& other) = delete;
-        Bitmap& operator=(Bitmap&&) = default;
 
+        Bitmap(const Bitmap &other);
+        Bitmap(Bitmap &&other) noexcept;
         ~Bitmap();
 
-        Bitmap* copy() const;
+        Bitmap &operator=(Bitmap &&other) noexcept;
+        Bitmap &operator=(const Bitmap &other) noexcept;
 
-        inline size_t sizeOfBuffer() const {
-            return bufferLength * (size_t)depth;
-        }
+        [[nodiscard]] Bitmap copy() const;
 
-        inline Bitmap* convertColor(ColorSpace newColorSpace) const {
-            return Bitmap::convertTo(depth, newColorSpace);
-        }
-        inline Bitmap* convertDepth(Depth newDepth) const {
-            return Bitmap::convertTo(newDepth, colorSpace);
-        }
-
-        Bitmap* convertTo(Depth newDepth, ColorSpace newColorSpace) const;
-
-    private:
-        template <typename I, typename O>
-        Bitmap* convert(Depth newDepth, ColorSpace newColorSpace) const {
-            size_t newBufferLength = width * height * (size_t)newColorSpace;
-            O* dst = new O[newBufferLength];
-            I* src = (I*)buffer;
-
-            if (colorSpace == newColorSpace) {
-                for (size_t i = 0; i < bufferLength; i++) {
-                    dst[i] = Bitmap::convertValueDepth<I, O>(src[i]);
-                }
-            }
-            else if (newColorSpace == ColorSpace::RGB) /* to RGB */ {
-                if (colorSpace == ColorSpace::Grayscale) /* from Grayscale */ {
-                    for (size_t i = 0; i < bufferLength; i++) {
-                        dst[i * 3]     = Bitmap::convertValueDepth<I, O>(src[i]);
-                        dst[i * 3 + 1] = Bitmap::convertValueDepth<I, O>(src[i]);
-                        dst[i * 3 + 2] = Bitmap::convertValueDepth<I, O>(src[i]);
-                    }
-                }
-                else if (colorSpace == ColorSpace::RGBA) /* from RGBA */ {
-                    for (size_t i = 0, newI = 0; i < bufferLength; i+=4, newI+=3) {
-                        dst[newI]     = Bitmap::convertValueDepth<I, O>(src[i]);
-                        dst[newI + 1] = Bitmap::convertValueDepth<I, O>(src[i + 1]);
-                        dst[newI + 2] = Bitmap::convertValueDepth<I, O>(src[i + 2]);
-                    }
-                }
-            }
-            else if (newColorSpace == ColorSpace::Grayscale) /* to Grayscale */ {
-                if (colorSpace == ColorSpace::RGB) /* from RGB */ {
-                    for (size_t i = 0; i < newBufferLength; i++) {
-                        I gray = static_cast<I>(0.299 * src[i * 3] + 0.587 * src[i * 3 + 1] + 0.114 * src[i * 3 + 2]);
-                        dst[i] = Bitmap::convertValueDepth<I, O>(gray);
-                    }
-                }
-                else if (colorSpace == ColorSpace::RGBA) /* from RGBA */ {
-                    for (size_t i = 0; i < newBufferLength; i++) {
-                        I gray = static_cast<I>(0.299 * src[i * 4] + 0.587 * src[i * 4 + 1] + 0.114 * src[i * 4 + 2]);
-                        dst[i] = Bitmap::convertValueDepth<I, O>(gray);
-                    }
-                }
-            }
-            else if (newColorSpace == ColorSpace::RGBA) /* to RGBA */ {
-                if (colorSpace == ColorSpace::RGB) /* from RGB */ {
-                    for (size_t i = 0, newI = 0; i < bufferLength; i+=3, newI+=4) {
-                        dst[newI]     = Bitmap::convertValueDepth<I, O>(src[i]);
-                        dst[newI + 1] = Bitmap::convertValueDepth<I, O>(src[i + 1]);
-                        dst[newI + 2] = Bitmap::convertValueDepth<I, O>(src[i + 2]);
-                        dst[newI + 3] = Bitmap::convertValueDepth<uint8_t, O>(255);
-                    }
-                }
-                else if (colorSpace == ColorSpace::Grayscale) /* from Grayscale */ {
-                    for (size_t i = 0; i < bufferLength; i++) {
-                        dst[i * 4]     = Bitmap::convertValueDepth<I, O>(src[i]);
-                        dst[i * 4 + 1] = Bitmap::convertValueDepth<I, O>(src[i]);
-                        dst[i * 4 + 2] = Bitmap::convertValueDepth<I, O>(src[i]);
-                        dst[i * 4 + 3] = Bitmap::convertValueDepth<uint8_t, O>(255);
-                    }
-                }
-            }
-
-            return new Bitmap(width, height, dst, newColorSpace, newDepth);
-        }
-
-        template <typename I, typename O>
-        static O convertValueDepth(I input) {
-            if (std::is_same<I, O>::value) return input;
-
-            if (std::is_same<I, uint8_t>::value && std::is_same<O, uint16_t>::value) {
-                return (uint16_t)input * 257;
-            }
-            if (std::is_same<I, uint16_t>::value && std::is_same<O, uint8_t>::value) {
-                return (uint8_t)((uint16_t)input >> 8);
-            }
-
-            throw std::invalid_argument("Unsupported types. Bitmap only supports U8 and U16 types");
-        }
+        // Converts an image to RGB with the specified color depth (note: input data must be RGB/RGBA)
+        Bitmap convertDepth(Depth outDepth) const;
+        // Converts an image to RGB with the specified color depth and color space
+        Bitmap normalize(Depth outDepth, ColorSpace outColorSpace, cmsHPROFILE inProfile) const;
     };
 }
 

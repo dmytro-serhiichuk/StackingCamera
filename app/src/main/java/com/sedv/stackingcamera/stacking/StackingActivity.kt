@@ -135,6 +135,7 @@ class StackingActivity : AppCompatActivity() {
         super.onResume()
 
         updateButtonsState()
+        // TODO: handle image reloading after changing bit depth or color space
         if (StackingHandler.isAnalyseResultsRemoved) {
             StackingHandler.bitmaps.forEach { it.bitmapValidationInfo = null }
             binding.loadedImagesList.forEach {

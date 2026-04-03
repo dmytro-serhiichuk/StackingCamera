@@ -32,33 +32,6 @@ Java_com_sedv_stackingcamera_stacking_StackingActivity_loadBitmap(JNIEnv *env, j
         return -1;
     }
 }
-inline int calculateImageChannelSupport(bool uint8, bool uint16) {
-    if (uint8 && uint16) return 3;
-    else if (uint8) return 1;
-    else if (uint16) return 2;
-    else return 0;
-}
-extern "C"
-JNIEXPORT jobject JNICALL
-Java_com_sedv_stackingcamera_stacking_settings_Settings_getAvailableImageSettings(JNIEnv *env,
-                                                                                  jobject thiz) {
-    jclass cls = env->FindClass("com/sedv/stackingcamera/stacking/settings/AvailableImageSettings");
-    jmethodID constructor = env->GetMethodID(cls, "<init>", "(II)V");
-
-    int rgbSupport = calculateImageChannelSupport(
-        CL::rgbInfo.UNORM_INT8_SUPPORT.SUPPORT_READ_WRITE,
-        CL::rgbInfo.UNORM_INT16_SUPPORT.SUPPORT_READ_WRITE
-    );
-    int rgbaSupport = calculateImageChannelSupport(
-            CL::rgbaInfo.UNORM_INT8_SUPPORT.SUPPORT_READ_WRITE,
-            CL::rgbaInfo.UNORM_INT16_SUPPORT.SUPPORT_READ_WRITE
-    );
-
-    jobject javailableImageSettings = env->NewObject(cls,constructor, rgbSupport, rgbaSupport);
-    env->DeleteLocalRef(cls);
-
-    return javailableImageSettings;
-}
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_sedv_stackingcamera_stacking_settings_Settings_applySettings(JNIEnv *env, jobject thiz,
@@ -70,14 +43,12 @@ Java_com_sedv_stackingcamera_stacking_settings_Settings_applySettings(JNIEnv *en
                                                                       jint max_matches,
                                                                       jfloat brisk_pattern_scale,
                                                                       jboolean use16_bit,
-                                                                      jboolean use_images,
-                                                                      jint image_format,
+                                                                      jint color_space,
                                                                       jboolean save_keypoints,
                                                                       jboolean save_matches) {
     Core::applySettings(
         fast_threshold, ransac_threshold, ransac_iterations, tiles_per_side, max_keypoints,
-        max_matches, brisk_pattern_scale, use16_bit, use_images, image_format,
-        save_keypoints, save_matches
+        max_matches, brisk_pattern_scale, use16_bit, color_space, save_keypoints, save_matches
     );
 }
 extern "C"

@@ -39,8 +39,9 @@ GaussianKernel* GaussianKernel::create(float scaleFactor) {
 }
 
 void BitmapInfo::update() {
-    bufferLength = width * height * (size_t)colorSpace;
-    stride = width * (uint32_t)colorSpace;
+    auto spp = getSamplesPerPixel(colorModel);
+    bufferLength = width * height * spp;
+    stride = width * spp;
 }
 
 void toGray8(BitmapInfo &bitmap, cl_mem &inputBuffer) {
@@ -54,7 +55,7 @@ void toGray8(BitmapInfo &bitmap, cl_mem &inputBuffer) {
     const char* kernelName = bitmap.depth == Depth::U16 ? "from_rgb16_to_gray8" : "from_rgb8_to_gray8";
     cl_kernel kernel = CL::createKernel(kernelName);
 
-    int32_t channels = (int32_t)bitmap.colorSpace;
+    int32_t channels = getSamplesPerPixel(bitmap.colorModel);
 
     clSetKernelArg(kernel, 0, sizeof(cl_mem), &inputBuffer);
     clSetKernelArg(kernel, 1, sizeof(cl_mem), &outputBuffer);
@@ -74,11 +75,11 @@ void toGray8(BitmapInfo &bitmap, cl_mem &inputBuffer) {
     inputBuffer = outputBuffer;
 
     bitmap.depth = Depth::U8;
-    bitmap.colorSpace = ColorSpace::Grayscale;
+    bitmap.colorModel = ColorModel::GRAY;
     bitmap.update();
 }
 
-Bitmap *toGray8WithReading(Bitmap &bitmap, cl_mem &inputBuffer) {
+Bitmap toGray8WithReading(Bitmap &bitmap, cl_mem &inputBuffer) {
     size_t outputDataLength = bitmap.width * bitmap.height;
 
     uint8_t* outputBitmapBuffer = new uint8_t[outputDataLength];
@@ -90,7 +91,7 @@ Bitmap *toGray8WithReading(Bitmap &bitmap, cl_mem &inputBuffer) {
     const char* kernelName = bitmap.depth == Depth::U16 ? "from_rgb16_to_gray8" : "from_rgb8_to_gray8";
     cl_kernel kernel = CL::createKernel(kernelName);
 
-    int32_t channels = (int32_t)bitmap.colorSpace;
+    int32_t channels = getSamplesPerPixel(bitmap.colorModel);
 
     clSetKernelArg(kernel, 0, sizeof(cl_mem), &inputBuffer);
     clSetKernelArg(kernel, 1, sizeof(cl_mem), &outputBuffer);
@@ -116,7 +117,7 @@ Bitmap *toGray8WithReading(Bitmap &bitmap, cl_mem &inputBuffer) {
 
     inputBuffer = outputBuffer;
 
-    return new Bitmap(bitmap.width, bitmap.height, outputBitmapBuffer, ColorSpace::Grayscale, Depth::U8);
+    return Bitmap {bitmap.width, bitmap.height, outputBitmapBuffer, Depth::U8, ColorModel::GRAY, ColorSpace::Other};
 }
 
 void CLAHE(BitmapInfo &bitmap, cl_mem &inputBuffer, uint32_t tileCount, float fClipLimit) {

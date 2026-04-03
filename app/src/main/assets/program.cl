@@ -922,10 +922,9 @@ __kernel void warp_perspective_16(
     const int input_width,
     const int input_height,
     const int output_width,
-    const int output_height,
-    const int channels
-)
-{
+    const int output_height
+) {
+    const int SAMPLES_PER_PIXEL = 3;
     int x = get_global_id(0);
     int y = get_global_id(1);
 
@@ -949,22 +948,22 @@ __kernel void warp_perspective_16(
         float dx = x_src - x0;
         float dy = y_src - y0;
 
-        for (int c = 0; c < 3; c++) {
-            float p0 = input_image[(y0 * input_width + x0) * channels + c];
-            float p1 = input_image[(y0 * input_width + x1) * channels + c];
-            float p2 = input_image[(y1 * input_width + x0) * channels + c];
-            float p3 = input_image[(y1 * input_width + x1) * channels + c];
+        for (int c = 0; c < SAMPLES_PER_PIXEL; c++) {
+            float p0 = input_image[(y0 * input_width + x0) * SAMPLES_PER_PIXEL + c];
+            float p1 = input_image[(y0 * input_width + x1) * SAMPLES_PER_PIXEL + c];
+            float p2 = input_image[(y1 * input_width + x0) * SAMPLES_PER_PIXEL + c];
+            float p3 = input_image[(y1 * input_width + x1) * SAMPLES_PER_PIXEL + c];
 
             float value = (1 - dx) * (1 - dy) * p0 +
                           dx * (1 - dy) * p1 +
                           (1 - dx) * dy * p2 +
                           dx * dy * p3;
-            output_image[(y * output_width + x) * channels + c] = (ushort)clamp(value, 0.0f, 65535.0f);
+            output_image[(y * output_width + x) * SAMPLES_PER_PIXEL + c] = (ushort)clamp(value, 0.0f, 65535.0f);
         }
     } else {
-        output_image[(y * output_width + x) * channels]     = 65000;
-        output_image[(y * output_width + x) * channels + 1] = 0;
-        output_image[(y * output_width + x) * channels + 2] = 0;
+        output_image[(y * output_width + x) * SAMPLES_PER_PIXEL]     = 65000;
+        output_image[(y * output_width + x) * SAMPLES_PER_PIXEL + 1] = 0;
+        output_image[(y * output_width + x) * SAMPLES_PER_PIXEL + 2] = 0;
     }
 }
 
@@ -975,10 +974,9 @@ __kernel void warp_perspective_8(
     const int input_width,
     const int input_height,
     const int output_width,
-    const int output_height,
-    const int channels
-)
-{
+    const int output_height
+) {
+    const int SAMPLES_PER_PIXEL = 3;
     int x = get_global_id(0);
     int y = get_global_id(1);
 
@@ -1002,21 +1000,21 @@ __kernel void warp_perspective_8(
         float dx = x_src - x0;
         float dy = y_src - y0;
 
-        for (int c = 0; c < 3; c++) {
-            float p0 = input_image[(y0 * input_width + x0) * channels + c];
-            float p1 = input_image[(y0 * input_width + x1) * channels + c];
-            float p2 = input_image[(y1 * input_width + x0) * channels + c];
-            float p3 = input_image[(y1 * input_width + x1) * channels + c];
+        for (int c = 0; c < SAMPLES_PER_PIXEL; c++) {
+            float p0 = input_image[(y0 * input_width + x0) * SAMPLES_PER_PIXEL + c];
+            float p1 = input_image[(y0 * input_width + x1) * SAMPLES_PER_PIXEL + c];
+            float p2 = input_image[(y1 * input_width + x0) * SAMPLES_PER_PIXEL + c];
+            float p3 = input_image[(y1 * input_width + x1) * SAMPLES_PER_PIXEL + c];
 
             float value = (1 - dx) * (1 - dy) * p0 +
                           dx * (1 - dy) * p1 +
                           (1 - dx) * dy * p2 +
                           dx * dy * p3;
-            output_image[(y * output_width + x) * channels + c] = (uchar)clamp(value, 0.0f, 255.0f);
+            output_image[(y * output_width + x) * SAMPLES_PER_PIXEL + c] = (uchar)clamp(value, 0.0f, 255.0f);
         }
     } else {
-        output_image[(y * output_width + x) * channels]     = 255;
-        output_image[(y * output_width + x) * channels + 1] = 0;
-        output_image[(y * output_width + x) * channels + 2] = 0;
+        output_image[(y * output_width + x) * SAMPLES_PER_PIXEL]     = 255;
+        output_image[(y * output_width + x) * SAMPLES_PER_PIXEL + 1] = 0;
+        output_image[(y * output_width + x) * SAMPLES_PER_PIXEL + 2] = 0;
     }
 }

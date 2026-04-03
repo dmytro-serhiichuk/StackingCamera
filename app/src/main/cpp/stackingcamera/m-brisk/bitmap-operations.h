@@ -28,21 +28,24 @@ typedef struct BitmapInfo {
     uint32_t height;
     size_t bufferLength;
     uint32_t stride;
-    ColorSpace colorSpace;
+    ColorModel colorModel;
     Depth depth;
 
-    BitmapInfo(uint32_t w, uint32_t h, ColorSpace cs, Depth d) : width(w), height(h), colorSpace(cs), depth(d) {
+    BitmapInfo(uint32_t w, uint32_t h, Depth d, ColorModel cm) : width(w), height(h), colorModel(cm), depth(d) {
+        auto spp = getSamplesPerPixel(colorModel);
+        bufferLength = w * h * (size_t)d * spp;
+        stride = w * spp * (size_t)d;
         update();
     }
 
     void update();
-    inline size_t sizeOfBuffer() const {
+    [[nodiscard]] inline size_t sizeOfBuffer() const {
         return bufferLength * (size_t)depth;
     }
 } BitmapInfo;
 
 void toGray8(BitmapInfo &bitmap, cl_mem &inputBuffer);
-Bitmap* toGray8WithReading(Bitmap &bitmap, cl_mem &inputBuffer);
+Bitmap toGray8WithReading(Bitmap &bitmap, cl_mem &inputBuffer);
 void CLAHE(BitmapInfo &bitmap, cl_mem &inputBuffer, uint32_t tileCount=32, float fClipLimit=4.0f);
 void blur(BitmapInfo &bitmap, cl_mem &inputBuffer, GaussianKernel &gk);
 bool resize(BitmapInfo &bitmap, cl_mem &inputBuffer, float scaleFactor, uint32_t minSize);
