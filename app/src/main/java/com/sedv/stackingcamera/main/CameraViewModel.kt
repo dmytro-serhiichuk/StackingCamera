@@ -93,8 +93,7 @@ class CameraViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     fun resume() {
-        if (cameraController.activeCamera.cameraDevice == null &&
-            cameraController.activeCamera.currentState == CameraState.CLOSED &&
+        if (cameraController.activeCamera.currentState == CameraState.CLOSED &&
             _previewSurface?.isValid == true
         ) {
             onProgramReady.invokeAll { it.invoke() }

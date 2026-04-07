@@ -35,7 +35,6 @@ import com.sedv.stackingcamera.main.generalsettings.GeneralSettingsController
 import com.sedv.stackingcamera.main.preview.GhostImageInfo
 import com.sedv.stackingcamera.main.preview.Preview
 import com.sedv.stackingcamera.main.settings.SettingsController
-import com.sedv.stackingcamera.main.Switcher
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File

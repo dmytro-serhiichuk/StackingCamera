@@ -41,7 +41,6 @@ class Camera(
 ) {
     val cameraSettings = CameraSettings(cameraInfo, ::onSettingsChangedManually)
     private var _cameraDevice: CameraDevice? = null
-    val cameraDevice: CameraDevice? get() = _cameraDevice
     private var captureSession: CameraCaptureSession? = null
     private val imageReaders = arrayListOf<FormatImageReader>()
     private var previewRequestBuilder: CaptureRequest.Builder? = null
@@ -61,7 +60,7 @@ class Camera(
 
     fun updatePreviewSurface(surface: Surface) {
         previewSurface = surface
-        if (cameraDevice != null && currentState == CameraState.OPENED) {
+        if (_cameraDevice != null && currentState == CameraState.OPENED) {
             recreateSession()
         }
     }
@@ -627,11 +626,4 @@ class Camera(
             throw CameraError.ClosingError("Error closing camera: ${e.message}")
         }
     }
-}
-
-enum class PhotoType {
-    REGULAR,
-    BURST_FIRST,
-    BURST_REGULAR,
-    BURST_LAST
 }
