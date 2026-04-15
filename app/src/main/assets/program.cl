@@ -867,7 +867,7 @@ __kernel void brisk(
     for (uint i = 0; i < nPoints; i++) {
         _values[i] = smoothedIntensity(
             image, integral, kp,
-            pattern[(kp.octave + 1) * nRotations * nPoints + i], 
+            pattern[kp.octave * nRotations * nPoints + i],
             imageWidth);
     }
 
@@ -893,7 +893,7 @@ __kernel void brisk(
     for (uint i = 0; i < nPoints; i++) {
         _values[i] = smoothedIntensity(
             image, integral, kp,
-            pattern[(kp.octave + 1) * nRotations * nPoints + theta * nPoints + i], 
+            pattern[kp.octave * nRotations * nPoints + theta * nPoints + i],
             imageWidth);
     }
 

@@ -20,7 +20,7 @@ size_t Descriptors::sizeOf() {
 }
 
 M_BRISK::M_BRISK(uint32_t _octaves, float _briskScaleFactor) {
-    nOctaves = _octaves + 1;
+    nOctaves = _octaves;
     scaleRange = dScaleRange * nOctaves;
 
     size_t pairsMaxSize = nPoints * (nPoints - 1) / 2;
@@ -58,7 +58,7 @@ M_BRISK::M_BRISK(uint32_t _octaves, float _briskScaleFactor) {
     patternPoints = new BriskPatternPoint[nPoints * nRotations * nOctaves];
 
     const float lb_scale = std::log2f(scaleRange);
-    const float lb_scale_step = lb_scale / nOctaves;
+    const float lb_scale_step = lb_scale / (nOctaves - 1);
 
     const float sigma_scale = 1.3f;
 
@@ -184,7 +184,7 @@ void M_BRISK::subpixelRefine(Bitmap &bitmap, cl_mem buffer, Buffer<KeyPoint> &ke
 inline void M_BRISK::filterKeypointsAfterRefining(Bitmap &bmp, Buffer<KeyPoint> &kps) {
     size_t fi = 0;
     for (size_t i = 0; i < kps.size; i++) {
-        if (RoiPredicate(bmp, kps[i], sizes[kps[i].octave + 1])) {
+        if (RoiPredicate(bmp, kps[i], sizes[kps[i].octave])) {
             kps[fi] = kps[i];
             fi++;
         }
@@ -215,7 +215,7 @@ Buffer<KeyPoint> *M_BRISK::detect(Bitmap &inputBitmap) {
 
     float lastScaleFactor = 1.0f;
 
-    for (size_t i = 0; i < nOctaves - 1; i++) {
+    for (size_t i = 0; i < nOctaves; i++) {
         if (i != 0) {
             if (!resize(bitmapInfo, buffer, OCTAVE_SCALE_FACTOR, MIN_OCTAVE_SIZE)) break;
             lastScaleFactor *= OCTAVE_SCALE_FACTOR;
