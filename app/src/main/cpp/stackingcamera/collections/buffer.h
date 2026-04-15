@@ -16,7 +16,7 @@ public:
     size_t size;
     T* buffer;
 
-    Buffer(size_t _capacity = 0) {
+    explicit Buffer(size_t _capacity = 0) {
         buffer = _capacity > 0 ? new T[_capacity] : nullptr;
         capacity = _capacity;
         size = 0;

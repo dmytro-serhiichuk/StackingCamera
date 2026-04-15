@@ -13,7 +13,17 @@ namespace RANSAC {
     typedef struct InliersInfo {
         int32_t count = 0;
         double errorFactor = 0.0;
-        std::vector<bool> mask;
+        bool* mask = nullptr;
+        size_t maskSize = 0;
+
+        InliersInfo() = default;
+        InliersInfo(int ic, double e, size_t ms);
+        InliersInfo(const InliersInfo &other);
+        InliersInfo(InliersInfo &&other) noexcept;
+        ~InliersInfo();
+
+        InliersInfo& operator=(InliersInfo &&other) noexcept;
+        InliersInfo& operator=(const InliersInfo &other);
     } InliersInfo;
 
     typedef struct Result {
