@@ -8,7 +8,7 @@
 #include "imageio.h"
 
 namespace ImageIO {
-    BitmapPtr* loadJPEG(uint8_t* fileData, size_t fileSize, ColorSpace colorSpace, Depth depth);
+    BitmapPtr* loadJPEG(const uint8_t* fileData, size_t fileSize, ColorSpace colorSpace, Depth depth);
 
     void saveJPEG(int fd, Bitmap &bmp, SaveProperties props);
 }

@@ -16,12 +16,10 @@ private:
     static const size_t LOG_BUFFER_SIZE = 512;
     static char LOG_BUFFER[LOG_BUFFER_SIZE];
 
-    JNIEnv *jniEnv;
+    JNIEnv *jniEnv = nullptr;
     // TODO: use lightweight listener instead of the whole activity
-    jobject jniHelperObject;
-    jclass jniHelperClass;
-
-    JNIHelper(): jniHelperObject(nullptr), jniHelperClass(nullptr) {}
+    jobject jniHelperObject = nullptr;
+    jclass jniHelperClass = nullptr;
 
 public:
     static void initialize(JNIEnv *env);

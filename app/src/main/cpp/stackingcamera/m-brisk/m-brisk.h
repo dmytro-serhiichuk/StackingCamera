@@ -48,12 +48,12 @@ typedef struct Descriptors {
 
     ~Descriptors();
 
-    size_t sizeOf();
+    [[nodiscard]] inline size_t sizeOf() const;
 } Descriptors;
 
 class M_BRISK {
 private:
-    uint32_t nOctaves;
+    static constexpr uint32_t nOctaves = 8;
     const float OCTAVE_SCALE_FACTOR = 0.7071067811865475f;
     const uint32_t MIN_OCTAVE_SIZE = 256;
     const uint32_t FAST_PADDING = 15;
@@ -64,22 +64,22 @@ private:
     BriskPatternPoint* patternPoints;   // [point][rotation][octave]
     const uint32_t nPoints = 60;
     const uint32_t nRotations = 1024;
-    const float dScaleRange = 3.75f;    // 30 / 8 - default value
-    float scaleRange;
+    static constexpr float dScaleRange = 3.75f;    // 30 / 8 - default value
+    static constexpr float scaleRange = dScaleRange * (float)nOctaves;
     const float dMaxSq = 5.85f * 5.85f;
     const float dMinSq = 8.2f * 8.2f;
     Buffer<BriskShortPair>* shortPairs;
     Buffer<BriskLongPair>* longPairs;
 
-    inline void subpixelRefine(Bitmap &bitmap, cl_mem buffer, Buffer<KeyPoint> &keypoints);
-    inline bool RoiPredicate(Bitmap &bitmap, KeyPoint &kp, uint32_t size);
-    inline void filterKeypointsAfterRefining(Bitmap &bmp, Buffer<KeyPoint> &kps);
+    inline void subpixelRefine(const Bitmap &bitmap, cl_mem buffer, Buffer<KeyPoint> &keypoints);
+    static inline bool RoiPredicate(const Bitmap &bitmap, const KeyPoint &kp, uint32_t size);
+    inline void filterKeypointsAfterRefining(const Bitmap &bmp, Buffer<KeyPoint> &kps);
 public:
-    M_BRISK(uint32_t _octaves=8, float _briskScaleFactor=1.4f);
+    explicit M_BRISK(float _briskScaleFactor=1.4f);
     ~M_BRISK();
 
-    Buffer<KeyPoint>* detect(Bitmap &inputBitmap);
-    Descriptors* compute(Bitmap &inputBitmap, Buffer<KeyPoint> &keyPoints);
+    Buffer<KeyPoint>* detect(const Bitmap &inputBitmap);
+    Descriptors* compute(const Bitmap &inputBitmap, Buffer<KeyPoint> &keyPoints);
 };
 
 #endif //STACKINGCAMERA_M_BRISK_H

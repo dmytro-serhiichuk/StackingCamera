@@ -21,7 +21,7 @@ namespace ImageIO {
     };
 
     static uint8_t* readFile(int fd, size_t &size) {
-        struct stat fileStat;
+        struct stat fileStat {};
         if (fstat(fd, &fileStat) == -1) {
             return nullptr;
         }
@@ -31,7 +31,7 @@ namespace ImageIO {
             return nullptr;
         }
 
-        uint8_t* buffer = new uint8_t[size];
+        auto buffer = new uint8_t[size];
 
         ssize_t bytesRead = read(fd, buffer, size);
         if (bytesRead <= 0) {

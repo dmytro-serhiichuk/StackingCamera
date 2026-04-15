@@ -31,7 +31,7 @@ static inline cl_mem initHBuffer(const Eigen::Matrix3d &H) {
     Eigen::Matrix3d invH = H.transpose().inverse();
 
     double *src = invH.data();
-    float *dst = new float[9];
+    auto dst = new float[9];
     for (size_t i = 0; i < 9; i++) dst[i] = (float)src[i];
 
     cl_mem buffer = CL::createBuffer(
@@ -57,7 +57,7 @@ BitmapPtr *WarpManager::warpSingleBitmap(Bitmap &bitmap, const Eigen::Matrix3d &
     clSetKernelArg(kernel, 3, sizeof(int32_t), &(bitmap.width));
     clSetKernelArg(kernel, 4, sizeof(int32_t), &(bitmap.height));
 
-    uint8_t* outputBitmapBuffer = new uint8_t[outputBufferSize]();
+    auto outputBitmapBuffer = new uint8_t[outputBufferSize]();
 
     cl_event warpingFinished;
 

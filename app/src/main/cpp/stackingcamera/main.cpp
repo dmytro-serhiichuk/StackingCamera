@@ -70,8 +70,8 @@ Java_com_sedv_stackingcamera_stacking_StackingActivity_analyse(JNIEnv *env, jobj
             scores[i] = (int32_t)Core::sources->buffer[i]->keyPoints->size;
         }
     }
-    jintArray jscores = env->NewIntArray(Core::sources->size);
-    env->SetIntArrayRegion(jscores, 0, Core::sources->size, scores);
+    jintArray jscores = env->NewIntArray((jsize)Core::sources->size);
+    env->SetIntArrayRegion(jscores, 0, (jsize)Core::sources->size, scores);
 
     delete [] scores;
     return jscores;
@@ -83,7 +83,7 @@ Java_com_sedv_stackingcamera_stacking_StackingActivity_match(JNIEnv *env, jobjec
         JNIHelper::getInstance()->updateHelper(env, thiz);
         auto infos = Core::match();
 
-        int totalSize = Validation::ValidationInfo::FIELDS_NUMBER * infos.size();
+        auto totalSize = (jsize)(Validation::ValidationInfo::FIELDS_NUMBER * infos.size());
 
         jintArray result = env->NewIntArray(totalSize);
         std::vector<jint> flat;

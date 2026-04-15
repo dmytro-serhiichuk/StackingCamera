@@ -18,7 +18,7 @@ namespace ImageIO {
         } PngReadState;
 
         void png_read_from_memory(png_structp png_ptr, png_bytep out, png_size_t count) {
-            PngReadState *state = (PngReadState *)png_get_io_ptr(png_ptr);
+            auto state = (PngReadState *)png_get_io_ptr(png_ptr);
 
             if (state->pos + count > state->size) {
                 png_error(png_ptr, "Read error: not enough data");
@@ -58,9 +58,9 @@ namespace ImageIO {
             double wx, wy, rx, ry, gx, gy, bx, by;
             double gamma_value;
 
-            int has_chrm = png_get_cHRM(png, info,
+            png_uint_32 has_chrm = png_get_cHRM(png, info,
                                         &wx, &wy, &rx, &ry, &gx, &gy, &bx, &by) & PNG_INFO_cHRM;
-            int has_gama = png_get_gAMA(png, info,
+            png_uint_32 has_gama = png_get_gAMA(png, info,
                                         &gamma_value) & PNG_INFO_gAMA;
 
             if (has_chrm && has_gama) {
@@ -71,7 +71,7 @@ namespace ImageIO {
                 };
                 cmsCIExyY white_point = { wx, wy, 1.0 };
 
-                cmsToneCurve *curve = cmsBuildGamma(NULL, 1.0 / gamma_value);
+                cmsToneCurve *curve = cmsBuildGamma(nullptr, 1.0 / gamma_value);
                 cmsToneCurve *curves[3] = { curve, curve, curve };
 
                 colorSpace = ColorSpace::Other;
@@ -79,14 +79,14 @@ namespace ImageIO {
                 return cmsCreateRGBProfile(
                         &white_point, &primaries, curves
                 );
-            } else if (has_chrm && !has_gama) { // assume sRGB gamma
+            } else if (has_chrm) { // assume sRGB gamma
                 cmsCIExyYTRIPLE primaries = {
                         { rx, ry, 1.0 }, { gx, gy, 1.0 }, { bx, by, 1.0 }
                 };
                 cmsCIExyY white_point = { wx, wy, 1.0 };
 
                 cmsToneCurve *srgb_trc = cmsBuildParametricToneCurve(
-                        NULL, 4, (double[]){ 2.4, 1.0/1.055, 0.055/1.055, 1.0/12.92, 0.04045 }
+                        nullptr, 4, (double[]){ 2.4, 1.0/1.055, 0.055/1.055, 1.0/12.92, 0.04045 }
                 );
                 cmsToneCurve *curves[3] = { srgb_trc, srgb_trc, srgb_trc };
 
@@ -102,7 +102,7 @@ namespace ImageIO {
         }
     }
 
-    BitmapPtr *loadPNG(uint8_t *fileData, size_t fileSize, ColorSpace colorSpace, Depth depth) {
+    BitmapPtr *loadPNG(const uint8_t *fileData, size_t fileSize, ColorSpace colorSpace, Depth depth) {
         auto png = png_create_read_struct(
                 PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr
         );

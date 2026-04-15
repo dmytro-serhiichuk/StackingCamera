@@ -28,7 +28,7 @@ namespace Matching {
         size_t size;
         size_t count;
 
-        MatchingCLBuffers(size_t c) {
+        explicit MatchingCLBuffers(size_t c) {
             count = c;
             size = count * sizeof(int32_t);
 

@@ -6,6 +6,9 @@
 #include <random>
 
 namespace {
+    std::random_device rd;
+    std::mt19937 gen(rd());
+
     void drawCircle(Bitmap &bmp, int x, int y, int r, int g, int b) {
         const int offset_points[42] = {
                 -4, 0, -4, -1, -3, -2, -2, -3, -1, -4,
@@ -22,14 +25,6 @@ namespace {
             bmp.buffer[index + 1] = g;
             bmp.buffer[index + 2] = b;
         }
-    }
-
-    int getRandomNumber(int min, int max) {
-        std::random_device rd;
-        std::mt19937 gen(rd());
-        std::uniform_int_distribution<> distrib(min, max);
-
-        return distrib(gen);
     }
 
     void drawMatches(Bitmap &bmp1,
@@ -70,39 +65,40 @@ namespace {
             const KeyPoint &kp1 = keyPoints1[match.index1];
             const KeyPoint &kp2 = keyPoints2[match.index2];
 
-            int r = getRandomNumber(50, 255);
-            int g = getRandomNumber(50, 255);
-            int b = getRandomNumber(50, 255);
+            std::uniform_int_distribution<> distrib(50, 255);
+            int r = distrib(gen);;
+            int g = distrib(gen);;
+            int b = distrib(gen);;
 
-            float dx = std::abs(kp2.x - kp1.x + bmp1.width);
+            float dx = std::abs(kp2.x - kp1.x + (float)bmp1.width);
             float dy = std::abs(kp2.y - kp1.y);
             float x = kp1.x;
             float y = kp1.y;
             float max = std::max(dx, dy);
             float step = std::min(dx, dy) / max;
             bool d = dx > dy;
-            int kx = kp2.x - kp1.x + bmp1.width > 0 ? 1 : -1;
-            int ky = kp2.y - kp1.y > 0 ? 1 : -1;
+            float kx = kp2.x - kp1.x + (float)bmp1.width > 0 ? 1.0f : -1.0f;
+            float ky = kp2.y - kp1.y > 0 ? 1.0f : -1.0f;
 
-            drawCircle(bmp, x, y, r, g, b);
+            drawCircle(bmp, static_cast<int>(x), static_cast<int>(y), r, g, b);
 
-            for (size_t j = 0; j < max; j++) {
-                int bufferIndex = (((int)y) * width + ((int)x)) * 3;
+            for (int j = 0; static_cast<float>(j) < max; j++) {
+                uint32_t bufferIndex = (((int)y) * width + ((int)x)) * 3;
                 bmp.buffer[bufferIndex + 0] = r;
                 bmp.buffer[bufferIndex + 1] = g;
                 bmp.buffer[bufferIndex + 2] = b;
 
                 if (d) {
-                    x+=1*kx;
+                    x+=1.0f*kx;
                     y+=step * ky;
                 }
                 else {
                     x+=step * kx;
-                    y+=1*ky;
+                    y+=1.0f*ky;
                 }
             }
 
-            drawCircle(bmp, x, y, r, g, b);
+            drawCircle(bmp, (int)x, (int)y, r, g, b);
         }
 
         SaveProperties props {};
@@ -118,7 +114,7 @@ void Utils::drawKeyPoints(Bitmap &bmp, Buffer<KeyPoint> &kps) {
     auto bitmap8 = bmp.convertDepth(Depth::U8);
 
     for (KeyPoint &kp : kps) {
-        drawCircle(bitmap8, kp.x, kp.y, 0, 255, 0);
+        drawCircle(bitmap8, (int)kp.x, (int)kp.y, 0, 255, 0);
     }
     SaveProperties props {};
     props.outputFormat = OutputFormat::JPEG;

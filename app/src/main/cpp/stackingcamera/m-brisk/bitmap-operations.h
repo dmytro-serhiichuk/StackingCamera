@@ -45,7 +45,7 @@ typedef struct BitmapInfo {
 } BitmapInfo;
 
 void toGray8(BitmapInfo &bitmap, cl_mem &inputBuffer);
-Bitmap toGray8WithReading(Bitmap &bitmap, cl_mem &inputBuffer);
+Bitmap toGray8WithReading(const Bitmap &bitmap, cl_mem &inputBuffer);
 void CLAHE(BitmapInfo &bitmap, cl_mem &inputBuffer, uint32_t tileCount=32, float fClipLimit=4.0f);
 void blur(BitmapInfo &bitmap, cl_mem &inputBuffer, GaussianKernel &gk);
 bool resize(BitmapInfo &bitmap, cl_mem &inputBuffer, float scaleFactor, uint32_t minSize);

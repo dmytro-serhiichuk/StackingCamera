@@ -8,9 +8,9 @@
 #include "imageio.h"
 
 namespace ImageIO {
-    bool isRAW(void* buffer, size_t size);
+    bool isRAW(const void* buffer, size_t size);
 
-    BitmapPtr* loadRAW(uint8_t* fileData, size_t fileSize, ColorSpace colorSpace, Depth depth);
+    BitmapPtr* loadRAW(const uint8_t* fileData, size_t fileSize, ColorSpace colorSpace, Depth depth);
 }
 
 #endif //STACKINGCAMERA_RAW_I_H

@@ -16,7 +16,7 @@ namespace ImageIO {
         } MemTIFF;
 
         tsize_t mem_read(thandle_t handle, tdata_t buf, tsize_t size) {
-            MemTIFF* mem = (MemTIFF*)handle;
+            auto mem = (MemTIFF*)handle;
 
             if (mem->pos + size > mem->size) {
                 size = mem->size - mem->pos;
@@ -32,7 +32,7 @@ namespace ImageIO {
         }
 
         toff_t mem_seek(thandle_t handle, toff_t off, int whence) {
-            MemTIFF* mem = (MemTIFF*)handle;
+            auto mem = (MemTIFF*)handle;
             switch (whence) {
                 case SEEK_SET: mem->pos = off; break;
                 case SEEK_CUR: mem->pos += off; break;
@@ -46,7 +46,7 @@ namespace ImageIO {
         }
 
         toff_t mem_size(thandle_t handle) {
-            MemTIFF* mem = (MemTIFF*)handle;
+            auto mem = (MemTIFF*)handle;
             return mem->size;
         }
 
@@ -172,7 +172,7 @@ namespace ImageIO {
     }
 
 
-    BitmapPtr* loadTIFF(uint8_t* fileData, size_t fileSize, ColorSpace colorSpace, Depth depth) {
+    BitmapPtr* loadTIFF(const uint8_t* fileData, size_t fileSize, ColorSpace colorSpace, Depth depth) {
         MemTIFF mem = { fileData, fileSize, 0 };
 
         TIFF* tiff = TIFFClientOpen("MEM_TIFF", "r", (thandle_t)&mem, mem_read, mem_write, mem_seek, mem_close, mem_size, mem_map, mem_unmap);
@@ -224,7 +224,7 @@ namespace ImageIO {
         bmp.bufferSize = bmp.totalSamples * (size_t)bmp.depth;
         bmp.buffer = new uint8_t [bmp.bufferSize];
 
-        size_t bytesPerSample = (size_t)bmp.depth;
+        auto bytesPerSample = (size_t)bmp.depth;
         size_t bytesPerPixel = bytesPerSample * getSamplesPerPixel(bmp.colorModel);
 
         if (TIFFIsTiled(tiff)) {
@@ -291,7 +291,7 @@ namespace ImageIO {
 
         uint16_t samplesPerPixel = 3;
 
-        uint16_t depthSize = (uint16_t)bitmapPtr->depth;
+        auto depthSize = (uint16_t)bitmapPtr->depth;
         uint16_t bitsPerSample = depthSize * 8;
 
         TIFFSetField(tiff, TIFFTAG_IMAGEWIDTH,      bitmapPtr->width);
@@ -310,7 +310,7 @@ namespace ImageIO {
                 static_cast<uint32_t>(icc.size()), icc.data()
         );
 
-        size_t rowStep = static_cast<size_t>(bitmapPtr->stride);
+        auto rowStep = static_cast<size_t>(bitmapPtr->stride);
 
         for (uint32_t y = 0; y < bitmapPtr->height; ++y) {
             uint8_t* row = bitmapPtr->buffer + y * rowStep;

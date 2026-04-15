@@ -36,7 +36,7 @@ namespace ImageIO {
         }
     }
 
-    BitmapPtr *loadJPEG(uint8_t *fileData, size_t fileSize, ColorSpace colorSpace, Depth depth) {
+    BitmapPtr *loadJPEG(const uint8_t *fileData, size_t fileSize, ColorSpace colorSpace, Depth depth) {
         tjhandle decompressor = tj3Init(TJINIT_DECOMPRESS);
         if (decompressor == nullptr) {
             throw std::runtime_error("Failed to init jpeg decompressor");
@@ -128,8 +128,8 @@ namespace ImageIO {
         auto profile = getProfileFromColorSpace(bitmapPtr->colorSpace);
         tj3SetICCProfile(jpegCompressor, profile.data(), profile.size());
 
-        if (tj3Compress8(jpegCompressor, bitmapPtr->buffer, bitmapPtr->width, 0,
-                         bitmapPtr->height, pixelFormat, &jpegBuf, &jpegSize) < 0) {
+        if (tj3Compress8(jpegCompressor, bitmapPtr->buffer, (int)bitmapPtr->width, 0,
+                         (int)bitmapPtr->height, pixelFormat, &jpegBuf, &jpegSize) < 0) {
             tj3Destroy(jpegCompressor);
             throw std::runtime_error("Failed to compress jpeg");
         }

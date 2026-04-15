@@ -13,7 +13,7 @@ namespace FAST {
         cl_mem kpsBuffer;
         cl_mem counterBuffer;
 
-        FAST_Buffers(size_t size);
+        explicit FAST_Buffers(size_t size);
         ~FAST_Buffers();
     } FAST_Buffers;
 

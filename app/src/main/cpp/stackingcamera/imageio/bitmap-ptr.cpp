@@ -53,7 +53,7 @@ namespace ImageIO {
         auto buffer = new uint8_t[size];
 
         FILE *file = fopen(filePath, "r");
-        fseek(file, offset, SEEK_SET);
+        fseek(file, (long)offset, SEEK_SET);
         fread(buffer, sizeof(uint8_t), size, file);
         fclose(file);
 

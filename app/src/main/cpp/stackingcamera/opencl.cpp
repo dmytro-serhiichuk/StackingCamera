@@ -33,7 +33,7 @@ namespace CL {
         if (status != CL_SUCCESS) throw std::runtime_error("Cannot get the number of platforms");
 
         // Step 1.2: Getting platforms
-        cl_platform_id* platforms = new cl_platform_id[numPlatforms];
+        auto platforms = new cl_platform_id[numPlatforms];
         status = clGetPlatformIDs(numPlatforms, platforms, nullptr);
         if (status != CL_SUCCESS) throw std::runtime_error("Cannot get platforms");
 
@@ -46,7 +46,7 @@ namespace CL {
         if (status != CL_SUCCESS) throw std::runtime_error("Cannot get the number of devices");
 
         // Step 3.2: Getting devices
-        cl_device_id* devices = new cl_device_id[numDevices];
+        auto devices = new cl_device_id[numDevices];
         status = clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, numDevices, devices, nullptr);
         if (status != CL_SUCCESS) throw std::runtime_error("Cannot get devices");
 

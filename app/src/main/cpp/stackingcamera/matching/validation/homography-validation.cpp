@@ -113,6 +113,7 @@ namespace Validation {
             };
 
             std::vector<Eigen::Vector2d> transformed;
+            transformed.reserve(original.size());
             for (const auto& pt : original) {
                 transformed.push_back(applyHomography(H, pt));
             }

@@ -18,12 +18,12 @@ namespace ImageIO {
         uint32_t bufferSize;
         char* filePath;
 
-        BitmapPtr(Bitmap& bitmap);
+        explicit BitmapPtr(Bitmap& bitmap);
         BitmapPtr(uint32_t w, uint32_t h, void* b, Depth d, ColorModel cm, ColorSpace cs);
         ~BitmapPtr();
 
-        Bitmap read() const;
-        uint8_t* readChunk(size_t offset, size_t size) const;
+        [[nodiscard]] Bitmap read() const;
+        [[nodiscard]] uint8_t* readChunk(size_t offset, size_t size) const;
     };
 }
 

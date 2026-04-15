@@ -7,7 +7,7 @@
 #include "profiles-manager.h"
 
 namespace ImageIO {
-    bool isRAW(void* buffer, size_t size) {
+    bool isRAW(const void* buffer, size_t size) {
         LibRaw processor {};
         if (processor.open_buffer(buffer, size) == LIBRAW_SUCCESS) {
             processor.recycle();
@@ -17,7 +17,7 @@ namespace ImageIO {
         return false;
     }
 
-    BitmapPtr* loadRAW(uint8_t* fileData, size_t fileSize, ColorSpace colorSpace, Depth depth) {
+    BitmapPtr* loadRAW(const uint8_t* fileData, size_t fileSize, ColorSpace colorSpace, Depth depth) {
         LibRaw processor {};
         // Open file from memory
         if (processor.open_buffer(fileData, fileSize) != LIBRAW_SUCCESS) {
@@ -115,7 +115,7 @@ namespace ImageIO {
             outputHeight = bigHeight;
         }
 
-        processor.dcraw_clear_mem(processed_image);
+        LibRaw::dcraw_clear_mem(processed_image);
         processor.recycle();
 
         Bitmap bmp { outputWidth, outputHeight, buffer, Depth::U16, ColorModel::XYZ, ColorSpace::Other };

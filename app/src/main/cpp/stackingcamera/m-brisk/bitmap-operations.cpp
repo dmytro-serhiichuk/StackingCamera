@@ -18,9 +18,9 @@ GaussianKernel::~GaussianKernel() {
 GaussianKernel* GaussianKernel::create(float scaleFactor) {
     float sigma = BASE_SIGMA * scaleFactor;
 
-    int32_t radius = (int32_t)ceil(3 * sigma);
+    auto radius = (int32_t)ceil(3 * sigma);
     int32_t diameter = 2 * radius + 1;
-    float* buffer = new float[diameter];
+    auto buffer = new float[diameter];
 
     float sum = 0.0f;
 
@@ -79,10 +79,10 @@ void toGray8(BitmapInfo &bitmap, cl_mem &inputBuffer) {
     bitmap.update();
 }
 
-Bitmap toGray8WithReading(Bitmap &bitmap, cl_mem &inputBuffer) {
+Bitmap toGray8WithReading(const Bitmap &bitmap, cl_mem &inputBuffer) {
     size_t outputDataLength = bitmap.width * bitmap.height;
 
-    uint8_t* outputBitmapBuffer = new uint8_t[outputDataLength];
+    auto outputBitmapBuffer = new uint8_t[outputDataLength];
     cl_mem outputBuffer = CL::createBuffer(
             CL_MEM_READ_WRITE,
             outputDataLength, nullptr
@@ -126,7 +126,7 @@ void CLAHE(BitmapInfo &bitmap, cl_mem &inputBuffer, uint32_t tileCount, float fC
     const uint32_t tileWidth = bitmap.width / tileCount;
     const uint32_t tileHeight = bitmap.height / tileCount;
 
-    uint64_t clipLimit = (uint64_t)(fClipLimit * (float)(tileWidth * tileHeight) / BINS_COUNT);
+    auto clipLimit = (uint64_t)(fClipLimit * (float)(tileWidth * tileHeight) / BINS_COUNT);
     size_t mapLength = tileCount * tileCount * BINS_COUNT;
     size_t mapSize = mapLength * sizeof(uint32_t);
 
@@ -279,7 +279,7 @@ bool resize(BitmapInfo &bitmap, cl_mem &inputBuffer, float scaleFactor, uint32_t
 int32_t *getIntegralImage(Bitmap &bitmap) {
     int32_t i_w = bitmap.width + 1;
     int32_t i_h = bitmap.height + 1;
-    int32_t* i_buffer = new int32_t[i_w * i_h]();
+    auto i_buffer = new int32_t[i_w * i_h]();
 
     for (size_t y = 1; y < i_h; y++) {
         for (size_t x = 1; x < i_w; x++) {

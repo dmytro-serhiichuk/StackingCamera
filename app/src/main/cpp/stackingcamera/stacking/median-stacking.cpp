@@ -27,7 +27,7 @@ namespace {
 
 Bitmap *MedianStacking::stack(List<BitmapPtr> &src, BitmapPtr &referenceBitmap) {
     auto outputBuffer = new uint8_t[referenceBitmap.bufferSize];
-    size_t depth = (size_t)referenceBitmap.depth;
+    auto depth = (size_t)referenceBitmap.depth;
     auto values = new uint8_t[src.size * depth];
 
     size_t chunkSize = Core::MAX_MEMORY_SIZE / src.size;

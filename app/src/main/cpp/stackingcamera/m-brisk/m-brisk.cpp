@@ -10,36 +10,33 @@
 #include <algorithm>
 
 Descriptors::~Descriptors() {
-    if (buffer != nullptr) delete [] buffer;
+    delete [] buffer;
     buffer = nullptr;
     count = 0;
 }
 
-size_t Descriptors::sizeOf() {
+inline size_t Descriptors::sizeOf() const {
     return count * DESCRIPTOR_LENGTH * sizeof(uint64_t);
 }
 
-M_BRISK::M_BRISK(uint32_t _octaves, float _briskScaleFactor) {
-    nOctaves = _octaves;
-    scaleRange = dScaleRange * nOctaves;
-
-    size_t pairsMaxSize = nPoints * (nPoints - 1) / 2;
+M_BRISK::M_BRISK(float _briskScaleFactor) {
+    const size_t pairsMaxSize = nPoints * (nPoints - 1) / 2;
     shortPairs = new Buffer<BriskShortPair>(pairsMaxSize);
     longPairs = new Buffer<BriskLongPair>(pairsMaxSize);
 
     uint32_t nRings = 5;
-    float *radiusList = new float[nRings] {
+    auto radiusList = new float[nRings] {
             0.0f,
             2.465f * _briskScaleFactor,
             4.165f * _briskScaleFactor,
             6.29f * _briskScaleFactor,
             9.18f * _briskScaleFactor
     };
-    int32_t* numberList = new int32_t[nRings] { 1, 10, 14, 15, 20 };
+    auto numberList = new int32_t[nRings] { 1, 10, 14, 15, 20 };
 
     /* init sin and cos lookup tables */
-    double* sinLUT = new double[nRotations];
-    double* cosLUT = new double[nRotations];
+    auto sinLUT = new double[nRotations];
+    auto cosLUT = new double[nRotations];
 
     double sin = 0.0;
     double cos = 1.0;
@@ -64,7 +61,7 @@ M_BRISK::M_BRISK(uint32_t _octaves, float _briskScaleFactor) {
 
     /* init pattern points */
     for (uint32_t octave = 0; octave < nOctaves; octave++) {
-        scales[octave] = std::pow(2.0f, octave * lb_scale_step);
+        scales[octave] = std::pow(2.0f, (float)octave * lb_scale_step);
         BriskPatternPoint *patternIteratorOuter = patternPoints + (octave * nRotations * nPoints);
 
         for (int32_t ring = 0; ring < nRings; ring++) {
@@ -74,10 +71,10 @@ M_BRISK::M_BRISK(uint32_t _octaves, float _briskScaleFactor) {
                 patternSigma = sigma_scale * scales[octave] * 0.5f;
             }
             else {
-                patternSigma = sigma_scale * scales[octave] * (double)radiusList[ring] *
+                patternSigma = sigma_scale * scales[octave] * (float)radiusList[ring] *
                                std::sin(M_PI / numberList[ring]);
             }
-            sizes[octave] = std::ceil(scales[octave] * radiusList[ring] + patternSigma) + 1;
+            sizes[octave] = (uint32_t)std::ceil(scales[octave] * radiusList[ring] + patternSigma) + 1;
 
             for (int32_t num = 0; num < numberList[ring]; num++) {
                 BriskPatternPoint *patternIterator = patternIteratorOuter;
@@ -147,11 +144,11 @@ M_BRISK::~M_BRISK() {
     delete longPairs;
 }
 
-bool M_BRISK::RoiPredicate(Bitmap &bitmap, KeyPoint &kp, uint32_t size) {
+bool M_BRISK::RoiPredicate(const Bitmap &bitmap, const KeyPoint &kp, uint32_t size) {
     return kp.x >= size && kp.y >= size && kp.x < bitmap.width - size && kp.y < bitmap.height - size;
 }
 
-void M_BRISK::subpixelRefine(Bitmap &bitmap, cl_mem buffer, Buffer<KeyPoint> &keypoints) {
+void M_BRISK::subpixelRefine(const Bitmap &bitmap, cl_mem buffer, Buffer<KeyPoint> &keypoints) {
     cl_mem kpsBuffer = CL::createBuffer(
             CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
             keypoints.size * sizeof(KeyPoint), keypoints.buffer
@@ -181,7 +178,7 @@ void M_BRISK::subpixelRefine(Bitmap &bitmap, cl_mem buffer, Buffer<KeyPoint> &ke
     clReleaseMemObject(kpsBuffer);
 }
 
-inline void M_BRISK::filterKeypointsAfterRefining(Bitmap &bmp, Buffer<KeyPoint> &kps) {
+inline void M_BRISK::filterKeypointsAfterRefining(const Bitmap &bmp, Buffer<KeyPoint> &kps) {
     size_t fi = 0;
     for (size_t i = 0; i < kps.size; i++) {
         if (RoiPredicate(bmp, kps[i], sizes[kps[i].octave])) {
@@ -195,7 +192,7 @@ inline void M_BRISK::filterKeypointsAfterRefining(Bitmap &bmp, Buffer<KeyPoint> 
     JNIHelper::getInstance()->writeMessageToLog(false, "\tTotal number of selected keypoints: %zd\n\tKeypoints detecting completed", kps.size);
 }
 
-Buffer<KeyPoint> *M_BRISK::detect(Bitmap &inputBitmap) {
+Buffer<KeyPoint> *M_BRISK::detect(const Bitmap &inputBitmap) {
     cl_mem buffer = CL::createBuffer(
             CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR | CL_MEM_HOST_NO_ACCESS,
             inputBitmap.bufferSize, inputBitmap.buffer
@@ -280,7 +277,7 @@ Buffer<KeyPoint> *M_BRISK::detect(Bitmap &inputBitmap) {
     return keyPoints;
 }
 
-Descriptors *M_BRISK::compute(Bitmap &inputBitmap, Buffer<KeyPoint> &keyPoints) {
+Descriptors *M_BRISK::compute(const Bitmap &inputBitmap, Buffer<KeyPoint> &keyPoints) {
     cl_mem buffer = CL::createBuffer(
             CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR | CL_MEM_HOST_NO_ACCESS,
             inputBitmap.bufferSize, inputBitmap.buffer
