@@ -18,6 +18,7 @@ import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.annotation.Keep
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.forEach
 import androidx.core.view.forEachIndexed
@@ -444,10 +445,12 @@ class StackingActivity : AppCompatActivity() {
     }
 
     // Functions which are called from native code
+    @Keep
     fun createTempFile(): String {
         val tempFile = File.createTempFile("temp_", "", cacheDir)
         return tempFile.absolutePath
     }
+    @Keep
     fun createImageFile(name: String): Int {
         val contentValues = ContentValues().apply {
             put(MediaStore.MediaColumns.DISPLAY_NAME, name)

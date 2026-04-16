@@ -10,7 +10,7 @@
 namespace ImageIO {
     namespace {
         typedef struct {
-            unsigned char* data;
+            const unsigned char* data;
             toff_t size;
             toff_t pos;
         } MemTIFF;

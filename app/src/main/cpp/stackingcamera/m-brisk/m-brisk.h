@@ -41,14 +41,16 @@ typedef struct BriskLongPair
 } BriskLongPair;
 
 typedef struct Descriptors {
-    static const uint32_t DESCRIPTOR_LENGTH = 8; // 512 (size of descriptor) / 64 (size of array element) = 8
+    static constexpr uint32_t DESCRIPTOR_LENGTH = 8; // 512 (size of descriptor) / 64 (size of array element) = 8
 
     uint64_t* buffer;
     size_t count;
 
     ~Descriptors();
 
-    [[nodiscard]] inline size_t sizeOf() const;
+    [[nodiscard]] inline size_t sizeOf() const {
+        return count * DESCRIPTOR_LENGTH * sizeof(uint64_t);
+    }
 } Descriptors;
 
 class M_BRISK {

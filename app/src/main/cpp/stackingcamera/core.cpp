@@ -39,10 +39,6 @@ namespace Core {
     int32_t referenceFrameIndex = 0;
     Buffer<RANSAC::Result> *homographies = nullptr;
 
-    void init(AAssetManager *aam) {
-        CL::init(aam);
-    }
-
     void loadBitmap(int fd) {
         auto bitmapPtr = open(fd, BITMAP_COLOR_SPACE, BITMAP_DEPTH);
         auto data = new Data();
@@ -77,7 +73,7 @@ namespace Core {
         if (BRISK_PATTERN_SCALE_FACTOR != brisk_pattern_scale || mBrisk == nullptr) {
             BRISK_PATTERN_SCALE_FACTOR = brisk_pattern_scale;
             delete mBrisk;
-            mBrisk = new M_BRISK(8, BRISK_PATTERN_SCALE_FACTOR);
+            mBrisk = new M_BRISK(BRISK_PATTERN_SCALE_FACTOR);
         }
 
         BITMAP_DEPTH = newDepth;

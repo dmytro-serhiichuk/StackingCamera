@@ -15,10 +15,6 @@ Descriptors::~Descriptors() {
     count = 0;
 }
 
-inline size_t Descriptors::sizeOf() const {
-    return count * DESCRIPTOR_LENGTH * sizeof(uint64_t);
-}
-
 M_BRISK::M_BRISK(float _briskScaleFactor) {
     const size_t pairsMaxSize = nPoints * (nPoints - 1) / 2;
     shortPairs = new Buffer<BriskShortPair>(pairsMaxSize);

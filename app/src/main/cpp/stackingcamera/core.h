@@ -43,7 +43,6 @@ namespace Core {
     extern List<Data>* sources;
     extern Bitmap* stackedResult;
 
-    void init(AAssetManager* aam);
     void loadBitmap(int fd);
     void applySettings(int fast_threshold, float ransac_threshold, int ransac_iterations,
                        int tiles_per_side, int max_keypoints, int max_matches,

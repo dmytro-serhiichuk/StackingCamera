@@ -4,13 +4,27 @@
 #include <string>
 #include "core.h"
 
+static char* readProgramSource(AAssetManager *aam) {
+    AAsset* asset = AAssetManager_open(aam, "program.cl", AASSET_MODE_BUFFER);
+    if (!asset) {
+        throw std::runtime_error("Program source file opening failed");
+    }
+    size_t sourceSize = AAsset_getLength(asset);
+    char* buffer = new char[sourceSize + 1];
+    AAsset_read(asset, buffer, sourceSize);
+    AAsset_close(asset);
+    buffer[sourceSize] = '\0';
+    return buffer;
+}
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_sedv_stackingcamera_stacking_StackingActivity_initStacking(JNIEnv *env, jobject, jobject am) {
     try {
         JNIHelper::initialize(env);
         AAssetManager* aam = AAssetManager_fromJava(env, am);
-        Core::init(aam);
+        const char *programSrc = readProgramSource(aam);
+        CL::init(programSrc);
+        delete [] programSrc;
     }
     catch (const std::exception& e) {
         env->ThrowNew(env->FindClass("java/lang/RuntimeException"), e.what());

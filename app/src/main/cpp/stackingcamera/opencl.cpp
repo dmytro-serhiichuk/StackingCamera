@@ -8,25 +8,12 @@
 namespace CL {
     static char logBuffer[256];
 
-    static char* readProgramSource(AAssetManager *aam) {
-        AAsset* asset = AAssetManager_open(aam, "program.cl", AASSET_MODE_BUFFER);
-        if (!asset) {
-            throw std::runtime_error("Program source file opening failed");
-        }
-        size_t sourceSize = AAsset_getLength(asset);
-        char* buffer = new char[sourceSize + 1];
-        AAsset_read(asset, buffer, sourceSize);
-        AAsset_close(asset);
-        buffer[sourceSize] = '\0';
-        return buffer;
-    }
-
     cl_context context = nullptr;
     cl_command_queue queue = nullptr;
     cl_program program = nullptr;
     size_t maxGroupSize = 0;
 
-    void init(AAssetManager *aam) {
+    void init(const char* programSrc) {
         // Step 1.1: Getting platforms num
         cl_uint numPlatforms;
         cl_int status = clGetPlatformIDs(0, nullptr, &numPlatforms);
@@ -75,12 +62,9 @@ namespace CL {
         queue = clCreateCommandQueueWithProperties(context, device, props, &status);
         if (status != CL_SUCCESS) throw std::runtime_error("Cannot create compute queue");
 
-        const char* source = readProgramSource(aam);
-
         // Step 9: Create program
-        program = clCreateProgramWithSource(context, 1, &source, nullptr, &status);
+        program = clCreateProgramWithSource(context, 1, &programSrc, nullptr, &status);
         if (status != CL_SUCCESS) throw std::runtime_error("Cannot create the program");
-        delete [] source;
 
         // Step 10: Build program
         status = clBuildProgram(program, numDevices, devices, nullptr, nullptr, nullptr);
