@@ -22,18 +22,23 @@ data class CameraSettings(
 
     val aeState: AEState
         get() {
-            return if (iso == null && exposureTimeNS == null) {
-                AEState.UNSUPPORTED
-            } else if (iso != null && exposureTimeNS != null) {
-                if (iso.isInAutoMode && exposureTimeNS.isInAutoMode) AEState.AUTO
-                else if (iso.isInAutoMode || exposureTimeNS.isInAutoMode) AEState.SEMI_AUTO
-                else AEState.MANUAL
-            } else if (iso != null) {
-                if (iso.isInAutoMode) AEState.AUTO
-                else AEState.MANUAL
-            } else {
-                if (exposureTimeNS!!.isInAutoMode) AEState.AUTO
-                else AEState.MANUAL
+            return when {
+                iso == null && exposureTimeNS == null -> {
+                    AEState.UNSUPPORTED
+                }
+                iso != null && exposureTimeNS != null -> {
+                    if (iso.isInAutoMode && exposureTimeNS.isInAutoMode) AEState.AUTO
+                    else if (iso.isInAutoMode || exposureTimeNS.isInAutoMode) AEState.SEMI_AUTO
+                    else AEState.MANUAL
+                }
+                iso != null -> {
+                    if (iso.isInAutoMode) AEState.AUTO
+                    else AEState.MANUAL
+                }
+                else -> {
+                    if (exposureTimeNS!!.isInAutoMode) AEState.AUTO
+                    else AEState.MANUAL
+                }
             }
         }
 

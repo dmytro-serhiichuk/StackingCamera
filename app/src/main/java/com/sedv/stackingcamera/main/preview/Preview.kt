@@ -35,6 +35,7 @@ class Preview(
 ) {
     private val previewSurface: GLPreviewSurfaceView
     private var scaleGestureDetector: ScaleGestureDetector? = null
+    @Suppress("DEPRECATION")
     private var gestureDetector: GestureDetectorCompat? = null
 
     private val uiHandler = Handler(Looper.getMainLooper())
@@ -61,6 +62,7 @@ class Preview(
         }
     }
 
+    @Suppress("DEPRECATION")
     private fun handleCameraSwitched() {
         val size = viewModel.getPreviewSizeWithAspectRation()
         Log.d("Camera", "Size: $size")

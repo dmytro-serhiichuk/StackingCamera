@@ -10,16 +10,10 @@ class MeteringArea(
     val supportAE: Boolean,
     val supportAWB: Boolean
 ) {
-    var _value: MeteringRectangle? = null
-    var value: MeteringRectangle?
-        get() = _value
-        set(value) {
-            _value = value
-            array[0] = _value
-            if (_value != null) onSettingsManuallyChanged()
-        }
+    val isTriggered get() = value != null
+    private var value: MeteringRectangle? = null
 
-    val array = arrayOf(value)
+    val regions = arrayOf(value)
 
     fun setArea(x: Float, y: Float, previewSize: Size) {
         val normalizedX = x / previewSize.width.toFloat()
@@ -45,6 +39,13 @@ class MeteringArea(
             areaSize,
             MeteringRectangle.METERING_WEIGHT_MAX - 1
         )
+        regions[0] = value
+        onSettingsManuallyChanged()
+    }
+
+    fun clear() {
+        value = null
+        regions[0] = null
     }
 
     companion object {

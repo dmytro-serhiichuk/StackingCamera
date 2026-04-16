@@ -39,9 +39,9 @@ class Histogram {
                 val uvCol = col / 2
                 val uvIndex = uvRow * uvRowStride + uvCol * uvPixelStride
 
-                val Y = (yBuffer.get(yIndex).toInt() and 0xFF)
-                val U = (uBuffer.get(uvIndex).toInt() and 0xFF) - 128
-                val V = (vBuffer.get(uvIndex).toInt() and 0xFF) - 128
+                val Y = (yBuffer[yIndex].toInt() and 0xFF)
+                val U = (uBuffer[uvIndex].toInt() and 0xFF) - 128
+                val V = (vBuffer[uvIndex].toInt() and 0xFF) - 128
 
                 val r = (Y + 1.402f * V).toInt()
                 val g = (Y - 0.344f * U - 0.714f * V).toInt()

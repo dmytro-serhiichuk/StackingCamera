@@ -213,7 +213,7 @@ class MainActivity : AppCompatActivity() {
                 .setTitle(title)
                 .setMessage(message ?: "Unhandled error")
                 .setCancelable(false)
-                .setPositiveButton("OK") { dialog, id ->
+                .setPositiveButton("OK") { _, _ ->
                     finishAffinity()
                     onClosed()
                 }

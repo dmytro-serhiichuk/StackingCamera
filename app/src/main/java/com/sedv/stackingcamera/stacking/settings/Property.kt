@@ -22,6 +22,7 @@ class RangedProperty<T : Comparable<T>>(
     val range: Range<T>,
     val step: T
 ) : Property<T>(name, defaultValue) {
+    @Suppress("UNCHECKED_CAST")
     override fun loadFrom(sharedPreferences: SharedPreferences) {
         value = when (defaultValue) {
             is Int -> sharedPreferences.getInt(name, defaultValue) as T

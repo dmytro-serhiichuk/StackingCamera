@@ -65,7 +65,7 @@ class CaptureAnalyser(
         var count = 0L
 
         val yBytes = ByteArray(yBuffer.remaining())
-        yBuffer.get(yBytes)
+        yBuffer[yBytes]
 
         var offset = 0
         for (row in 0 until height) {

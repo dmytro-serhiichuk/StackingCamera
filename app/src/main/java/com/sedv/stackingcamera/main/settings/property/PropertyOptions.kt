@@ -18,8 +18,6 @@ class PropertyOptions(
         binding.icon.setImageResource(property.getIcon())
         binding.valueLabel.text = property.getDisplayValue()
     }
-
-    // TODO: fix element width
     override fun handleValueChanged() {
         binding.icon.setImageResource(property.getIcon())
         binding.valueLabel.text = property.getDisplayValue()

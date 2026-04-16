@@ -51,7 +51,7 @@ class BurstRequest(
         synchronized(lock) {
             if (processedCount >= imagesLeftInCurrentIterations) return
 
-            val timestamp = captureResult.get(CaptureResult.SENSOR_TIMESTAMP) ?: return
+            val timestamp = captureResult[CaptureResult.SENSOR_TIMESTAMP] ?: return
 
             captureResults[timestamp] = captureResult
 

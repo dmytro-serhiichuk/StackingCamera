@@ -111,12 +111,10 @@ class CameraViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     private fun handleGeneralSettingsChanged(prop: BaseProperty<*>) {
-        if (prop.type == GeneralPropertyType.FRAME_SIZE) {
-            if (activeCamera.currentState != CameraState.BUSY) {
-                activeCamera.close()
-                onCameraSwitched.invokeAll { it.invoke() }
-                activeCamera.open()
-            }
+        if (prop.type == GeneralPropertyType.FRAME_SIZE && activeCamera.currentState != CameraState.BUSY) {
+            activeCamera.close()
+            onCameraSwitched.invokeAll { it.invoke() }
+            activeCamera.open()
         }
     }
 }

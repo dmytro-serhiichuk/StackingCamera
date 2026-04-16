@@ -75,13 +75,13 @@ class Camera(
                     Manifest.permission.CAMERA
                 ) != PackageManager.PERMISSION_GRANTED
             ) {
-                Log.e("Camera", "Camera permission not granted")
+                Log.e(LOG_TAG, "Camera permission not granted")
                 throw CameraError.OpeningError("Camera permission not granted")
             }
 
             cameraManager.openCamera(cameraInfo.cameraId, object : CameraDevice.StateCallback() {
                 override fun onOpened(device: CameraDevice) {
-                    Log.d("Camera", "Camera opened: ${cameraInfo.cameraId}")
+                    Log.d(LOG_TAG, "Camera opened: ${cameraInfo.cameraId}")
                     _cameraDevice = device
 
                     checkSemiAutoSupport()
@@ -91,17 +91,17 @@ class Camera(
                     _currentState = CameraState.OPENED
                 }
                 override fun onDisconnected(device: CameraDevice) {
-                    Log.d("Camera", "Camera disconnected: ${cameraInfo.cameraId}")
+                    Log.d(LOG_TAG, "Camera disconnected: ${cameraInfo.cameraId}")
                     close()
                 }
                 override fun onError(device: CameraDevice, error: Int) {
-                    Log.e("Camera", "Camera error: $error for camera ${cameraInfo.cameraId}")
+                    Log.e(LOG_TAG, "Camera error: $error for camera ${cameraInfo.cameraId}")
                     close()
                     throw CameraError.OpeningError("Camera error: $error for camera ${cameraInfo.cameraId}")
                 }
             }, backgroundHandler)
         } catch (e: CameraAccessException) {
-            Log.e("Camera", "Failed to open camera: ${e.message}")
+            Log.e(LOG_TAG, "Failed to open camera: ${e.message}")
             throw CameraError.OpeningError("Failed to open camera: ${e.message}")
         }
     }
@@ -116,25 +116,25 @@ class Camera(
 
         try {
             val testRequest = device.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
-            testRequest.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_OFF)
-            testRequest.set(CaptureRequest.SENSOR_SENSITIVITY, 0)
-            testRequest.set(CaptureRequest.SENSOR_EXPOSURE_TIME, cameraInfo.exposureRange.lower)
+            testRequest[CaptureRequest.CONTROL_AE_MODE] = CaptureRequest.CONTROL_AE_MODE_OFF
+            testRequest[CaptureRequest.SENSOR_SENSITIVITY] = 0
+            testRequest[CaptureRequest.SENSOR_EXPOSURE_TIME] = cameraInfo.exposureRange.lower
 
             val testRequest2 = device.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
-            testRequest2.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_OFF)
-            testRequest2.set(CaptureRequest.SENSOR_SENSITIVITY, cameraInfo.isoRange.lower)
-            testRequest2.set(CaptureRequest.SENSOR_EXPOSURE_TIME, 0)
-            testRequest2.set(CaptureRequest.SENSOR_FRAME_DURATION, 0)
+            testRequest2[CaptureRequest.CONTROL_AE_MODE] = CaptureRequest.CONTROL_AE_MODE_OFF
+            testRequest2[CaptureRequest.SENSOR_SENSITIVITY] = cameraInfo.isoRange.lower
+            testRequest2[CaptureRequest.SENSOR_EXPOSURE_TIME] = 0
+            testRequest2[CaptureRequest.SENSOR_FRAME_DURATION] = 0
 
             cameraInfo.supportSemiAutoExposure = true
-            Log.i("Camera", "Semi-auto exposure supported on this device")
+            Log.i(LOG_TAG, "Semi-auto exposure supported on this device")
 
         } catch (e: IllegalArgumentException) {
             cameraInfo.supportSemiAutoExposure = false
-            Log.i("Camera", "Semi-auto exposure not supported on this device: ${e.message}")
+            Log.i(LOG_TAG, "Semi-auto exposure not supported on this device: ${e.message}")
         } catch (e: Exception) {
             cameraInfo.supportSemiAutoExposure = false
-            Log.i("Camera", "Semi-auto exposure not supported, unknown error: ${e.message}")
+            Log.i(LOG_TAG, "Semi-auto exposure not supported, unknown error: ${e.message}")
         }
     }
 
@@ -168,11 +168,11 @@ class Camera(
         val surface = previewSurface
 
         if (device == null) {
-            Log.e("Camera", "Camera device is not initialized")
+            Log.e(LOG_TAG, "Camera device is not initialized")
             throw CameraError.SessionError("Camera device is not initialized")
         }
         if (surface == null || !surface.isValid) {
-            Log.e("Camera", "Preview surface is null or invalid")
+            Log.e(LOG_TAG, "Preview surface is null or invalid")
             throw CameraError.SessionError("Preview surface is null or invalid")
         }
 
@@ -180,26 +180,27 @@ class Camera(
             captureSession?.close()
             captureSession = null
 
+            @Suppress("DEPRECATION")
             device.createCaptureSession(
                 listOf(surface, *imageReaders.map { it.surface }.toTypedArray(), captureAnalyser.surface),
                 object : CameraCaptureSession.StateCallback() {
                     override fun onConfigureFailed(session: CameraCaptureSession) {
-                        Log.e("Camera", "Session configure failed;")
+                        Log.e(LOG_TAG, "Session configure failed;")
                         throw CameraError.SessionError("Session configure failed")
                     }
 
                     override fun onConfigured(session: CameraCaptureSession) {
                         captureSession = session
                         startPreview()
-                        Log.i("Camera", "Session configured successfully")
+                        Log.i(LOG_TAG, "Session configured successfully")
                     }
                 }, backgroundHandler
             )
         } catch (e: CameraAccessException) {
-            Log.e("Camera", "Failed to create capture session: ${e.message}")
+            Log.e(LOG_TAG, "Failed to create capture session: ${e.message}")
             throw CameraError.SessionError("Failed to create capture session: ${e.message}")
         } catch (e: IllegalStateException) {
-            Log.e("Camera", "Camera device in invalid state: ${e.message}")
+            Log.e(LOG_TAG, "Camera device in invalid state: ${e.message}")
             throw CameraError.SessionError("Camera device in invalid state: ${e.message}")
         }
     }
@@ -210,8 +211,9 @@ class Camera(
         val session = captureSession
 
         if (device == null || session == null || surface == null) {
-            Log.e("Camera", "Camera not ready for preview")
-            throw CameraError.SessionError("Camera not ready for preview")
+            val message = "Camera not ready for preview"
+            Log.e(LOG_TAG, message)
+            throw CameraError.SessionError(message)
         }
 
         try {
@@ -221,10 +223,10 @@ class Camera(
             runPreview()
 
         } catch (e: CameraAccessException) {
-            Log.e("Camera", "Failed to create capture session: ${e.message}")
+            Log.e(LOG_TAG, "Failed to create capture session: ${e.message}")
             throw CameraError.SessionError("Failed to create capture session: ${e.message}")
         } catch (e: IllegalStateException) {
-            Log.e("Camera", "Camera device in invalid state: ${e.message}")
+            Log.e(LOG_TAG, "Camera device in invalid state: ${e.message}")
             throw CameraError.SessionError("Camera device in invalid state: ${e.message}")
         }
     }
@@ -238,77 +240,27 @@ class Camera(
     private fun setCaptureRequestSettings(requestBuilder: CaptureRequest.Builder, target: Surface) {
         requestBuilder.apply {
             addTarget(target)
-            if (requestBuilder != photoRequestBuilder) {
-                captureAnalyser.surface?.let {
-                    addTarget(it)
-                }
+            if (requestBuilder != photoRequestBuilder && captureAnalyser.surface != null) {
+                addTarget(captureAnalyser.surface!!)
             }
 
             set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO)
-            set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE)
-
             set(CaptureRequest.JPEG_ORIENTATION, getOrientation())
 
-            cameraSettings.iso?.let { iso ->
-                if (iso.isInAutoMode && requestBuilder != photoRequestBuilder && cameraInfo.supportSemiAutoExposure) {
-                    set(CaptureRequest.SENSOR_SENSITIVITY, 0)
-                } else {
-                    set(CaptureRequest.SENSOR_SENSITIVITY, cameraSettings.iso.value)
-                }
-            }
+            setIsoSettings(this)
+            setExposureTimeSettings(this)
 
-            cameraSettings.exposureTimeNS?.let { shutter ->
-                if (shutter.isInAutoMode && requestBuilder != photoRequestBuilder && cameraInfo.supportSemiAutoExposure) {
-                    set(CaptureRequest.SENSOR_EXPOSURE_TIME, 0)
-                    set(CaptureRequest.SENSOR_FRAME_DURATION, 0)
-                } else {
-                    if (requestBuilder == photoRequestBuilder) {
-                        set(CaptureRequest.SENSOR_EXPOSURE_TIME, cameraSettings.exposureTimeNS.value)
-                        set(CaptureRequest.SENSOR_FRAME_DURATION, cameraSettings.exposureTimeNS.value)
-                    } else {
-                        val previewExposureTime = min(cameraSettings.exposureTimeNS.value, 100_000_000L)
-                        set(CaptureRequest.SENSOR_EXPOSURE_TIME, previewExposureTime)
-                        set(CaptureRequest.SENSOR_FRAME_DURATION, max(previewExposureTime, 30_303_030L))
-                    }
-                }
+            val aeState = when (cameraSettings.aeState) {
+                AEState.AUTO -> CaptureRequest.CONTROL_AE_MODE_ON
+                else -> CaptureRequest.CONTROL_AE_MODE_OFF
             }
-
-            val aeState = cameraSettings.aeState
-
-            if (aeState == AEState.AUTO) {
-                set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON)
-            } else {
-                set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_OFF)
-            }
+            set(CaptureRequest.CONTROL_AE_MODE, aeState)
 
             cameraSettings.ev?.let { ev ->
                 set(CaptureRequest.CONTROL_AE_EXPOSURE_COMPENSATION, ev.value)
             }
 
-            set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE)
-
-            cameraSettings.focusModes?.let { focusMode ->
-                set(CaptureRequest.CONTROL_AF_MODE, focusMode.value)
-                if (focusMode.value == CaptureRequest.CONTROL_AF_MODE_OFF) {
-                    cameraSettings.manualFocus?.let { focus ->
-                        set(CaptureRequest.LENS_FOCUS_DISTANCE, focus.value)
-                    }
-                }
-
-                cameraSettings.meteringArea?.let { meteringArea ->
-                    if (meteringArea.value != null) {
-                        set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_AUTO)
-                        set(CaptureRequest.CONTROL_AF_REGIONS, meteringArea.array)
-                        if (meteringArea.supportAE) set(CaptureRequest.CONTROL_AE_REGIONS, meteringArea.array)
-                        if (meteringArea.supportAWB) set(CaptureRequest.CONTROL_AWB_REGIONS, meteringArea.array)
-
-                        set(CaptureRequest.CONTROL_AF_TRIGGER, CameraMetadata.CONTROL_AF_TRIGGER_START)
-                        meteringArea.value = null
-                    } else {
-                        set(CaptureRequest.CONTROL_AF_TRIGGER, CameraMetadata.CONTROL_AF_TRIGGER_CANCEL)
-                    }
-                }
-            }
+            setFocusSettings(this)
 
             set(CaptureRequest.CONTROL_AWB_MODE,
                 cameraSettings.whiteBalance?.value ?: CaptureRequest.CONTROL_AWB_MODE_AUTO)
@@ -318,13 +270,71 @@ class Camera(
             }
         }
     }
+    private fun setIsoSettings(requestBuilder: CaptureRequest.Builder) {
+        val iso = cameraSettings.iso ?: return
+        val isUseAutoMode = iso.isInAutoMode
+                && requestBuilder != photoRequestBuilder
+                && cameraInfo.supportSemiAutoExposure
+
+        requestBuilder[CaptureRequest.SENSOR_SENSITIVITY] = if (isUseAutoMode) 0 else iso.value
+    }
+    private fun setExposureTimeSettings(requestBuilder: CaptureRequest.Builder) {
+        val shutter = cameraSettings.exposureTimeNS ?: return
+        val isInAutoMode = shutter.isInAutoMode
+                && requestBuilder != photoRequestBuilder
+                && cameraInfo.supportSemiAutoExposure
+
+        when {
+            isInAutoMode -> {
+                requestBuilder[CaptureRequest.SENSOR_EXPOSURE_TIME] = 0
+                requestBuilder[CaptureRequest.SENSOR_FRAME_DURATION] = 0
+            }
+            requestBuilder == photoRequestBuilder -> {
+                requestBuilder[CaptureRequest.SENSOR_EXPOSURE_TIME] = shutter.value
+                requestBuilder[CaptureRequest.SENSOR_FRAME_DURATION] = shutter.value
+            }
+            else -> {
+                val previewExposureTime = min(shutter.value, MAX_PREVIEW_EXPOSURE_TIME)
+                val previewFrameDuration = max(previewExposureTime, MAX_PREVIEW_FRAME_DURATION)
+                requestBuilder[CaptureRequest.SENSOR_EXPOSURE_TIME] = previewExposureTime
+                requestBuilder[CaptureRequest.SENSOR_FRAME_DURATION] = previewFrameDuration
+            }
+        }
+    }
+    private fun setFocusSettings(requestBuilder: CaptureRequest.Builder) {
+        requestBuilder[CaptureRequest.CONTROL_AF_MODE] = CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE
+
+        val focusMode = cameraSettings.focusModes ?: return
+        requestBuilder[CaptureRequest.CONTROL_AF_MODE] = focusMode.value
+        if (focusMode.value == CaptureRequest.CONTROL_AF_MODE_OFF) {
+            cameraSettings.manualFocus?.let {
+                requestBuilder[CaptureRequest.LENS_FOCUS_DISTANCE] = it.value
+            }
+        }
+
+        setMeteringAreaSettings(requestBuilder)
+    }
+    private fun setMeteringAreaSettings(requestBuilder: CaptureRequest.Builder) {
+        val meteringArea = cameraSettings.meteringArea ?: return
+        if (meteringArea.isTriggered) {
+            requestBuilder[CaptureRequest.CONTROL_AF_MODE] = CaptureRequest.CONTROL_AF_MODE_AUTO
+            requestBuilder[CaptureRequest.CONTROL_AF_REGIONS] = meteringArea.regions
+            if (meteringArea.supportAE) requestBuilder[CaptureRequest.CONTROL_AE_REGIONS] = meteringArea.regions
+            if (meteringArea.supportAWB) requestBuilder[CaptureRequest.CONTROL_AWB_REGIONS] = meteringArea.regions
+
+            requestBuilder[CaptureRequest.CONTROL_AF_TRIGGER] = CameraMetadata.CONTROL_AF_TRIGGER_START
+            meteringArea.clear()
+        } else {
+            requestBuilder[CaptureRequest.CONTROL_AF_TRIGGER] = CameraMetadata.CONTROL_AF_TRIGGER_CANCEL
+        }
+    }
 
     private fun runPreview() {
         val session = captureSession
-
         if (session == null) {
-            Log.e("Camera", "Camera not ready for preview")
-            throw CameraError.SessionError("Camera not ready for preview")
+            val message = "Camera not ready for preview"
+            Log.e(LOG_TAG, message)
+            throw CameraError.SessionError(message)
         }
 
         val captureCallback = object : CameraCaptureSession.CaptureCallback() {
@@ -334,39 +344,7 @@ class Camera(
                 result: TotalCaptureResult
             ) {
                 super.onCaptureCompleted(session, request, result)
-
-                val currentTime = SystemClock.elapsedRealtime()
-                if (currentTime - lastSettingsUpdateTime < updateIntervalMs) return
-                lastSettingsUpdateTime = currentTime
-
-                cameraSettings.iso?.let {
-                    val iso = result.get(CaptureResult.SENSOR_SENSITIVITY)
-                    if (iso != null && cameraSettings.iso.isInAutoMode) {
-                        cameraSettings.iso.setValueWithoutNotifying(iso)
-                    }
-                }
-                cameraSettings.exposureTimeNS?.let {
-                    val shutterSpeed = result.get(CaptureResult.SENSOR_EXPOSURE_TIME)
-                    if (shutterSpeed != null && cameraSettings.exposureTimeNS.isInAutoMode) {
-                        cameraSettings.exposureTimeNS.setValueWithoutNotifying(shutterSpeed)
-                    }
-                }
-
-                cameraSettings.meteringArea?.let {
-                    val state = result.get(CaptureResult.CONTROL_AF_STATE)
-                    if (state != null && (state == CaptureResult.CONTROL_AF_STATE_FOCUSED_LOCKED || state == CaptureResult.CONTROL_AF_STATE_NOT_FOCUSED_LOCKED)) {
-                        onSettingsChangedManually()
-                    }
-                }
-
-                cameraSettings.manualFocus?.let {
-                    val currentFocusDistance = result.get(CaptureResult.LENS_FOCUS_DISTANCE)
-                    if (currentFocusDistance != null && currentFocusDistance >= 0f) {
-                        cameraSettings.manualFocus.setValueWithoutNotifying(currentFocusDistance)
-                    }
-                }
-
-                onSettingsAutoChanged.invokeAll { it.invoke() }
+                handlePreviewCaptureResult(result)
             }
         }
 
@@ -375,6 +353,40 @@ class Camera(
             captureCallback,
             backgroundHandler
         )
+    }
+    private fun handlePreviewCaptureResult(result: TotalCaptureResult) {
+        val currentTime = SystemClock.elapsedRealtime()
+        if (currentTime - lastSettingsUpdateTime < updateIntervalMs) return
+        lastSettingsUpdateTime = currentTime
+
+        cameraSettings.iso?.let {
+            val iso = result[CaptureResult.SENSOR_SENSITIVITY]
+            if (iso != null && cameraSettings.iso.isInAutoMode) {
+                cameraSettings.iso.setValueWithoutNotifying(iso)
+            }
+        }
+        cameraSettings.exposureTimeNS?.let {
+            val shutterSpeed = result[CaptureResult.SENSOR_EXPOSURE_TIME]
+            if (shutterSpeed != null && cameraSettings.exposureTimeNS.isInAutoMode) {
+                cameraSettings.exposureTimeNS.setValueWithoutNotifying(shutterSpeed)
+            }
+        }
+
+        cameraSettings.meteringArea?.let {
+            val state = result[CaptureResult.CONTROL_AF_STATE]
+            if (state != null && (state == CaptureResult.CONTROL_AF_STATE_FOCUSED_LOCKED || state == CaptureResult.CONTROL_AF_STATE_NOT_FOCUSED_LOCKED)) {
+                onSettingsChangedManually()
+            }
+        }
+
+        cameraSettings.manualFocus?.let {
+            val currentFocusDistance = result[CaptureResult.LENS_FOCUS_DISTANCE]
+            if (currentFocusDistance != null && currentFocusDistance >= 0f) {
+                cameraSettings.manualFocus.setValueWithoutNotifying(currentFocusDistance)
+            }
+        }
+
+        onSettingsAutoChanged.invokeAll { it.invoke() }
     }
 
     private fun getOrientation(): Int {
@@ -404,12 +416,14 @@ class Camera(
         val reader = imageReaders.find { it.format == format }
 
         if (device == null || session == null) {
-            Log.e("Camera", "Camera not ready for capture")
-            throw CameraError.SessionError("Camera not ready for capture")
+            val message = "Camera not ready for capture"
+            Log.e(LOG_TAG, message)
+            throw CameraError.SessionError(message)
         }
         if (reader == null) {
-            Log.e("Camera", "Camera does not support capturing in ${format.displayName}")
-            throw CameraError.SessionError("Camera does not support capturing in ${format.displayName}")
+            val message = "Camera does not support capturing in ${format.displayName}"
+            Log.e(LOG_TAG, message)
+            throw CameraError.SessionError(message)
         }
 
         if (_currentState == CameraState.BUSY) return
@@ -444,7 +458,7 @@ class Camera(
                     request: CaptureRequest,
                     result: TotalCaptureResult
                 ) {
-                    Log.d("Camera", "Picture capture completed")
+                    Log.d(LOG_TAG, "Picture capture completed")
                     photoRequest.setCaptureResult(result)
                 }
 
@@ -453,7 +467,7 @@ class Camera(
                     request: CaptureRequest,
                     failure: CaptureFailure
                 ) {
-                    Log.e("Camera", "Picture capture failed: ${failure.reason}")
+                    Log.e(LOG_TAG, "Picture capture failed: ${failure.reason}")
                     photoRequest.release()
                 }
             }
@@ -465,11 +479,13 @@ class Camera(
             )
 
         } catch (e: CameraAccessException) {
-            Log.e("Camera", "Failed to capture session: ${e.message}")
-            throw CameraError.SessionError("Failed to capture session: ${e.message}")
+            val message = "Failed to capture session: ${e.message}"
+            Log.e(LOG_TAG, message)
+            throw CameraError.SessionError(message)
         } catch (e: IllegalStateException) {
-            Log.e("Camera", "Camera device in invalid state: ${e.message}")
-            throw CameraError.SessionError("Camera device in invalid state: ${e.message}")
+            val message = "Camera device in invalid state: ${e.message}"
+            Log.e(LOG_TAG, message)
+            throw CameraError.SessionError(message)
         }
     }
     fun takeBurst() {
@@ -479,19 +495,22 @@ class Camera(
         val burstProperty = cameraSettings.burstProperty
 
         if (device == null || session == null) {
-            Log.e("Camera", "Camera not ready for capture")
-            throw CameraError.SessionError("Camera not ready for capture")
+            val message = "Camera not ready for capture"
+            Log.e(LOG_TAG, message)
+            throw CameraError.SessionError(message)
         }
         if (burstProperty == null) {
-            Log.e("Camera", "Camera does not support burst mode")
-            throw CameraError.SessionError("Camera does not support burst mode")
+            val message = "Camera does not support burst mode"
+            Log.e(LOG_TAG, message)
+            throw CameraError.SessionError(message)
         }
 
         val reader = imageReaders.find { it.format == format }
 
         if (reader == null) {
-            Log.e("Camera", "Camera does not support capturing in ${format.displayName}")
-            throw CameraError.SessionError("Camera does not support capturing in ${format.displayName}")
+            val message = "Camera does not support capturing in ${format.displayName}"
+            Log.e(LOG_TAG, message)
+            throw CameraError.SessionError(message)
         }
 
         if (_currentState == CameraState.BUSY) return
@@ -500,11 +519,13 @@ class Camera(
         try {
             captureBurstIteration(burstProperty.value, device, reader, format, session)
         } catch (e: CameraAccessException) {
-            Log.e("Camera", "Failed to capture session: ${e.message}")
-            throw CameraError.SessionError("Failed to capture session: ${e.message}")
+            val message = "Failed to capture session: ${e.message}"
+            Log.e(LOG_TAG, message)
+            throw CameraError.SessionError(message)
         } catch (e: IllegalStateException) {
-            Log.e("Camera", "Camera device in invalid state: ${e.message}")
-            throw CameraError.SessionError("Camera device in invalid state: ${e.message}")
+            val message = "Camera device in invalid state: ${e.message}"
+            Log.e(LOG_TAG, message)
+            throw CameraError.SessionError(message)
         }
     }
 
@@ -553,7 +574,7 @@ class Camera(
                 request: CaptureRequest,
                 result: TotalCaptureResult
             ) {
-                Log.d("Camera", "Picture capture completed")
+                Log.d(LOG_TAG, "Picture capture completed")
                 burstRequest.addCaptureResultToSequence(result)
             }
 
@@ -562,7 +583,7 @@ class Camera(
                 request: CaptureRequest,
                 failure: CaptureFailure
             ) {
-                Log.e("Camera", "Picture capture failed: ${failure.reason}")
+                Log.e(LOG_TAG, "Picture capture failed: ${failure.reason}")
                 burstRequest.release()
             }
         }
@@ -585,7 +606,7 @@ class Camera(
         if (format == CameraOutputFormat.JPEG) {
             val buffer = image.planes[0].buffer
             val bytes = ByteArray(buffer.capacity())
-            buffer.get(bytes)
+            buffer[bytes]
 
             onPhotoCreated?.invoke(bytes, format, photoType, orientation)
         }
@@ -618,12 +639,18 @@ class Camera(
             onPhotoCreated = null
             onPhotoCreatingFailed = null
             onSettingsAutoChanged.clear()
-            Log.d("Camera", "Camera closed: ${cameraInfo.cameraId}")
+            Log.d(LOG_TAG, "Camera closed: ${cameraInfo.cameraId}")
 
             _currentState = CameraState.CLOSED
         } catch (e: Exception) {
-            Log.e("Camera", "Error closing camera: ${e.message}")
+            Log.e(LOG_TAG, "Error closing camera: ${e.message}")
             throw CameraError.ClosingError("Error closing camera: ${e.message}")
         }
+    }
+    
+    companion object {
+        const val LOG_TAG = "Camera"
+        const val MAX_PREVIEW_EXPOSURE_TIME = 100_000_000L
+        const val MAX_PREVIEW_FRAME_DURATION = 30_303_030L
     }
 }

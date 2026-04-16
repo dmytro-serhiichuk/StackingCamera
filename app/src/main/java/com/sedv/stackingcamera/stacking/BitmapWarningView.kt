@@ -140,11 +140,13 @@ class BitmapWarningView @JvmOverloads constructor(
             shape = android.graphics.drawable.GradientDrawable.RECTANGLE
             setColor(fillColor)
             setStroke((1.5 * dp).toInt(), strokeColor)
+            val topRadius = if (topRounded) radius else 0f
+            val bottomRadius = if (bottomRounded) radius else 0f
             cornerRadii = floatArrayOf(
-                if (topRounded) radius else 0f, if (topRounded) radius else 0f,   // top-left
-                if (topRounded) radius else 0f, if (topRounded) radius else 0f,   // top-right
-                if (bottomRounded) radius else 0f, if (bottomRounded) radius else 0f, // bottom-right
-                if (bottomRounded) radius else 0f, if (bottomRounded) radius else 0f  // bottom-left
+                topRadius, topRadius,   // top-left
+                topRadius, topRadius,   // top-right
+                bottomRadius, bottomRadius, // bottom-right
+                bottomRadius, bottomRadius  // bottom-left
             )
         }
     }

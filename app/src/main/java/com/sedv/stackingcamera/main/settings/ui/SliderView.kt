@@ -37,7 +37,7 @@ class SliderView(
             }
             false
         }
-        binding.scroll.setOnScrollChangeListener { _, newX, newY, oldX, oldY ->
+        binding.scroll.setOnScrollChangeListener { _, newX, _, _, _ ->
             if (!property.isInAutoMode) {
                 val centerX = newX + binding.scroll.width / 2
                 val relativeX = centerX - slider.sidePadding
@@ -68,33 +68,33 @@ class SliderView(
         isSnapping = true
         lastScrollX = binding.scroll.scrollX
 
-        scrollHandler.postDelayed(object : Runnable {
-            override fun run() {
-                val currentScrollX = binding.scroll.scrollX
-                if (currentScrollX == lastScrollX) {
-                    val centerX = currentScrollX + binding.scroll.width / 2
-                    val relativeX = centerX - slider.sidePadding
-                    val index = (relativeX / slider.stepSpacing).roundToInt().coerceIn(0, slider.steps - 1)
-                    val targetX = (index * slider.stepSpacing + slider.sidePadding - binding.scroll.width / 2).toInt()
-                    binding.scroll.smoothScrollTo(targetX, 0)
-                    isSnapping = false
-
-                    @Suppress("UNCHECKED_CAST")
-                    property as BaseRangeProperty<Number>
-                    property.setValueWithNotifying(property.range.mainSteps[index])
-                    binding.valueLabel.text = property.getDisplayValue()
-                } else {
-                    lastScrollX = currentScrollX
-                    scrollHandler.postDelayed(this, 50)
-                }
-            }
-        }, 100)
+        scrollHandler.postDelayed(::handleScroll, 100)
     }
 
     fun handleValueAutoUpdated() {
         if (!isSnapping) {
             binding.valueLabel.text = property.getDisplayValue()
             smoothScrollToValue(property.value)
+        }
+    }
+
+    private fun handleScroll() {
+        val currentScrollX = binding.scroll.scrollX
+        if (currentScrollX == lastScrollX) {
+            val centerX = currentScrollX + binding.scroll.width / 2
+            val relativeX = centerX - slider.sidePadding
+            val index = (relativeX / slider.stepSpacing).roundToInt().coerceIn(0, slider.steps - 1)
+            val targetX = (index * slider.stepSpacing + slider.sidePadding - binding.scroll.width / 2).toInt()
+            binding.scroll.smoothScrollTo(targetX, 0)
+            isSnapping = false
+
+            @Suppress("UNCHECKED_CAST")
+            property as BaseRangeProperty<Number>
+            property.setValueWithNotifying(property.range.mainSteps[index])
+            binding.valueLabel.text = property.getDisplayValue()
+        } else {
+            lastScrollX = currentScrollX
+            scrollHandler.postDelayed(::handleScroll, 50)
         }
     }
 

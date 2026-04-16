@@ -118,7 +118,6 @@ class GLPreviewSurfaceRenderer(
         surfaceWidth = width
         surfaceHeight = height
         GLES30.glViewport(0, 0, width, height)
-//        cameraTexture?.setDefaultBufferSize(width, height)
     }
 
     override fun onDrawFrame(gl: GL10?) {

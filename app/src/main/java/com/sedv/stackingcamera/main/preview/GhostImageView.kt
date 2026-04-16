@@ -14,6 +14,7 @@ import androidx.lifecycle.lifecycleScope
 import com.sedv.stackingcamera.main.camera.settings.CameraOutputFormat
 import com.sedv.stackingcamera.main.generalsettings.FrameSize
 import com.sedv.stackingcamera.main.generalsettings.GeneralSettings
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -31,13 +32,16 @@ class GhostImageView @JvmOverloads constructor(
 
     private var hasLoadedBitmap = false
 
+    internal var ioDispatcher: CoroutineDispatcher = Dispatchers.IO
+    internal var mainDispatcher: CoroutineDispatcher = Dispatchers.Main
+
     fun setImage(info: GhostImageInfo) {
         if (GeneralSettings.frameSize.value == FrameSize.FRAME_SIZE_16_9.value && info.format == CameraOutputFormat.RAW) return
         val scope = findViewTreeLifecycleOwner()?.lifecycleScope ?: return
         loadJob?.cancel()
-        loadJob = scope.launch(Dispatchers.IO) {
+        loadJob = scope.launch(ioDispatcher) {
             val bitmap = loadScaledBitmap(info) ?: return@launch
-            withContext(Dispatchers.Main) {
+            withContext(mainDispatcher) {
                 setImageBitmap(bitmap)
                 hasLoadedBitmap = true
                 if (GeneralSettings.ghostImage.value) isVisible = true

@@ -3,6 +3,7 @@ package com.sedv.stackingcamera.stacking.settings
 import android.content.SharedPreferences
 import android.util.Range
 import kotlin.collections.arrayListOf
+import androidx.core.content.edit
 
 enum class ColorSpace(val value: Int, val nameValue: String) {
     sRGB(0, "sRGB"),
@@ -75,24 +76,20 @@ object Settings {
     }
 
     fun updateSettings() {
-        val editor = sharedPreferences.edit()
-
-        for (prop in properties) {
-            prop.saveTo(editor)
+        sharedPreferences.edit(commit = true) {
+            for (prop in properties) {
+                prop.saveTo(this)
+            }
         }
-
-        editor.commit()
         callApplySettings()
     }
 
     fun resetSettings() {
-        val editor = sharedPreferences.edit()
-
-        for (prop in properties) {
-            prop.reset(editor)
+        sharedPreferences.edit(commit = true) {
+            for (prop in properties) {
+                prop.reset(this)
+            }
         }
-
-        editor.commit()
         callApplySettings()
     }
 
@@ -113,7 +110,8 @@ object Settings {
     }
 
     // Native functions
-    external private fun applySettings(
+    @Suppress("LongParameterList")
+    private external fun applySettings(
         fastThreshold: Int,
         ransacThreshold: Float,
         ransacIterations: Int,

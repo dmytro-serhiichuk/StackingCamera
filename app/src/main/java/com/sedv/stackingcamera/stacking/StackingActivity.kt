@@ -105,7 +105,7 @@ class StackingActivity : AppCompatActivity() {
         binding.stackBtn.setOnClickListener { handleStackButtonClicked() }
         binding.saveBtn.setOnClickListener { handleSaveButtonClicked() }
 
-        binding.disableAlignmentCheckBox.setOnCheckedChangeListener { _, isChecked ->
+        binding.disableAlignmentCheckBox.setOnCheckedChangeListener { _, _ ->
             updateButtonsState()
         }
 
@@ -153,7 +153,7 @@ class StackingActivity : AppCompatActivity() {
             .setTitle("Fatal Error")
             .setMessage(e.message)
             .setCancelable(false)
-            .setPositiveButton("OK") { dialog, id ->
+            .setPositiveButton("OK") { _, _ ->
                 finishAffinity()
                 exitProcess(0)
             }

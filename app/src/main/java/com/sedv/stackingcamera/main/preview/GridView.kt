@@ -6,6 +6,7 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import android.util.AttributeSet
 import android.view.View
+import androidx.core.content.ContextCompat
 import com.sedv.stackingcamera.R
 
 class GridView @JvmOverloads constructor(
@@ -18,7 +19,7 @@ class GridView @JvmOverloads constructor(
     private var desiredHeight: Int = 0
 
     private val paint = Paint().apply {
-        color = context.resources.getColor(R.color.grid_line_color)
+        color = ContextCompat.getColor(context, R.color.grid_line_color)
         strokeWidth = context.resources.getDimension(R.dimen.grid_line_width)
     }
 

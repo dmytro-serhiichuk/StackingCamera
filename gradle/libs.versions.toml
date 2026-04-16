@@ -25,4 +25,5 @@ androidx-exifinterface = { group = "androidx.exifinterface", name = "exifinterfa
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+sonarqube = { id = "org.sonarqube", version = "7.2.3.7755" }
 

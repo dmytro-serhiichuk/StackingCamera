@@ -41,7 +41,6 @@ class ShutterProperty(
             var current = keySteps[i]
             val next = keySteps[i + 1]
 
-            val diff = next - current
             val stepSize = (next - current) / stepsBetweenKeySteps
 
             while (current < next) {
