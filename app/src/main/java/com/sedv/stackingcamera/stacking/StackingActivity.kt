@@ -12,7 +12,6 @@ import android.os.Environment
 import android.os.ParcelFileDescriptor
 import android.provider.MediaStore
 import android.provider.OpenableColumns
-import android.util.Log
 import android.view.WindowManager
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
@@ -488,7 +487,7 @@ class StackingActivity : AppCompatActivity() {
         const val APP_DIRECTORY = "/StackingCamera/"
         val OUTPUT_FORMATS = listOf(".jpg", ".png", ".tiff")
         init {
-            System.loadLibrary("stackingcamera")
+            System.loadLibrary("stacking")
         }
     }
 }

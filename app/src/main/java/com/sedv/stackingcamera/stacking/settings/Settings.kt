@@ -36,7 +36,7 @@ object Settings {
     private lateinit var sharedPreferences: SharedPreferences
 
     init {
-        System.loadLibrary("stackingcamera")
+        System.loadLibrary("stacking")
 
         COLOR_SPACE = OptionsProperty(
             "COLOR_SPACE",
