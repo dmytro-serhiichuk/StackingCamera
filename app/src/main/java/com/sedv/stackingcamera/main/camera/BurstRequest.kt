@@ -65,8 +65,8 @@ class BurstRequest(
         backgroundHandler.post {
             try {
                 val photoType = when (processedCount) {
-                    0 -> PhotoType.BURST_FIRST
                     totalImagesLeft - 1 -> PhotoType.BURST_LAST
+                    0 -> PhotoType.BURST_FIRST
                     else -> PhotoType.BURST_REGULAR
                 }
                 onImageReadyCallback(image, result, outputFormat, photoType)

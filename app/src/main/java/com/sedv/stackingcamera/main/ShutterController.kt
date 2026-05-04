@@ -179,7 +179,7 @@ class ShutterController(
 
     private fun startShutterCountDown() {
         viewModel.activeCamera.cameraSettings.exposureTimeNS?.let { speed ->
-            if (speed.value > LONG_EXPOSURE) {
+            if (speed.value >= LONG_EXPOSURE) {
                 shutter.text = (speed.value / LONG_EXPOSURE).toString()
 
                 countdown = object : CountDownTimer(speed.value / 1000000, 100L) {
