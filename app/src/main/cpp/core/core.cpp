@@ -6,7 +6,6 @@
 #include "matching/matching.h"
 #include "matching/ransac.h"
 #include "stacking/warping.h"
-#include "stacking/median-stacking.h"
 #include "utils.h"
 #include "matching/validation/homography-validation.h"
 #include "matching/validation/matches-validation.h"
@@ -156,9 +155,9 @@ namespace Core {
             }
             stackedSrc.add(sources->buffer[i]->bitmapPtr);
         }
-        _logger->log(false, "Starting median stacking");
-        stackedResult = MedianStacking::stack(stackedSrc, *sources->buffer[0]->bitmapPtr);
-        _logger->log(false, "Median stacking completed");
+        _logger->log(false, "Starting stacking");
+        stackedResult = Settings::STACKING_METHOD->stack(stackedSrc, *sources->buffer[0]->bitmapPtr);
+        _logger->log(false, "Stacking completed");
     }
 
     void stack(bool disableAlignment) {
@@ -183,10 +182,10 @@ namespace Core {
             stackedSrc.add(warpedBitmaps->buffer[i]);
         }
 
-        _logger->log(false, "Starting median stacking");
-        stackedResult = MedianStacking::stack(stackedSrc, *sources->buffer[referenceFrameIndex]->bitmapPtr);
+        _logger->log(false, "Starting stacking");
+        stackedResult = Settings::STACKING_METHOD->stack(stackedSrc, *sources->buffer[referenceFrameIndex]->bitmapPtr);
         delete warpedBitmaps;
-        _logger->log(false, "Median stacking completed");
+        _logger->log(false, "Stacking completed");
     }
 
     void save(int fd, int format) {

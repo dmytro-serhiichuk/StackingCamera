@@ -467,6 +467,7 @@ class StackingActivity : AppCompatActivity() {
 
         return pfd.detachFd()
     }
+    @Keep
     fun addLogMessage(message: String, isError: Boolean) {
         runOnUiThread {
             binding.logWindow.addMessage(message, isError)

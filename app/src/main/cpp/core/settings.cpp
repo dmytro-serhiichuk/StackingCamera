@@ -4,7 +4,16 @@
 
 #include "settings.h"
 #include "core.h"
+#include "stacking/average-stacking.h"
+#include "stacking/median-stacking.h"
 #include <stdexcept>
+
+namespace {
+    enum class StackingMethod {
+        Median = 0,
+        Average = 1
+    };
+}
 
 uint32_t Settings::TILES_COUNT = 0;
 uint32_t Settings::TILES_PER_SIDE = 0;
@@ -18,13 +27,14 @@ bool Settings::SAVE_KEYPOINTS = false;
 bool Settings::SAVE_MATCHES = false;
 ColorSpace Settings::BITMAP_COLOR_SPACE = ColorSpace::Other;
 Depth Settings::BITMAP_DEPTH = Depth::U16;
+std::unique_ptr<BaseStacking> Settings::STACKING_METHOD = std::make_unique<MedianStacking>();
 
 void (*Settings::onBriskUpdated)() = nullptr;
 
 void Settings::update(int fast_threshold, float ransac_threshold, int ransac_iterations,
                       int tiles_per_side, int max_keypoints, int max_matches,
                       float brisk_pattern_scale, bool use16_bit, int color_space,
-                      bool save_keypoints, bool save_matches) {
+                      bool save_keypoints, bool save_matches, int stacking_method) {
     auto newDepth = use16_bit ? Depth::U16 : Depth::U8;
     auto newColorSpace = (ColorSpace)color_space;
 
@@ -43,11 +53,17 @@ void Settings::update(int fast_threshold, float ransac_threshold, int ransac_ite
 
     if (BRISK_PATTERN_SCALE_FACTOR != brisk_pattern_scale) {
         BRISK_PATTERN_SCALE_FACTOR = brisk_pattern_scale;
-        onBriskUpdated();
+        if (onBriskUpdated) onBriskUpdated();
     }
 
     BITMAP_DEPTH = newDepth;
     BITMAP_COLOR_SPACE = newColorSpace;
     SAVE_KEYPOINTS = save_keypoints;
     SAVE_MATCHES = save_matches;
+
+    if (stacking_method == (int)StackingMethod::Median) {
+        STACKING_METHOD = std::make_unique<MedianStacking>();
+    } else if (stacking_method == (int)StackingMethod::Average) {
+        STACKING_METHOD = std::make_unique<AverageStacking>();
+    }
 }

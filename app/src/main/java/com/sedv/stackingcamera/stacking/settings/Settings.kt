@@ -18,6 +18,16 @@ enum class ColorSpace(val value: Int, val nameValue: String) {
     }
 }
 
+enum class StackingMethod(val value: Int, val nameValue: String) {
+    Median(0, "Median"),
+    Average(1, "Average");
+
+    companion object {
+        fun fromInt(value: Int) = StackingMethod.entries.first { it.value == value }
+        fun fromString(value: String) = StackingMethod.entries.first { it.nameValue == value }
+    }
+}
+
 object Settings {
     val FAST_THRESHOLD = RangedProperty("FAST_THRESHOLD", 20, Range(5, 60), 1)
     val RANSAC_THRESHOLD = RangedProperty("RANSAC_THRESHOLD", 1.0f, Range(0.5f, 10.0f), 0.5f)
@@ -28,6 +38,7 @@ object Settings {
     val BRISK_PATTERNS_SCALE = RangedProperty("BRISK_PATTERNS_SCALE", 10.0f, Range(1.0f, 20.0f), 0.5f)
     val USE_16_BIT = BoolProperty("USE_16_BIT", true)
     val COLOR_SPACE: OptionsProperty
+    val STACKING_METHOD: OptionsProperty
     val SAVE_KEYPOINTS = BoolProperty("SAVE_KEYPOINTS", false)
     val SAVE_MATCHES = BoolProperty("SAVE_MATCHES", false)
 
@@ -47,6 +58,15 @@ object Settings {
                 ColorSpace.AdobeRGB.value,
                 ColorSpace.WideGamut.value,
                 ColorSpace.ProPhoto.value
+            )
+        )
+
+        STACKING_METHOD = OptionsProperty(
+            "STACKING_METHOD",
+            StackingMethod.Median.value,
+            linkedSetOf(
+                StackingMethod.Median.value,
+                StackingMethod.Average.value
             )
         )
 
@@ -105,7 +125,8 @@ object Settings {
             USE_16_BIT.value,
             COLOR_SPACE.value,
             SAVE_KEYPOINTS.value,
-            SAVE_MATCHES.value
+            SAVE_MATCHES.value,
+            STACKING_METHOD.value
         )
     }
 
@@ -122,6 +143,7 @@ object Settings {
         use16Bit: Boolean,
         colorSpace: Int,
         saveKeypoints: Boolean,
-        saveMatches: Boolean
+        saveMatches: Boolean,
+        stackingMethod: Int
     )
 }

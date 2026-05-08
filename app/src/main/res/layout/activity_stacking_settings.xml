@@ -73,6 +73,13 @@
                     app:descriptionText="Using 16-bit format instead of 8-bit avoids data loss when decoding images, but consumes more device memory"/>
 
                 <com.sedv.stackingcamera.stacking.settings.ui.DropDown
+                    android:id="@+id/stacking_method"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:titleText="Stacking Method"
+                    app:descriptionText="Specifies the the method of stacking images, which may affect execution time and output image. Note that this setting does not affect image alignment"/>
+
+                <com.sedv.stackingcamera.stacking.settings.ui.DropDown
                     android:id="@+id/color_space"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"

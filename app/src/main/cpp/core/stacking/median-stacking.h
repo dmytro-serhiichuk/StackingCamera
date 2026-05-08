@@ -5,13 +5,14 @@
 #ifndef STACKINGCAMERA_MEDIAN_STACKING_H
 #define STACKINGCAMERA_MEDIAN_STACKING_H
 
-#include "imageio/imageio.h"
-#include "collections/list.h"
+#include "base-stacking.h"
 
 using namespace ImageIO;
 
-namespace MedianStacking {
-    Bitmap *stack(List<BitmapPtr> &src, BitmapPtr &referenceBitmap);
-}
+class MedianStacking : public BaseStacking {
+private:
+    uint8_t get8(uint8_t *values, size_t size) override;
+    uint16_t get16(uint16_t *values, size_t size) override;
+};
 
 #endif //STACKINGCAMERA_MEDIAN_STACKING_H

@@ -7,6 +7,8 @@
 
 #include <cstdint>
 #include "imageio/bitmap.h"
+#include "stacking/base-stacking.h"
+#include <memory>
 
 using namespace ImageIO;
 
@@ -24,6 +26,7 @@ public:
     static bool SAVE_MATCHES;
     static ColorSpace BITMAP_COLOR_SPACE;
     static Depth BITMAP_DEPTH;
+    static std::unique_ptr<BaseStacking> STACKING_METHOD;
 
     Settings() = delete;
 
@@ -32,7 +35,7 @@ public:
     static void update(int fast_threshold, float ransac_threshold, int ransac_iterations,
                 int tiles_per_side, int max_keypoints, int max_matches,
                 float brisk_pattern_scale, bool use16_bit,
-                int color_space, bool save_keypoints, bool save_matches);
+                int color_space, bool save_keypoints, bool save_matches, int stacking_method);
 };
 
 #endif //STACKINGCAMERA_SETTINGS_H

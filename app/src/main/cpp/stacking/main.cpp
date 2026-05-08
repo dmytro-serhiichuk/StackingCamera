@@ -67,11 +67,12 @@ Java_com_sedv_stackingcamera_stacking_settings_Settings_applySettings(JNIEnv *en
                                                                       jboolean use16_bit,
                                                                       jint color_space,
                                                                       jboolean save_keypoints,
-                                                                      jboolean save_matches) {
+                                                                      jboolean save_matches,
+                                                                      jint stacking_method) {
     Settings::update(
             fast_threshold, ransac_threshold, ransac_iterations, tiles_per_side, max_keypoints,
-            max_matches, brisk_pattern_scale, use16_bit, color_space, save_keypoints, save_matches
-    );
+            max_matches, brisk_pattern_scale, use16_bit, color_space, save_keypoints, save_matches,
+            stacking_method);
 }
 extern "C"
 JNIEXPORT void JNICALL

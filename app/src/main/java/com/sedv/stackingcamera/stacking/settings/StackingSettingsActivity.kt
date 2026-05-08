@@ -21,6 +21,10 @@ class StackingSettingsActivity : AppCompatActivity() {
 
         binding.root.post {
             binding.use16BitData.init(Settings.USE_16_BIT.value)
+            binding.stackingMethod.init(
+                Settings.STACKING_METHOD.options.map { StackingMethod.fromInt(it).nameValue },
+                StackingMethod.fromInt(Settings.STACKING_METHOD.value).nameValue
+            )
             binding.colorSpace.init(
                 Settings.COLOR_SPACE.options.map { ColorSpace.fromInt(it).nameValue },
                 ColorSpace.fromInt(Settings.COLOR_SPACE.value).nameValue
@@ -106,6 +110,7 @@ class StackingSettingsActivity : AppCompatActivity() {
         Settings.resetSettings()
 
         binding.use16BitData.isChecked = Settings.USE_16_BIT.value
+        binding.stackingMethod.value = StackingMethod.fromInt(Settings.STACKING_METHOD.value).nameValue
         binding.colorSpace.value = ColorSpace.fromInt(Settings.COLOR_SPACE.value).nameValue
         binding.numberOfTiles.value = Settings.TILES_PER_SIDE.value.toFloat()
 
@@ -125,6 +130,7 @@ class StackingSettingsActivity : AppCompatActivity() {
 
     private fun handleSaveButtonClicked() {
         Settings.USE_16_BIT.value = binding.use16BitData.isChecked
+        Settings.STACKING_METHOD.value = StackingMethod.fromString(binding.stackingMethod.value).value
         Settings.COLOR_SPACE.value = ColorSpace.fromString(binding.colorSpace.value).value
         Settings.TILES_PER_SIDE.value = binding.numberOfTiles.value.toInt()
 
@@ -150,6 +156,7 @@ class StackingSettingsActivity : AppCompatActivity() {
         }
 
         binding.use16BitData.applyNewValue()
+        binding.stackingMethod.applyNewValue()
         binding.colorSpace.applyNewValue()
         binding.numberOfTiles.applyNewValue()
         binding.maxKeypoints.applyNewValue()
