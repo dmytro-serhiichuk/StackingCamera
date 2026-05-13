@@ -78,12 +78,12 @@ namespace ImageIO {
         auto bmp = Bitmap { width, height, buffer, Depth::U8, colorModel, srcColorSpace };
 
         if (srcColorSpace == colorSpace && depth != Depth::U8) {
-            bmp = bmp.convertDepth(depth);
+            bmp = bmp.convertToRgbWithDepth(depth);
         } else if (srcColorSpace != colorSpace) {
             cmsHPROFILE profile = isIccValid
                     ? cmsOpenProfileFromMem(icc.buffer, icc.size)
                     : cmsCreate_sRGBProfile();
-            bmp = bmp.normalize(depth, colorSpace, profile);
+            bmp = bmp.convert(depth, colorSpace, profile);
             cmsCloseProfile(profile);
         }
 
@@ -95,11 +95,11 @@ namespace ImageIO {
         Bitmap _converted {};
         Bitmap* bitmapPtr = nullptr;
         if (bmp.depth != Depth::U8 && bmp.colorSpace == ColorSpace::sRGB) {
-            _converted = bmp.convertDepth(Depth::U8);
+            _converted = bmp.convertToRgbWithDepth(Depth::U8);
             bitmapPtr = &_converted;
         } else if (bmp.colorSpace != ColorSpace::sRGB) {
             auto p = createProfileFromColorSpace(bmp.colorSpace);
-            _converted = bmp.normalize(Depth::U8, ColorSpace::sRGB, p);
+            _converted = bmp.convert(Depth::U8, ColorSpace::sRGB, p);
             cmsCloseProfile(p);
             bitmapPtr = &_converted;
         } else {

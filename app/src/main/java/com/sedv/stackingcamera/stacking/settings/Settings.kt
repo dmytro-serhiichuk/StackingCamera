@@ -9,8 +9,7 @@ enum class ColorSpace(val value: Int, val nameValue: String) {
     sRGB(0, "sRGB"),
     Linear_sRGB(1, "Linear sRGB"),
     AdobeRGB(2, "Adobe RGB"),
-    WideGamut(3, "WideGamut"),
-    ProPhoto(4, "ProPhoto");
+    ProPhoto(3, "ProPhoto");
 
     companion object {
         fun fromInt(value: Int) = ColorSpace.entries.first { it.value == value }
@@ -56,7 +55,6 @@ object Settings {
                 ColorSpace.sRGB.value,
                 ColorSpace.Linear_sRGB.value,
                 ColorSpace.AdobeRGB.value,
-                ColorSpace.WideGamut.value,
                 ColorSpace.ProPhoto.value
             )
         )

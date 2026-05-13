@@ -5,7 +5,6 @@
 #include "profiles-manager.h"
 #include "profiles/adobe_rgb_profile_data.h"
 #include "profiles/pro_photo_profile_data.h"
-#include "profiles/wide_gamut_profile_data.h"
 
 namespace ImageIO {
     cmsHPROFILE cloneProfile(cmsHPROFILE srcProfile) {
@@ -69,10 +68,8 @@ namespace ImageIO {
             return h;
         } else if (colorSpace == ColorSpace::AdobeRGB) {
             return cmsOpenProfileFromMem(AdobeRGB1998_icc, AdobeRGB1998_icc_len);
-        } else if (colorSpace == ColorSpace::ProPhoto) {
+        } else { // ProPhoto
             return cmsOpenProfileFromMem(ISO22028_2_ROMM_RGB_icc, ISO22028_2_ROMM_RGB_icc_len);
-        } else { // Wide Gamut
-            return cmsOpenProfileFromMem(WideGamut_icc, WideGamut_icc_len);
         }
     }
 

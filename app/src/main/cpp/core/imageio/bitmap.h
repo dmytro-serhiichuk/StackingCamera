@@ -51,9 +51,9 @@ namespace ImageIO {
         [[nodiscard]] Bitmap copy() const;
 
         // Converts an image to RGB with the specified color depth (note: input data must be RGB/RGBA)
-        [[nodiscard]] Bitmap convertDepth(Depth outDepth) const;
+        [[nodiscard]] Bitmap convertToRgbWithDepth(Depth outDepth) const;
         // Converts an image to RGB with the specified color depth and color space
-        Bitmap normalize(Depth outDepth, ColorSpace outColorSpace, cmsHPROFILE inProfile) const;
+        Bitmap convert(Depth outDepth, ColorSpace outColorSpace, cmsHPROFILE inProfile) const;
     };
 }
 

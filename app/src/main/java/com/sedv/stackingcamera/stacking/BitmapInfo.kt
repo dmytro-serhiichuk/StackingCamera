@@ -28,6 +28,14 @@ class BitmapValidationInfo(
         anisotropy, inliersPercentage, inliersNumber, evenDistribution
     )
 ) {
+    fun hasWarningStatus(): Boolean {
+        return props.any { it == BitmapValidationStatus.WARNING }
+    }
+
+    fun hasBadStatus(): Boolean {
+        return props.any { it == BitmapValidationStatus.BAD } || !isConvex || mirrored
+    }
+
     fun getMessage(): String {
         if (!isConvex || mirrored) {
             return "Image can not be aligned with the reference image"

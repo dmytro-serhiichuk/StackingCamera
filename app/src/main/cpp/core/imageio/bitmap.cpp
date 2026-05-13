@@ -81,7 +81,7 @@ namespace ImageIO {
         return Bitmap {width, height, cb, depth, colorModel, colorSpace };
     }
 
-    Bitmap Bitmap::convertDepth(Depth outDepth) const {
+    Bitmap Bitmap::convertToRgbWithDepth(Depth outDepth) const {
         if (depth == outDepth && colorModel == ColorModel::RGB) return copy();
 
         size_t outTotalSamples = width * height * getSamplesPerPixel(ColorModel::RGB);
@@ -118,7 +118,7 @@ namespace ImageIO {
         return Bitmap {width, height, outBuffer, outDepth, ColorModel::RGB, colorSpace};
     }
 
-    Bitmap Bitmap::normalize(Depth outDepth, ColorSpace outColorSpace, cmsHPROFILE inProfile) const {
+    Bitmap Bitmap::convert(Depth outDepth, ColorSpace outColorSpace, cmsHPROFILE inProfile) const {
         const ColorModel outColorModel = ColorModel::RGB;
 
         if (depth == outDepth && colorSpace == outColorSpace && colorModel == outColorModel) return copy();

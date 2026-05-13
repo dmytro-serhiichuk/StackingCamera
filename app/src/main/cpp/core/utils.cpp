@@ -111,7 +111,7 @@ void Utils::drawKeyPoints(Bitmap &bmp, Buffer<KeyPoint> &kps) {
     const char *fileName = "keyPoints.jpg";
     int fd = Core::getFileStorage()->createImageFile(fileName);
 
-    auto bitmap8 = bmp.convertDepth(Depth::U8);
+    auto bitmap8 = bmp.convertToRgbWithDepth(Depth::U8);
 
     for (KeyPoint &kp : kps) {
         drawCircle(bitmap8, (int)kp.x, (int)kp.y, 0, 255, 0);
@@ -124,12 +124,12 @@ void Utils::drawKeyPoints(Bitmap &bmp, Buffer<KeyPoint> &kps) {
 void Utils::drawAllMatches(Buffer<Buffer<Matching::Match>> &matches, uint32_t bestIndex) {
     size_t index = 0;
     Bitmap bmp2_8 = Core::sources->buffer[bestIndex]->bitmapPtr->read();
-    bmp2_8 = bmp2_8.convertDepth(Depth::U8);
+    bmp2_8 = bmp2_8.convertToRgbWithDepth(Depth::U8);
     for (size_t i = 0; i < Core::sources->size; i++) {
         if (i == bestIndex) continue;
 
         Bitmap bmp1_8 = Core::sources->buffer[i]->bitmapPtr->read();
-        bmp1_8 = bmp1_8.convertDepth(Depth::U8);
+        bmp1_8 = bmp1_8.convertToRgbWithDepth(Depth::U8);
         drawMatches(
                 bmp1_8,
                 bmp2_8,

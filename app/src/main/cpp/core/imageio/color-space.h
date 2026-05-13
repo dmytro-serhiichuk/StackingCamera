@@ -10,9 +10,8 @@ namespace ImageIO {
         sRGB = 0,
         Linear_sRGB = 1,
         AdobeRGB = 2,
-        WideGamut = 3,
-        ProPhoto = 4,
-        Other = 5
+        ProPhoto = 3,
+        Other = 4
     };
 }
 

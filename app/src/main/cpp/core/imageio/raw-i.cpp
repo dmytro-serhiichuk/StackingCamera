@@ -119,7 +119,7 @@ namespace ImageIO {
         processor.recycle();
 
         Bitmap bmp { outputWidth, outputHeight, buffer, Depth::U16, ColorModel::XYZ, ColorSpace::Other };
-        bmp = bmp.normalize(depth, colorSpace, profile);
+        bmp = bmp.convert(depth, colorSpace, profile);
         cmsCloseProfile(profile);
 
         return new BitmapPtr(bmp);

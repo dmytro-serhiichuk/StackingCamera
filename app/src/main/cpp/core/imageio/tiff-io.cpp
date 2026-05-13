@@ -258,13 +258,13 @@ namespace ImageIO {
         bool isIccValid = icc.isValid();
         bmp.colorSpace = isIccValid ? ColorSpace::Other : ColorSpace::sRGB;
 
-        if (bmp.colorSpace == colorSpace && bmp.depth != depth) {
-            bmp = bmp.convertDepth(depth);
+        if (bmp.colorSpace == colorSpace && (bmp.depth != depth || bmp.colorModel != ColorModel::RGB)) {
+            bmp = bmp.convertToRgbWithDepth(depth);
         } else if (bmp.colorSpace != colorSpace) {
             cmsHPROFILE profile = isIccValid
                                   ? cmsOpenProfileFromMem(icc.buffer, icc.size)
                                   : cmsCreate_sRGBProfile();
-            bmp = bmp.normalize(depth, colorSpace, profile);
+            bmp = bmp.convert(depth, colorSpace, profile);
             cmsCloseProfile(profile);
         }
 
@@ -277,7 +277,7 @@ namespace ImageIO {
         Bitmap* bitmapPtr = nullptr;
         if (bmp.colorSpace != ColorSpace::sRGB) {
             auto p = createProfileFromColorSpace(bmp.colorSpace);
-            _converted = bmp.normalize(bmp.depth, ColorSpace::sRGB, p);
+            _converted = bmp.convert(bmp.depth, ColorSpace::sRGB, p);
             cmsCloseProfile(p);
             bitmapPtr = &_converted;
         } else {

@@ -42,8 +42,8 @@ class BitmapListItem(
             binding.bitmapWarningMessage.isVisible = false
         } else {
             val vInfo = bitmapInfo.bitmapValidationInfo!!
-            val hasWarningStatus = vInfo.props.any { it == BitmapValidationStatus.WARNING }
-            val hasBadStatus = vInfo.props.any { it == BitmapValidationStatus.BAD } || !vInfo.isConvex || vInfo.mirrored
+            val hasWarningStatus = vInfo.hasWarningStatus()
+            val hasBadStatus = vInfo.hasBadStatus()
 
             if (hasBadStatus || hasWarningStatus) {
                 binding.bitmapWarningMessage.isVisible = true
