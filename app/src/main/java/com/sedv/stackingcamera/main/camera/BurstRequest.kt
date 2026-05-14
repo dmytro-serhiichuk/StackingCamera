@@ -11,6 +11,7 @@ import com.sedv.stackingcamera.main.camera.settings.CameraOutputFormat
 class BurstRequest(
     val totalImagesLeft: Int,
     val imagesLeftInCurrentIterations: Int,
+    val processedImages: Int,
     val outputFormat: CameraOutputFormat,
     val onImageReadyCallback: (Image, TotalCaptureResult, CameraOutputFormat, PhotoType) -> Unit,
     val onSequenceFinished: () -> Unit,
@@ -22,7 +23,7 @@ class BurstRequest(
 
     private val lock = Any()
 
-    private var processedCount = 0
+    private var processedImageInCurrentIteration = 0
 
     private val backgroundThread: HandlerThread
     private val backgroundHandler: Handler
@@ -34,7 +35,7 @@ class BurstRequest(
 
     fun addImageToSequence(image: Image) {
         synchronized(lock) {
-            if (processedCount >= imagesLeftInCurrentIterations) {
+            if (processedImageInCurrentIteration >= imagesLeftInCurrentIterations) {
                 image.close()
                 return
             }
@@ -49,7 +50,7 @@ class BurstRequest(
 
     fun addCaptureResultToSequence(captureResult: TotalCaptureResult) {
         synchronized(lock) {
-            if (processedCount >= imagesLeftInCurrentIterations) return
+            if (processedImageInCurrentIteration >= imagesLeftInCurrentIterations) return
 
             val timestamp = captureResult[CaptureResult.SENSOR_TIMESTAMP] ?: return
 
@@ -64,7 +65,7 @@ class BurstRequest(
     private fun processPhoto(timestamp: Long, image: Image, result: TotalCaptureResult) {
         backgroundHandler.post {
             try {
-                val photoType = when (processedCount) {
+                val photoType = when (processedImages + processedImageInCurrentIteration) {
                     totalImagesLeft - 1 -> PhotoType.BURST_LAST
                     0 -> PhotoType.BURST_FIRST
                     else -> PhotoType.BURST_REGULAR
@@ -80,9 +81,9 @@ class BurstRequest(
                 images.remove(timestamp)
                 captureResults.remove(timestamp)
 
-                processedCount++
+                processedImageInCurrentIteration++
 
-                if (processedCount == imagesLeftInCurrentIterations && images.isEmpty() && captureResults.isEmpty()) {
+                if (processedImageInCurrentIteration == imagesLeftInCurrentIterations && images.isEmpty() && captureResults.isEmpty()) {
                     onSequenceFinished()
                     backgroundThread.quitSafely()
                 }

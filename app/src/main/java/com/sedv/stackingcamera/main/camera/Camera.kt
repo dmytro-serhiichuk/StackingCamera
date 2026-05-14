@@ -517,7 +517,7 @@ class Camera(
         _currentState = CameraState.BUSY
 
         try {
-            captureBurstIteration(burstProperty.value, device, reader, format, session)
+            captureBurstIteration(burstProperty.value, 0, device, reader, format, session)
         } catch (e: CameraAccessException) {
             val message = "Failed to capture session: ${e.message}"
             Log.e(LOG_TAG, message)
@@ -531,13 +531,14 @@ class Camera(
 
     private fun captureBurstIteration(
         frames: Int,
+        processedFrames: Int,
         device: CameraDevice,
         reader: FormatImageReader,
         format: CameraOutputFormat,
         session: CameraCaptureSession
     ) {
-        val nextIterationFrames = max(frames - CameraSettings.Companion.MAX_BURST_IMAGES, 0)
-        val currentFrames = frames - nextIterationFrames
+        val nextProcessed = min(processedFrames + CameraSettings.MAX_BURST_IMAGES, frames)
+        val currentFrames = nextProcessed - processedFrames
 
         photoRequestBuilder = device
             .createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE)
@@ -547,11 +548,16 @@ class Camera(
         val burstRequest = BurstRequest(
             frames,
             currentFrames,
+            processedFrames,
             format,
             ::onImageReadyCallback,
             {
-                if (nextIterationFrames > 0) {
-                    captureBurstIteration(nextIterationFrames, device, reader, format, session)
+                if (nextProcessed < frames) {
+                    captureBurstIteration(
+                        frames,
+                        nextProcessed,
+                        device, reader, format, session
+                    )
                 } else {
                     deblockCamera()
                 }
