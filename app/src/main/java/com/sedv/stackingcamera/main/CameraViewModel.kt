@@ -15,7 +15,7 @@ import com.sedv.stackingcamera.main.generalsettings.property.BaseProperty
 import com.sedv.stackingcamera.main.generalsettings.FrameSize
 import com.sedv.stackingcamera.main.generalsettings.GeneralPropertyType
 import com.sedv.stackingcamera.main.generalsettings.GeneralSettings
-import com.sedv.stackingcamera.main.preview.GhostImageInfo
+import com.sedv.stackingcamera.main.preview.GhostBitmap
 
 class CameraViewModel(application: Application) : AndroidViewModel(application) {
     private lateinit var _permissionHelper: PermissionHelper
@@ -31,7 +31,7 @@ class CameraViewModel(application: Application) : AndroidViewModel(application) 
     val deviceOrientation get() = _deviceOrientation
 
     val lastBurstPhotosUris = arrayListOf<Uri>()
-    var ghostImageInfo: GhostImageInfo? = null
+    var ghostBitmap: GhostBitmap? = null
 
     val onCameraSwitched = Event<() -> Unit>()
     val onProgramReady = Event<() -> Unit>()

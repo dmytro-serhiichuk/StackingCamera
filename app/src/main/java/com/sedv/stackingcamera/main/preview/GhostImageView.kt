@@ -4,58 +4,44 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
-import android.net.Uri
 import android.util.AttributeSet
 import android.util.Log
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.core.view.isVisible
-import androidx.lifecycle.findViewTreeLifecycleOwner
-import androidx.lifecycle.lifecycleScope
+import androidx.exifinterface.media.ExifInterface
+import com.sedv.stackingcamera.main.camera.CapturedPhotoInfo
 import com.sedv.stackingcamera.main.camera.settings.CameraOutputFormat
 import com.sedv.stackingcamera.main.generalsettings.FrameSize
 import com.sedv.stackingcamera.main.generalsettings.GeneralSettings
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import java.io.ByteArrayInputStream
+import java.io.InputStream
 
 class GhostImageView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet,
     defStyleAttr: Int = 0
 ) : AppCompatImageView(context, attrs, defStyleAttr) {
-
-    private var loadJob: Job? = null
     private var desiredWidth: Int = 0
     private var desiredHeight: Int = 0
 
-    private var hasLoadedBitmap = false
+    private var ghostBitmap: GhostBitmap? = null
 
-    internal var ioDispatcher: CoroutineDispatcher = Dispatchers.IO
-    internal var mainDispatcher: CoroutineDispatcher = Dispatchers.Main
-
-    fun setImage(info: GhostImageInfo) {
-        if (GeneralSettings.frameSize.value == FrameSize.FRAME_SIZE_16_9.value && info.format == CameraOutputFormat.RAW) return
-        val scope = findViewTreeLifecycleOwner()?.lifecycleScope ?: return
-        loadJob?.cancel()
-        loadJob = scope.launch(ioDispatcher) {
-            val bitmap = loadScaledBitmap(info) ?: return@launch
-            withContext(mainDispatcher) {
-                setImageBitmap(bitmap)
-                hasLoadedBitmap = true
-                if (GeneralSettings.ghostImage.value) isVisible = true
-            }
-        }
+    fun extractBitmap(info: CapturedPhotoInfo): GhostBitmap? {
+        if (GeneralSettings.frameSize.value == FrameSize.FRAME_SIZE_16_9.value &&
+            info.format == CameraOutputFormat.RAW) return null
+        val bitmap = loadScaledBitmap(info) ?: return null
+        return GhostBitmap(bitmap, GeneralSettings.frameSize.value)
     }
 
-    fun clear() {
-        loadJob?.cancel()
-        isVisible = false
+    fun setBitmap(ghostBitmap: GhostBitmap?) {
+        if (ghostBitmap == null || ghostBitmap.frameOption != GeneralSettings.frameSize.value) return
+        this.ghostBitmap = ghostBitmap
+        setImageBitmap(ghostBitmap.bitmap)
+        if (GeneralSettings.ghostImage.value) isVisible = true
     }
 
     fun setSize(width: Int, height: Int) {
-        clear()
+        isVisible = false
         desiredWidth = width
         desiredHeight = height
         requestLayout()
@@ -63,8 +49,10 @@ class GhostImageView @JvmOverloads constructor(
     }
 
     fun handleGeneralSettingsChanged() {
-        if (hasLoadedBitmap) {
-            isVisible = !isVisible
+        ghostBitmap?.let {
+            if (it.frameOption == GeneralSettings.frameSize.value) {
+                isVisible = GeneralSettings.ghostImage.value
+            }
         }
     }
 
@@ -78,23 +66,24 @@ class GhostImageView @JvmOverloads constructor(
         }
     }
 
-    private fun loadScaledBitmap(info: GhostImageInfo): Bitmap? {
+    private fun loadScaledBitmap(info: CapturedPhotoInfo): Bitmap? {
         return try {
-            val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-            val contentResolver = context.contentResolver
-            contentResolver.openInputStream(info.uri)?.use {
-                BitmapFactory.decodeStream(it, null, options)
-            }
+            val stream = ByteArrayInputStream(info.buffer)
 
             val willRotate = info.orientation == 90 || info.orientation == 270
             val reqWidth = if (willRotate) desiredHeight else desiredWidth
             val reqHeight = if (willRotate) desiredWidth else desiredHeight
+
+            val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+            stream.mark(info.buffer.size)
+            BitmapFactory.decodeStream(stream, null, options)
+
             options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight)
             options.inJustDecodeBounds = false
 
-            val bitmap = contentResolver.openInputStream(info.uri)?.use {
-                BitmapFactory.decodeStream(it, null, options)
-            } ?: return null
+            stream.reset()
+            val bitmap = BitmapFactory.decodeStream(stream, null, options)
+                ?: return null
 
             rotateBitmapToPortrait(bitmap, info)
         } catch (e: Exception) {
@@ -112,7 +101,7 @@ class GhostImageView @JvmOverloads constructor(
         return inSampleSize
     }
 
-    private fun rotateBitmapToPortrait(bitmap: Bitmap, info: GhostImageInfo): Bitmap {
+    private fun rotateBitmapToPortrait(bitmap: Bitmap, info: CapturedPhotoInfo): Bitmap {
         return if (info.format == CameraOutputFormat.JPEG) {
             rotateJpegToPortrait(bitmap, info.orientation)
         } else {
@@ -150,8 +139,7 @@ class GhostImageView @JvmOverloads constructor(
     }
 }
 
-class GhostImageInfo(
-    val uri: Uri,
-    val orientation: Int,
-    val format: CameraOutputFormat
+class GhostBitmap(
+    val bitmap: Bitmap,
+    val frameOption: Int
 )

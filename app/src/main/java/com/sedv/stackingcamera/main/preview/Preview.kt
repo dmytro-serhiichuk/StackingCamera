@@ -157,6 +157,7 @@ class Preview(
             previewSurface.setZebraPatternEnabled(prop.value as Boolean)
         } else if (prop.type == GeneralPropertyType.FRAME_SIZE) {
             meteringAreaIndicator.hide()
+            ghostImageView.handleGeneralSettingsChanged()
         } else if (prop.type == GeneralPropertyType.GHOST_IMAGE) {
             ghostImageView.handleGeneralSettingsChanged()
         }

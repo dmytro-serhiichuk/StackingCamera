@@ -51,7 +51,7 @@ class Camera(
     private val updateIntervalMs = 100L
 
     var onPhotoReceived = Event<(() -> Unit)>()
-    var onPhotoCreated: ((ByteArray, CameraOutputFormat, PhotoType, Int) -> Unit)? = null
+    var onPhotoCreated: ((CapturedPhotoInfo) -> Unit)? = null
     var onPhotoCreatingFailed: ((CameraError) -> Unit)? = null
 
     var onSettingsAutoChanged = Event<(() -> Unit)>()
@@ -614,7 +614,7 @@ class Camera(
             val bytes = ByteArray(buffer.capacity())
             buffer[bytes]
 
-            onPhotoCreated?.invoke(bytes, format, photoType, orientation)
+            onPhotoCreated?.invoke(CapturedPhotoInfo(bytes, format, photoType, orientation))
         }
         else if (format == CameraOutputFormat.RAW) {
             val baos = ByteArrayOutputStream()
@@ -625,7 +625,7 @@ class Camera(
                 .use { dng ->
                     dng.writeImage(baos, image)
                 }
-            onPhotoCreated?.invoke(baos.toByteArray(), format, photoType, orientation)
+            onPhotoCreated?.invoke(CapturedPhotoInfo(baos.toByteArray(), format, photoType, orientation))
         }
     }
 

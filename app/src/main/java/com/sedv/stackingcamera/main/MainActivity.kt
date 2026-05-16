@@ -24,19 +24,20 @@ import androidx.lifecycle.lifecycleScope
 import com.sedv.stackingcamera.R
 import com.sedv.stackingcamera.main.camera.CameraError
 import com.sedv.stackingcamera.main.camera.PhotoType
-import com.sedv.stackingcamera.main.camera.settings.CameraOutputFormat
 import com.sedv.stackingcamera.databinding.ActivityMainBinding
+import com.sedv.stackingcamera.main.camera.CapturedPhotoInfo
 import com.sedv.stackingcamera.main.generalsettings.property.BaseProperty
 import com.sedv.stackingcamera.main.generalsettings.FrameSize
 import com.sedv.stackingcamera.main.generalsettings.GeneralPropertyType
 import com.sedv.stackingcamera.main.generalsettings.GeneralSettings
 import com.sedv.stackingcamera.stacking.StackingActivity
 import com.sedv.stackingcamera.main.generalsettings.GeneralSettingsController
-import com.sedv.stackingcamera.main.preview.GhostImageInfo
 import com.sedv.stackingcamera.main.preview.Preview
 import com.sedv.stackingcamera.main.settings.SettingsController
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 import kotlin.system.exitProcess
 
@@ -131,9 +132,7 @@ class MainActivity : AppCompatActivity() {
                 binding.screenIndicator,
                 binding.ghostImageView
             )
-            viewModel.ghostImageInfo?.let { info ->
-                binding.ghostImageView.setImage(info)
-            }
+            binding.ghostImageView.setBitmap(viewModel.ghostBitmap)
 
 //            TODO: add another button for photo passing
             binding.navToStackingButton.setOnClickListener {
@@ -312,19 +311,26 @@ class MainActivity : AppCompatActivity() {
         Log.d("MainActivity", "Activity destroyed, resources cleaned up")
     }
 
-    private fun handlePhotoCreated(bytes: ByteArray, format: CameraOutputFormat, photoType: PhotoType, orientation: Int) {
+    private fun handlePhotoCreated(info: CapturedPhotoInfo) {
         val timestamp = System.currentTimeMillis()
-        val filename = "IMG_${timestamp}${format.ext}"
+        val filename = "IMG_${timestamp}${info.format.ext}"
 
-        if (photoType == PhotoType.BURST_FIRST) {
+        if (info.photoType == PhotoType.BURST_FIRST) {
             viewModel.lastBurstPhotosUris.clear()
         }
 
+        lifecycleScope.launch(Dispatchers.Default) {
+            viewModel.ghostBitmap = binding.ghostImageView.extractBitmap(info)
+            withContext(Dispatchers.Main) {
+                binding.ghostImageView.setBitmap(viewModel.ghostBitmap)
+            }
+        }
+
         try {
-            val ghostImageUri: Uri? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val lastImageUri: Uri? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 val contentValues = ContentValues().apply {
                     put(MediaStore.MediaColumns.DISPLAY_NAME, filename)
-                    put(MediaStore.MediaColumns.MIME_TYPE, format.mimeType)
+                    put(MediaStore.MediaColumns.MIME_TYPE, info.format.mimeType)
                     put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DCIM + "/Camera")
                 }
 
@@ -333,7 +339,7 @@ class MainActivity : AppCompatActivity() {
 
                 imageUri?.also { uri ->
                     resolver.openOutputStream(uri)?.use { outputStream ->
-                        outputStream.write(bytes)
+                        outputStream.write(info.buffer)
                         outputStream.flush()
                     }
                     Log.d("Camera", "Image saved to MediaStore: $filename")
@@ -346,26 +352,21 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 val file = File(cameraDir, filename)
-                file.writeBytes(bytes)
+                file.writeBytes(info.buffer)
 
                 MediaScannerConnection.scanFile(
                     this,
                     arrayOf(file.absolutePath),
-                    arrayOf(format.mimeType),
+                    arrayOf(info.format.mimeType),
                     null
                 )
                 Log.d("Camera", "Image saved to: ${file.absolutePath}")
                 Uri.fromFile(file)
             }
 
-            ghostImageUri?.let { uri ->
-                if (photoType != PhotoType.REGULAR) {
+            lastImageUri?.let { uri ->
+                if (info.photoType != PhotoType.REGULAR) {
                     viewModel.lastBurstPhotosUris.add(uri)
-                }
-                if (photoType == PhotoType.REGULAR || photoType == PhotoType.BURST_LAST) {
-                    viewModel.ghostImageInfo =
-                        GhostImageInfo(uri, orientation, format)
-                    binding.ghostImageView.setImage(viewModel.ghostImageInfo!!)
                 }
             }
         } catch (e: Exception) {
