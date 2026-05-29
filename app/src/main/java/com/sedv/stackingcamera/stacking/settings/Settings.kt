@@ -78,6 +78,7 @@ object Settings {
             BRISK_PATTERNS_SCALE,
             USE_16_BIT,
             COLOR_SPACE,
+            STACKING_METHOD,
             SAVE_KEYPOINTS,
             SAVE_MATCHES
         )
