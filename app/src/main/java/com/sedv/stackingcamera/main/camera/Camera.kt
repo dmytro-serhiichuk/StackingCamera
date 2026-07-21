@@ -256,11 +256,11 @@ class Camera(
             }
             set(CaptureRequest.CONTROL_AE_MODE, aeState)
 
+            setFocusSettings(this)
+
             cameraSettings.ev?.let { ev ->
                 set(CaptureRequest.CONTROL_AE_EXPOSURE_COMPENSATION, ev.value)
             }
-
-            setFocusSettings(this)
 
             set(CaptureRequest.CONTROL_AWB_MODE,
                 cameraSettings.whiteBalance?.value ?: CaptureRequest.CONTROL_AWB_MODE_AUTO)
@@ -317,6 +317,8 @@ class Camera(
     private fun setMeteringAreaSettings(requestBuilder: CaptureRequest.Builder) {
         val meteringArea = cameraSettings.meteringArea ?: return
         if (meteringArea.isTriggered) {
+            cameraSettings.ev?.setValueWithoutNotifying(0)
+
             requestBuilder[CaptureRequest.CONTROL_AF_MODE] = CaptureRequest.CONTROL_AF_MODE_AUTO
             requestBuilder[CaptureRequest.CONTROL_AF_REGIONS] = meteringArea.regions
             if (meteringArea.supportAE) requestBuilder[CaptureRequest.CONTROL_AE_REGIONS] = meteringArea.regions

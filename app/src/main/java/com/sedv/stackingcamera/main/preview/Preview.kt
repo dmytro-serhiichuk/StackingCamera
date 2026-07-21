@@ -6,18 +6,15 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import android.util.Size
-import android.view.GestureDetector
-import android.view.MotionEvent
 import android.view.ScaleGestureDetector
 import android.widget.FrameLayout
 import android.widget.TextView
-import androidx.core.view.GestureDetectorCompat
 import androidx.core.view.isVisible
 import com.sedv.stackingcamera.main.CameraViewModel
 import com.sedv.stackingcamera.main.camera.settings.MeteringArea
-import com.sedv.stackingcamera.main.generalsettings.property.BaseProperty
 import com.sedv.stackingcamera.main.generalsettings.GeneralPropertyType
 import com.sedv.stackingcamera.main.generalsettings.GeneralSettings
+import com.sedv.stackingcamera.main.generalsettings.property.BaseProperty
 import kotlinx.coroutines.Runnable
 import kotlin.math.min
 
@@ -34,12 +31,11 @@ class Preview(
     private val ghostImageView: GhostImageView
 ) {
     private val previewSurface: GLPreviewSurfaceView
-    private var scaleGestureDetector: ScaleGestureDetector? = null
-    @Suppress("DEPRECATION")
-    private var gestureDetector: GestureDetectorCompat? = null
 
     private val uiHandler = Handler(Looper.getMainLooper())
-    private var zoomRunnable: Runnable? = null
+
+    private var zoomGestureController: ZoomGestureController? = null
+    private var exposureFocusController: ExposureFocusController? = null
 
     init {
         viewModel.onCameraSwitched += ::handleCameraSwitched
@@ -55,8 +51,8 @@ class Preview(
         previewSurfaceContainer.addView(previewSurface, 0)
 
         previewSurface.setOnTouchListener { _, event ->
-            val handledTap = gestureDetector?.onTouchEvent(event) ?: false
-            val handledScale = scaleGestureDetector?.onTouchEvent(event) ?: false
+            val handledTap = exposureFocusController?.onTouchEvent(event) ?: false
+            val handledScale = zoomGestureController?.onTouchEvent(event) ?: false
 
             handledScale || handledTap
         }
@@ -78,74 +74,69 @@ class Preview(
         timerLayout.height = size.height
         screenIndicator.layoutParams = timerLayout
 
-        scaleGestureDetector = null
-        gestureDetector = null
-
         zoomIndicator.isVisible = false
-
-        viewModel.activeCamera.cameraSettings.zoomProperty?.let { zoomProperty ->
-            scaleGestureDetector = ScaleGestureDetector(context, object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
-                override fun onScale(detector: ScaleGestureDetector): Boolean {
-                    val scaleFactor = detector.scaleFactor
-
-                    zoomProperty.value *= scaleFactor
-                    zoomIndicator.text = "${zoomProperty.value}X"
-
-                    zoomIndicator.isVisible = true
-
-                    return true
-                }
-
-                override fun onScaleBegin(detector: ScaleGestureDetector): Boolean {
-                    zoomRunnable?.let {
-                        uiHandler.removeCallbacks(it)
-                        zoomRunnable = null
-                    }
-                    return super.onScaleBegin(detector)
-                }
-
-                override fun onScaleEnd(detector: ScaleGestureDetector) {
-                    zoomRunnable = Runnable { zoomIndicator.isVisible = false }
-                    zoomRunnable?.let {
-                        uiHandler.postDelayed(it, 2000)
-                    }
-                }
-            })
-        }
+        setupZoomGestureController()
 
         viewModel.activeCamera.cameraSettings.meteringArea?.let { meteringArea ->
             meteringArea.onFocusStateUpdated = meteringAreaIndicator::handleFocusStateUpdated
-
-            gestureDetector = GestureDetectorCompat(context, object : GestureDetector.SimpleOnGestureListener() {
-                override fun onSingleTapUp(event: MotionEvent): Boolean {
-                    if (event.action == MotionEvent.ACTION_UP) {
-                        meteringAreaIndicator.hide()
-
-                        val location = IntArray(2)
-                        meteringAreaIndicator.getLocationOnScreen(location)
-                        val relativeX = event.rawX - location[0]
-                        val relativeY = event.rawY - location[1]
-
-                        val size = Size(
-                            previewSurface.width,
-                            previewSurface.height
-                        )
-                        meteringArea.setArea(
-                            relativeX,
-                            relativeY,
-                            size
-                        )
-
-                        val smallerSize = min(size.width, size.height)
-                        meteringAreaIndicator.showFocusAt(relativeX, relativeY, smallerSize * MeteringArea.WIDTH_FRACTION)
-                    }
-
-                    return true
-                }
-            })
         }
+        setupExposureFocusController()
 
         viewModel.activeCamera.captureAnalyser.histogram.onUpdated = ::onHistogramUpdated
+    }
+
+    private fun setupZoomGestureController() {
+        zoomGestureController?.release()
+        zoomGestureController = ZoomGestureController(
+            context,
+            onZoomStateChanged = { state ->
+                zoomIndicator.isVisible = state
+            },
+            onZoomChanged = { scaleFactor ->
+                Log.d("QQQQQQ", scaleFactor.toString())
+                viewModel.activeCamera.cameraSettings.zoomProperty?.let { zoomProperty ->
+                    zoomProperty.value *= scaleFactor
+                    zoomIndicator.text = "${zoomProperty.value}X"
+                }
+            }
+        )
+    }
+    private fun setupExposureFocusController() {
+        exposureFocusController?.release()
+        exposureFocusController = ExposureFocusController(
+            context,
+            onFocus = { x, y ->
+                viewModel.activeCamera.cameraSettings.meteringArea?.let { meteringArea ->
+                    meteringAreaIndicator.hide()
+
+                    val location = IntArray(2)
+                    meteringAreaIndicator.getLocationOnScreen(location)
+                    val relativeX = x - location[0]
+                    val relativeY = y - location[1]
+
+                    val size = Size(
+                        previewSurface.width,
+                        previewSurface.height
+                    )
+                    meteringArea.setArea(
+                        relativeX,
+                        relativeY,
+                        size
+                    )
+
+                    val smallerSize = min(size.width, size.height)
+                    meteringAreaIndicator.showFocusAt(relativeX, relativeY, smallerSize * MeteringArea.WIDTH_FRACTION)
+                }
+            },
+            onExposureChanged = { evIndex ->
+                viewModel.activeCamera.cameraSettings.ev?.setValueWithNotifying(evIndex)
+            },
+            onFocusLockChanged = { isLocked ->
+                if (!isLocked) meteringAreaIndicator.hide()
+            },
+            minEv = viewModel.activeCamera.cameraInfo.evRange.lower,
+            maxEv = viewModel.activeCamera.cameraInfo.evRange.upper
+        )
     }
 
     private fun handleGeneralPropertyChanged(prop: BaseProperty<*>) {
@@ -170,5 +161,12 @@ class Preview(
             histogramView.onHistogramUpdated(red, green, blue, maximum)
             histogramView.invalidate()
         }
+    }
+
+    fun release() {
+        exposureFocusController?.release()
+        exposureFocusController = null
+        zoomGestureController?.release()
+        zoomGestureController = null
     }
 }

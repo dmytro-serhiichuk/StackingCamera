@@ -38,10 +38,6 @@ class PreviewMeteringAreaIndicator(
 
     private var currentPaint = paint
 
-    private val durationMs = 5000L
-    private val handler = Handler(Looper.getMainLooper())
-    private var hideRunnable: Runnable? = null
-
     private var desiredWidth: Int = 0
     private var desiredHeight: Int = 0
 
@@ -56,22 +52,11 @@ class PreviewMeteringAreaIndicator(
         )
         invalidate()
 
-        hideRunnable = Runnable { hide() }
-
-        hideRunnable?.let {
-            handler.postDelayed(it, durationMs)
-        }
-
     }
 
     fun hide() {
         focusRect = null
         invalidate()
-
-        hideRunnable?.let {
-            handler.removeCallbacks(it)
-            hideRunnable = null
-        }
     }
 
     override fun onDraw(canvas: Canvas) {

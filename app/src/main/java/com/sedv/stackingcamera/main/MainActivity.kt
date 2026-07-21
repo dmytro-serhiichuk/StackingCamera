@@ -306,6 +306,7 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
 
+        preview.release()
         viewModel.destroy()
 
         Log.d("MainActivity", "Activity destroyed, resources cleaned up")
