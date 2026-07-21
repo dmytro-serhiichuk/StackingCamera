@@ -48,6 +48,7 @@
 <!--    Preview-->
     <dimen name="zoom_indicator_margin_top">50dp</dimen>
     <dimen name="zoom_indicator_size">45dp</dimen>
+    <dimen name="zoom_px_per_unit">26dp</dimen>
     <dimen name="metering_area_stroke_width">3dp</dimen>
     <dimen name="ev_px_per_step">30dp</dimen>
 

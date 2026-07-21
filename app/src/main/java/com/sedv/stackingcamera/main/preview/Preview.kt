@@ -6,7 +6,6 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import android.util.Size
-import android.view.ScaleGestureDetector
 import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.core.view.isVisible
@@ -15,7 +14,6 @@ import com.sedv.stackingcamera.main.camera.settings.MeteringArea
 import com.sedv.stackingcamera.main.generalsettings.GeneralPropertyType
 import com.sedv.stackingcamera.main.generalsettings.GeneralSettings
 import com.sedv.stackingcamera.main.generalsettings.property.BaseProperty
-import kotlinx.coroutines.Runnable
 import kotlin.math.min
 
 @SuppressLint("ClickableViewAccessibility")
@@ -89,13 +87,14 @@ class Preview(
         zoomGestureController?.release()
         zoomGestureController = ZoomGestureController(
             context,
+            minZoom = 1f,
+            maxZoom = viewModel.activeCamera.cameraInfo.maxZoom,
             onZoomStateChanged = { state ->
                 zoomIndicator.isVisible = state
             },
-            onZoomChanged = { scaleFactor ->
-                Log.d("QQQQQQ", scaleFactor.toString())
+            onZoomChanged = { zoom ->
                 viewModel.activeCamera.cameraSettings.zoomProperty?.let { zoomProperty ->
-                    zoomProperty.value *= scaleFactor
+                    zoomProperty.value = zoom
                     zoomIndicator.text = "${zoomProperty.value}X"
                 }
             }
