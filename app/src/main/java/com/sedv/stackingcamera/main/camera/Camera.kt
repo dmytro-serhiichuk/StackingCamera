@@ -375,6 +375,8 @@ class Camera(
         cameraSettings.meteringArea?.let {
             val state = result[CaptureResult.CONTROL_AF_STATE]
             if (state != null && (state == CaptureResult.CONTROL_AF_STATE_FOCUSED_LOCKED || state == CaptureResult.CONTROL_AF_STATE_NOT_FOCUSED_LOCKED)) {
+                if (state == CaptureResult.CONTROL_AF_STATE_FOCUSED_LOCKED) it.onFocusStateUpdated?.invoke(true)
+                else it.onFocusStateUpdated?.invoke(false)
                 onSettingsChangedManually()
             }
         }

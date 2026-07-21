@@ -8,6 +8,7 @@ import android.graphics.PorterDuff
 import android.graphics.PorterDuffXfermode
 import android.util.AttributeSet
 import android.view.View
+import androidx.core.view.isVisible
 
 class HistogramView @JvmOverloads constructor(
     context: Context,
@@ -19,6 +20,8 @@ class HistogramView @JvmOverloads constructor(
     private var blue  = IntArray(256)
 
     private var maximum: Int = 0
+    private var currentRotation: Int = 0
+    private var isRotated = true
 
     private val redPaint = Paint().apply {
         color = Color.RED
@@ -70,11 +73,23 @@ class HistogramView @JvmOverloads constructor(
         }
 
         canvas.restoreToCount(layerId)
+
+        if (!isRotated) performRotation()
     }
 
     fun rotate(deviceOrientation: Int) {
-        rotation = deviceOrientation.toFloat()
-        when (deviceOrientation) {
+        currentRotation = deviceOrientation
+        if (isVisible) {
+            performRotation()
+        } else {
+            isRotated = false
+        }
+
+    }
+
+    private fun performRotation() {
+        rotation = currentRotation.toFloat()
+        when (currentRotation) {
             90, 270 -> {
                 val offset = (width - height) / 2f
                 translationX = offset
@@ -85,5 +100,6 @@ class HistogramView @JvmOverloads constructor(
                 translationY = 0f
             }
         }
+        isRotated = true
     }
 }

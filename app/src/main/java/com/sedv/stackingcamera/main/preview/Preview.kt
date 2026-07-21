@@ -114,6 +114,8 @@ class Preview(
         }
 
         viewModel.activeCamera.cameraSettings.meteringArea?.let { meteringArea ->
+            meteringArea.onFocusStateUpdated = meteringAreaIndicator::handleFocusStateUpdated
+
             gestureDetector = GestureDetectorCompat(context, object : GestureDetector.SimpleOnGestureListener() {
                 override fun onSingleTapUp(event: MotionEvent): Boolean {
                     if (event.action == MotionEvent.ACTION_UP) {

@@ -23,6 +23,20 @@ class PreviewMeteringAreaIndicator(
         strokeWidth = context.resources.getDimension(R.dimen.metering_area_stroke_width)
         isAntiAlias = true
     }
+    private val focusedPaint = Paint().apply {
+        style = Paint.Style.STROKE
+        color = Color.GREEN
+        strokeWidth = context.resources.getDimension(R.dimen.metering_area_stroke_width)
+        isAntiAlias = true
+    }
+    private val notFocusedPaint = Paint().apply {
+        style = Paint.Style.STROKE
+        color = Color.RED
+        strokeWidth = context.resources.getDimension(R.dimen.metering_area_stroke_width)
+        isAntiAlias = true
+    }
+
+    private var currentPaint = paint
 
     private val durationMs = 5000L
     private val handler = Handler(Looper.getMainLooper())
@@ -32,6 +46,8 @@ class PreviewMeteringAreaIndicator(
     private var desiredHeight: Int = 0
 
     fun showFocusAt(x: Float, y: Float, size: Float) {
+        currentPaint = paint
+
         focusRect = RectF(
             x - size / 2,
             y - size / 2,
@@ -61,7 +77,7 @@ class PreviewMeteringAreaIndicator(
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         focusRect?.let {
-            canvas.drawRect(it, paint)
+            canvas.drawRect(it, currentPaint)
         }
     }
 
@@ -79,6 +95,11 @@ class PreviewMeteringAreaIndicator(
         desiredWidth = width
         desiredHeight = height
         requestLayout()
+        invalidate()
+    }
+
+    fun handleFocusStateUpdated(state: Boolean) {
+        currentPaint = if (state) focusedPaint else notFocusedPaint
         invalidate()
     }
 }

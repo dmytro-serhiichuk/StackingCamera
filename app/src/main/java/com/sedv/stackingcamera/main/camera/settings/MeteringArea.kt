@@ -10,6 +10,8 @@ class MeteringArea(
     val supportAE: Boolean,
     val supportAWB: Boolean
 ) {
+    var onFocusStateUpdated: ((Boolean) -> Unit)? = null
+
     val isTriggered get() = value != null
     private var value: MeteringRectangle? = null
 
