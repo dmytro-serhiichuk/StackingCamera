@@ -131,7 +131,10 @@ class Preview(
                 viewModel.activeCamera.cameraSettings.ev?.setValueWithNotifying(evIndex)
             },
             onFocusLockChanged = { isLocked ->
-                if (!isLocked) meteringAreaIndicator.hide()
+                if (!isLocked) {
+                    meteringAreaIndicator.hide()
+                    viewModel.activeCamera.cameraSettings.meteringArea?.resetState()
+                }
             },
             minEv = viewModel.activeCamera.cameraInfo.evRange.lower,
             maxEv = viewModel.activeCamera.cameraInfo.evRange.upper

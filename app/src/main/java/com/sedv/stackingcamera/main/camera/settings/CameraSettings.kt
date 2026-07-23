@@ -4,7 +4,8 @@ import com.sedv.stackingcamera.main.camera.CameraInfo
 
 data class CameraSettings(
     val cameraInfo: CameraInfo,
-    val onSettingsManuallyChanged: () -> Unit
+    val onSettingsManuallyChanged: () -> Unit,
+    val onMeteringAreaTriggerUpdated: (Boolean) -> Unit
 ) {
     val properties: Set<BaseSettingsProperty<*>>
 
@@ -89,6 +90,7 @@ data class CameraSettings(
         meteringArea = if (focusModes != null && cameraInfo.afRegions > 0) {
             val prop = MeteringArea(
                 cameraInfo,
+                onMeteringAreaTriggerUpdated,
                 onSettingsManuallyChanged,
                 cameraInfo.aeRegions > 0,
                 cameraInfo.awbRegions > 0

@@ -39,7 +39,11 @@ class Camera(
     private val cameraManager: CameraManager,
     private var deviceOrientation: Int = 0
 ) {
-    val cameraSettings = CameraSettings(cameraInfo, ::onSettingsChangedManually)
+    val cameraSettings = CameraSettings(
+        cameraInfo,
+        ::onSettingsChangedManually,
+        ::onMeteringAreaTriggerUpdated
+    )
     private var _cameraDevice: CameraDevice? = null
     private var captureSession: CameraCaptureSession? = null
     private val imageReaders = arrayListOf<FormatImageReader>()
@@ -191,37 +195,14 @@ class Camera(
 
                     override fun onConfigured(session: CameraCaptureSession) {
                         captureSession = session
+
+                        previewRequestBuilder = device.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
                         startPreview()
+
                         Log.i(LOG_TAG, "Session configured successfully")
                     }
                 }, backgroundHandler
             )
-        } catch (e: CameraAccessException) {
-            Log.e(LOG_TAG, "Failed to create capture session: ${e.message}")
-            throw CameraError.SessionError("Failed to create capture session: ${e.message}")
-        } catch (e: IllegalStateException) {
-            Log.e(LOG_TAG, "Camera device in invalid state: ${e.message}")
-            throw CameraError.SessionError("Camera device in invalid state: ${e.message}")
-        }
-    }
-
-    private fun startPreview() {
-        val device = _cameraDevice
-        val surface = previewSurface
-        val session = captureSession
-
-        if (device == null || session == null || surface == null) {
-            val message = "Camera not ready for preview"
-            Log.e(LOG_TAG, message)
-            throw CameraError.SessionError(message)
-        }
-
-        try {
-            previewRequestBuilder = device.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
-            setCaptureRequestSettings(previewRequestBuilder!!, surface)
-
-            runPreview()
-
         } catch (e: CameraAccessException) {
             Log.e(LOG_TAG, "Failed to create capture session: ${e.message}")
             throw CameraError.SessionError("Failed to create capture session: ${e.message}")
@@ -311,29 +292,56 @@ class Camera(
                 requestBuilder[CaptureRequest.LENS_FOCUS_DISTANCE] = it.value
             }
         }
-
-        setMeteringAreaSettings(requestBuilder)
     }
-    private fun setMeteringAreaSettings(requestBuilder: CaptureRequest.Builder) {
-        val meteringArea = cameraSettings.meteringArea ?: return
-        if (meteringArea.isTriggered) {
-            cameraSettings.ev?.setValueWithoutNotifying(0)
 
-            requestBuilder[CaptureRequest.CONTROL_AF_MODE] = CaptureRequest.CONTROL_AF_MODE_AUTO
-            requestBuilder[CaptureRequest.CONTROL_AF_REGIONS] = meteringArea.regions
-            if (meteringArea.supportAE) requestBuilder[CaptureRequest.CONTROL_AE_REGIONS] = meteringArea.regions
-            if (meteringArea.supportAWB) requestBuilder[CaptureRequest.CONTROL_AWB_REGIONS] = meteringArea.regions
+    private fun onMeteringAreaTriggerUpdated(lock: Boolean) {
+        if (_currentState != CameraState.OPENED || _cameraDevice == null ||
+            captureSession == null || previewSurface == null || previewRequestBuilder == null)
+            return
 
-            requestBuilder[CaptureRequest.CONTROL_AF_TRIGGER] = CameraMetadata.CONTROL_AF_TRIGGER_START
-            meteringArea.clear()
-        } else {
-            requestBuilder[CaptureRequest.CONTROL_AF_TRIGGER] = CameraMetadata.CONTROL_AF_TRIGGER_CANCEL
+        val captureCallback = object : CameraCaptureSession.CaptureCallback() {
+            override fun onCaptureCompleted(
+                session: CameraCaptureSession,
+                request: CaptureRequest,
+                result: TotalCaptureResult
+            ) {
+                super.onCaptureCompleted(session, request, result)
+                startPreview()
+            }
         }
+
+        val meteringArea = cameraSettings.meteringArea ?: return
+        val builder = previewRequestBuilder ?: return
+
+        if (lock) {
+            cameraSettings.ev?.let { ev ->
+                ev.setValueWithoutNotifying(0)
+                builder[CaptureRequest.CONTROL_AE_EXPOSURE_COMPENSATION] = ev.value
+            }
+
+            builder[CaptureRequest.CONTROL_AF_MODE] = CaptureRequest.CONTROL_AF_MODE_AUTO
+            builder[CaptureRequest.CONTROL_AF_REGIONS] = meteringArea.regions
+            if (meteringArea.supportAE) builder[CaptureRequest.CONTROL_AE_REGIONS] = meteringArea.regions
+            if (meteringArea.supportAWB) builder[CaptureRequest.CONTROL_AWB_REGIONS] = meteringArea.regions
+
+            builder[CaptureRequest.CONTROL_AF_TRIGGER] = CameraMetadata.CONTROL_AF_TRIGGER_START
+
+            builder.setTag(++meteringArea.triggerId)
+        } else {
+            builder[CaptureRequest.CONTROL_AF_TRIGGER] = CameraMetadata.CONTROL_AF_TRIGGER_CANCEL
+        }
+
+        captureSession!!.capture(
+            builder.build(),
+            captureCallback,
+            backgroundHandler
+        )
     }
 
-    private fun runPreview() {
+    private fun startPreview() {
         val session = captureSession
-        if (session == null) {
+        val surface = previewSurface
+        if (session == null || surface == null) {
             val message = "Camera not ready for preview"
             Log.e(LOG_TAG, message)
             throw CameraError.SessionError(message)
@@ -346,20 +354,24 @@ class Camera(
                 result: TotalCaptureResult
             ) {
                 super.onCaptureCompleted(session, request, result)
-                handlePreviewCaptureResult(result)
+                handlePreviewCaptureCompleted(request, result)
             }
         }
 
+        setCaptureRequestSettings(previewRequestBuilder!!, surface)
         session.setRepeatingRequest(
             previewRequestBuilder!!.build(),
             captureCallback,
             backgroundHandler
         )
     }
-    private fun handlePreviewCaptureResult(result: TotalCaptureResult) {
+
+    private fun handlePreviewCaptureCompleted(request: CaptureRequest, result: TotalCaptureResult) {
         val currentTime = SystemClock.elapsedRealtime()
         if (currentTime - lastSettingsUpdateTime < updateIntervalMs) return
         lastSettingsUpdateTime = currentTime
+
+        val triggerId = request.tag
 
         cameraSettings.iso?.let {
             val iso = result[CaptureResult.SENSOR_SENSITIVITY]
@@ -376,10 +388,9 @@ class Camera(
 
         cameraSettings.meteringArea?.let {
             val state = result[CaptureResult.CONTROL_AF_STATE]
-            if (state != null && (state == CaptureResult.CONTROL_AF_STATE_FOCUSED_LOCKED || state == CaptureResult.CONTROL_AF_STATE_NOT_FOCUSED_LOCKED)) {
-                if (state == CaptureResult.CONTROL_AF_STATE_FOCUSED_LOCKED) it.onFocusStateUpdated?.invoke(true)
-                else it.onFocusStateUpdated?.invoke(false)
-                onSettingsChangedManually()
+            if (state != null && triggerId == it.triggerId &&
+                (state == CaptureResult.CONTROL_AF_STATE_FOCUSED_LOCKED || state == CaptureResult.CONTROL_AF_STATE_NOT_FOCUSED_LOCKED)) {
+                it.onFocusStateUpdated?.invoke(state == CaptureResult.CONTROL_AF_STATE_FOCUSED_LOCKED)
             }
         }
 

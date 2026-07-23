@@ -6,13 +6,14 @@ import com.sedv.stackingcamera.main.camera.CameraInfo
 
 class MeteringArea(
     val cameraInfo: CameraInfo,
+    val onTriggerUpdated: (Boolean) -> Unit,
     val onSettingsManuallyChanged: () -> Unit,
     val supportAE: Boolean,
     val supportAWB: Boolean
 ) {
     var onFocusStateUpdated: ((Boolean) -> Unit)? = null
+    var triggerId = 0
 
-    val isTriggered get() = value != null
     private var value: MeteringRectangle? = null
 
     val regions = arrayOf(value)
@@ -42,12 +43,15 @@ class MeteringArea(
             MeteringRectangle.METERING_WEIGHT_MAX - 1
         )
         regions[0] = value
-        onSettingsManuallyChanged()
-    }
 
-    fun clear() {
+        onTriggerUpdated(true)
+
         value = null
         regions[0] = null
+    }
+
+    fun resetState() {
+        onTriggerUpdated(false)
     }
 
     companion object {
