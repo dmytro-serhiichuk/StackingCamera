@@ -12,7 +12,7 @@ class EVProperty(
     "EV",
     0,
     false,
-    hasSwitcher = false
+    false
 ) {
 
     private val evSteps = initEVSteps()

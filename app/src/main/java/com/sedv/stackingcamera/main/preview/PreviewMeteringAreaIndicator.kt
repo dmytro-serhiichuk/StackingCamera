@@ -16,7 +16,9 @@ class PreviewMeteringAreaIndicator(
     attrs: AttributeSet? = null
 ) : View(context, attrs) {
 
-    private var focusRect: RectF? = null
+    var focusRect = RectF()
+        private set
+
     private val paint = Paint().apply {
         style = Paint.Style.STROKE
         color = Color.WHITE
@@ -37,50 +39,52 @@ class PreviewMeteringAreaIndicator(
     }
 
     private var currentPaint = paint
+    private var isDisplayed = false
 
-    private var desiredWidth: Int = 0
-    private var desiredHeight: Int = 0
+    var isCloseToRightSide = false
+        private set
 
     fun showFocusAt(x: Float, y: Float, size: Float) {
         currentPaint = paint
+        isDisplayed = true
+        isCloseToRightSide = false
 
-        focusRect = RectF(
-            x - size / 2,
-            y - size / 2,
-            x + size / 2,
-            y + size / 2
-        )
+        var indicatorX = x
+        var indicatorY = y
+
+        val sizeHalf = size / 2
+
+        if (indicatorX - sizeHalf < sizeHalf) {
+            indicatorX = size
+        } else if (indicatorX + sizeHalf > width - sizeHalf) {
+            indicatorX = width - size
+            isCloseToRightSide = true
+        }
+
+        if (indicatorY - sizeHalf < sizeHalf) {
+            indicatorY = size
+        } else if (indicatorY + sizeHalf > height - sizeHalf) {
+            indicatorY = height - size
+        }
+
+        focusRect.left   = indicatorX - sizeHalf
+        focusRect.right  = indicatorX + sizeHalf
+        focusRect.top    = indicatorY - sizeHalf
+        focusRect.bottom = indicatorY + sizeHalf
+
         invalidate()
-
     }
 
     fun hide() {
-        focusRect = null
+        isDisplayed = false
         invalidate()
     }
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        focusRect?.let {
-            canvas.drawRect(it, currentPaint)
+        if (isDisplayed) {
+            canvas.drawRect(focusRect, currentPaint)
         }
-    }
-
-    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        val width = MeasureSpec.getSize(widthMeasureSpec)
-        val height = MeasureSpec.getSize(heightMeasureSpec)
-        if (desiredWidth == 0 || desiredHeight == 0) {
-            setMeasuredDimension(width, height)
-        } else {
-            setMeasuredDimension(desiredWidth, desiredHeight)
-        }
-    }
-
-    fun setSize(width: Int, height: Int) {
-        desiredWidth = width
-        desiredHeight = height
-        requestLayout()
-        invalidate()
     }
 
     fun handleFocusStateUpdated(state: Boolean) {

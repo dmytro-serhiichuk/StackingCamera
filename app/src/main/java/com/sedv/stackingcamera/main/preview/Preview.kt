@@ -23,6 +23,7 @@ class Preview(
     previewSurfaceContainer: FrameLayout,
     private val histogramView: HistogramView,
     private val meteringAreaIndicator: PreviewMeteringAreaIndicator,
+    private val exposureCompensationSlider: ExposureCompensationSlider,
     private val zoomIndicator: TextView,
     private val gridView: GridView,
     private val screenIndicator: TextView,
@@ -105,34 +106,37 @@ class Preview(
         exposureFocusController = ExposureFocusController(
             context,
             onFocus = { x, y ->
+                exposureCompensationSlider.hide()
+
                 viewModel.activeCamera.cameraSettings.meteringArea?.let { meteringArea ->
                     meteringAreaIndicator.hide()
-
-                    val location = IntArray(2)
-                    meteringAreaIndicator.getLocationOnScreen(location)
-                    val relativeX = x - location[0]
-                    val relativeY = y - location[1]
 
                     val size = Size(
                         previewSurface.width,
                         previewSurface.height
                     )
-                    meteringArea.setArea(
-                        relativeX,
-                        relativeY,
-                        size
-                    )
+                    meteringArea.setArea(x, y, size)
 
-                    val smallerSize = min(size.width, size.height)
-                    meteringAreaIndicator.showFocusAt(relativeX, relativeY, smallerSize * MeteringArea.WIDTH_FRACTION)
+                    val indicatorSize = min(size.width, size.height) * MeteringArea.WIDTH_FRACTION
+                    meteringAreaIndicator.showFocusAt(x, y, indicatorSize)
                 }
             },
             onExposureChanged = { evIndex ->
-                viewModel.activeCamera.cameraSettings.ev?.setValueWithNotifying(evIndex)
+                viewModel.activeCamera.cameraSettings.ev?.let { ev ->
+                    ev.setValueWithNotifying(evIndex)
+                    val progress = ev.getRangeIndexFromValue(evIndex).toFloat() / (ev.range.mainSteps.size - 1)
+                    exposureCompensationSlider.showAt(
+                        meteringAreaIndicator.focusRect,
+                        meteringAreaIndicator.isCloseToRightSide,
+                        progress
+                    )
+                }
+
             },
             onFocusLockChanged = { isLocked ->
                 if (!isLocked) {
                     meteringAreaIndicator.hide()
+                    exposureCompensationSlider.hide()
                     viewModel.activeCamera.cameraSettings.meteringArea?.resetState()
                 }
             },

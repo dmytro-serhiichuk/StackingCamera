@@ -127,6 +127,7 @@ class MainActivity : AppCompatActivity() {
                 binding.surfaceContainer,
                 binding.histogramView,
                 binding.meteringArea,
+                binding.evCorrectionSlider,
                 binding.zoomIndicator,
                 binding.gridView,
                 binding.screenIndicator,

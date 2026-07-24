@@ -51,8 +51,8 @@ class ExposureFocusController (
             override fun onDown(e: MotionEvent): Boolean = true
 
             override fun onSingleTapUp(e: MotionEvent): Boolean {
-                focusX = e.rawX
-                focusY = e.rawY
+                focusX = e.x
+                focusY = e.y
                 currentEvIndex = 0
                 focusLocked = true
                 onFocus(focusX, focusY)

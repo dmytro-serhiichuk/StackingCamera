@@ -1,12 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <declare-styleable name="SliderView">
-        <attr name="stepSpacing" format="dimension"/>
-        <attr name="minorTickWidth" format="dimension"/>
-        <attr name="majorTickWidth" format="dimension"/>
-        <attr name="selectedTickWidth" format="dimension"/>
-    </declare-styleable>
-
     <declare-styleable name="StackingSettings">
         <attr name="titleText" format="string"/>
         <attr name="descriptionText" format="string"/>
