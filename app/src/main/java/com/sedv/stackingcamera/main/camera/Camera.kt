@@ -292,6 +292,13 @@ class Camera(
                 requestBuilder[CaptureRequest.LENS_FOCUS_DISTANCE] = it.value
             }
         }
+
+        val meteringArea = cameraSettings.meteringArea ?: return
+        if (meteringArea.isProcessing) {
+            requestBuilder[CaptureRequest.CONTROL_AF_MODE] = CaptureRequest.CONTROL_AF_MODE_AUTO
+        } else {
+            requestBuilder[CaptureRequest.CONTROL_AF_MODE] = focusMode.value
+        }
     }
 
     private fun onMeteringAreaTriggerUpdated(lock: Boolean) {

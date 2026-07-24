@@ -14,6 +14,8 @@ class MeteringArea(
     var onFocusStateUpdated: ((Boolean) -> Unit)? = null
     var triggerId = 0
 
+    var isProcessing = false
+        private set
     private var value: MeteringRectangle? = null
 
     val regions = arrayOf(value)
@@ -44,6 +46,7 @@ class MeteringArea(
         )
         regions[0] = value
 
+        isProcessing = true
         onTriggerUpdated(true)
 
         value = null
@@ -51,6 +54,7 @@ class MeteringArea(
     }
 
     fun resetState() {
+        isProcessing = false
         onTriggerUpdated(false)
     }
 
