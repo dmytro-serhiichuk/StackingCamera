@@ -7,4 +7,9 @@
         <item name="cornerSizeBottomLeft">0dp</item>
         <item name="cornerSizeBottomRight">0dp</item>
     </style>
+
+    <style name="GalleryButtonShape">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">@dimen/gallery_button_corner_radius</item>
+    </style>
 </resources>

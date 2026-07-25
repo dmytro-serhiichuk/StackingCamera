@@ -27,6 +27,7 @@ import com.sedv.stackingcamera.main.settings.property.PropertyToggle
 import com.sedv.stackingcamera.main.settings.ui.OptionsList
 import com.sedv.stackingcamera.main.settings.ui.SliderView
 import com.sedv.stackingcamera.main.PreviewBottomContainerManager
+import com.sedv.stackingcamera.main.settings.ui.AutoModeToggle
 
 class SettingsController(
     private val context: Context,
@@ -34,7 +35,7 @@ class SettingsController(
     private val previewBottomContainerManager: PreviewBottomContainerManager,
     private val settingsList: LinearLayout,
     private val sliderWrapperContainer: FrameLayout,
-    private val autoModeToggle: AppCompatButton
+    private val autoModeToggle: AutoModeToggle
 ) {
     private val handler = Handler(Looper.getMainLooper())
 
@@ -169,10 +170,10 @@ class SettingsController(
         sliderWrapperContainer.addView(slider)
 
         if (prop.hasSwitcher) {
-            autoModeToggle.isVisible = true
+            autoModeToggle.buttonVisibility = true
             autoModeToggle.isSelected = prop.isInAutoMode
         } else {
-            autoModeToggle.isVisible = false
+            autoModeToggle.buttonVisibility = false
         }
     }
     private fun openOptionListContainer(prop: BaseOptionsProperty) {
@@ -203,7 +204,7 @@ class SettingsController(
         previewBottomContainerManager.clear()
         sliderWrapperContainer.removeAllViews()
         sliderWrapperContainer.visibility = INVISIBLE
-        autoModeToggle.isVisible = false
+        autoModeToggle.buttonVisibility = false
         autoModeToggle.isSelected = false
     }
 }

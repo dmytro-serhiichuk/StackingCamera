@@ -2,7 +2,9 @@ package com.sedv.stackingcamera.main
 
 import android.annotation.SuppressLint
 import android.app.AlertDialog
+import android.content.ContentUris
 import android.content.ContentValues
+import android.content.Context
 import android.content.Intent
 import android.graphics.Color
 import android.media.MediaScannerConnection
@@ -20,7 +22,9 @@ import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.WindowCompat
+import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
+import com.bumptech.glide.Glide
 import com.sedv.stackingcamera.R
 import com.sedv.stackingcamera.main.camera.CameraError
 import com.sedv.stackingcamera.main.camera.PhotoType
@@ -134,6 +138,21 @@ class MainActivity : AppCompatActivity() {
                 binding.ghostImageView
             )
             binding.ghostImageView.setBitmap(viewModel.ghostBitmap)
+
+            // Gallery Button
+            binding.galleryButton.setOnClickListener {
+                viewModel.galleryImageUri?.let { uri ->
+                    val intent = Intent(Intent.ACTION_VIEW).apply {
+                        setDataAndType(uri, "image/*")
+                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    }
+
+                    startActivity(intent)
+                }
+            }
+            binding.autoModeToggle.onVisibilityUpdated = { isVisible ->
+                binding.galleryButton.isVisible = !isVisible
+            }
 
 //            TODO: add another button for photo passing
             binding.navToStackingButton.setOnClickListener {
@@ -286,8 +305,14 @@ class MainActivity : AppCompatActivity() {
 
             if (hasPermissions && isViewsReady) {
                 viewModel.resume()
+                lifecycleScope.launch {
+                    getGalleryPhotoUri(this@MainActivity)
+                }
             } else if (hasPermissions) {
                 initViews()
+                lifecycleScope.launch {
+                    getGalleryPhotoUri(this@MainActivity)
+                }
             } else {
                 viewModel.permissionHelper.requestAllPermissions()
             }
@@ -370,9 +395,40 @@ class MainActivity : AppCompatActivity() {
                 if (info.photoType != PhotoType.REGULAR) {
                     viewModel.lastBurstPhotosUris.add(uri)
                 }
+                viewModel.galleryImageUri = uri
+                lifecycleScope.launch {
+                    updateGalleryButton(this@MainActivity)
+                }
             }
         } catch (e: Exception) {
             Log.e("Camera", "Failed to save image: ${e.message}")
+        }
+    }
+
+    private suspend fun getGalleryPhotoUri(context: Context) = withContext(Dispatchers.IO) {
+        val projection = arrayOf(MediaStore.Images.Media._ID, MediaStore.Images.Media.DATE_ADDED)
+        val sortOrder = "${MediaStore.Images.Media.DATE_ADDED} DESC"
+
+        context.contentResolver.query(
+            MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+            projection, null, null, sortOrder
+        )?.use { cursor ->
+            if (cursor.moveToFirst()) {
+                val id = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Images.Media._ID))
+                val uri = ContentUris.withAppendedId(
+                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI, id
+                )
+
+                val lastUri = viewModel.galleryImageUri
+                viewModel.galleryImageUri = uri
+                if (lastUri != uri) updateGalleryButton(context)
+            }
+        }
+    }
+
+    private suspend fun updateGalleryButton(context: Context) = withContext(Dispatchers.Main) {
+        viewModel.galleryImageUri?.let { uri ->
+            Glide.with(context).load(uri).centerCrop().into(binding.galleryButton)
         }
     }
 }

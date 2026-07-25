@@ -183,7 +183,7 @@
         app:layout_constrainedWidth="true"
         android:visibility="invisible"/>
 
-    <androidx.appcompat.widget.AppCompatButton
+    <com.sedv.stackingcamera.main.settings.ui.AutoModeToggle
         android:id="@+id/auto_mode_toggle"
         android:layout_width="@dimen/round_block_size_extended"
         android:layout_height="@dimen/round_block_size_extended"
@@ -193,6 +193,7 @@
         app:layout_constraintStart_toStartOf="parent"
         android:layout_marginStart="@dimen/controls_side_margin"
         android:textColor="@color/white"
+        android:gravity="center"
         android:visibility="gone"
         android:text="Ⓐ"/>
 
@@ -246,5 +247,22 @@
         app:layout_constraintStart_toStartOf="@+id/shutter_button"
         app:layout_constraintEnd_toEndOf="@+id/shutter_button"
         android:visibility="invisible"/>
+
+<!--    Gallery Button-->
+    <com.google.android.material.imageview.ShapeableImageView
+        android:id="@+id/gallery_button"
+        android:layout_width="@dimen/gallery_button_size"
+        android:layout_height="@dimen/gallery_button_size"
+        app:layout_constraintTop_toTopOf="@id/shutter_button"
+        app:layout_constraintBottom_toBottomOf="@id/shutter_button"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginStart="@dimen/gallery_button_right_margin"
+        android:scaleType="centerCrop"
+        app:strokeColor="@color/white"
+        app:strokeWidth="@dimen/gallery_button_stroke_width"
+        android:padding="@dimen/gallery_button_stroke_width"
+        app:shapeAppearanceOverlay="@style/GalleryButtonShape"
+        android:visibility="visible"/>
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

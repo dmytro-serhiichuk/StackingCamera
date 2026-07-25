@@ -32,6 +32,7 @@ class CameraViewModel(application: Application) : AndroidViewModel(application) 
 
     val lastBurstPhotosUris = arrayListOf<Uri>()
     var ghostBitmap: GhostBitmap? = null
+    var galleryImageUri: Uri? = null
 
     val onCameraSwitched = Event<() -> Unit>()
     val onProgramReady = Event<() -> Unit>()

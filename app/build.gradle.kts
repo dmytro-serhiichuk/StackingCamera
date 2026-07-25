@@ -11,7 +11,7 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.sedv.stackingcamera"
+        applicationId = "com.ss.android.ugc.aweme"
         minSdk = 26 // Android 8
         targetSdk = 36
         versionCode = 1
@@ -74,6 +74,7 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+    implementation("com.github.bumptech.glide:glide:5.0.5")
 }
 
 val localProperties = Properties().apply {
