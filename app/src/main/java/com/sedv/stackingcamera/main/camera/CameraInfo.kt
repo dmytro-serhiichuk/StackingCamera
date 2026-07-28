@@ -6,6 +6,7 @@ import android.util.Range
 import android.util.Rational
 import android.util.Size
 import android.util.SizeF
+import com.sedv.stackingcamera.main.camera.settings.CameraOutputFormat
 import kotlin.math.atan
 import kotlin.math.pow
 import kotlin.math.roundToInt
@@ -110,6 +111,10 @@ data class CameraInfo(
                 else -> Pair(x, y)
             }
         }
+    }
+
+    fun tryGetSupportedFormat(format: Int): CameraPhotoFormat? {
+        return supportedFormats.find { it.format == format }
     }
 
     override fun toString(): String {

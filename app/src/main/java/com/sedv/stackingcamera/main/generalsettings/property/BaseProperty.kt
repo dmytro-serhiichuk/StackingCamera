@@ -7,13 +7,18 @@ abstract class BaseProperty<T>(
     private val onChanged: (BaseProperty<T>) -> Unit,
     initValue: T
 ) {
-    var value: T = initValue
-        get() = field
+    open var value: T = initValue
         set(value) {
             if (value != field) {
                 field = value
                 onChanged(this)
             }
+        }
+
+    var isAvailable: Boolean = true
+        set(value) {
+            field = value
+            onChanged(this)
         }
 
     override fun equals(other: Any?): Boolean {

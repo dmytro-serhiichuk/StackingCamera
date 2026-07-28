@@ -46,10 +46,23 @@ class GeneralSettingsController(
         }
         bottomScrollView.addView(additionalList)
 
+        viewModel.onProgramReady   += ::handleCameraSwitched
+        viewModel.onCameraSwitched += ::handleCameraSwitched
+    }
+
+    private fun handleCameraSwitched() {
+        close()
+        propList.removeAllViews()
+
+        GeneralSettings.handleCameraSwitched(viewModel.activeCamera)
+
         GeneralSettings.properties.forEach { property ->
+            if (!property.isAvailable) return@forEach
+
             val view = LayoutInflater.from(context).inflate(R.layout.general_settings_list_item, propList, false) as ImageView
             if (property is ToggleProperty) {
-                view.setImageResource(property.disabledIcon)
+                if (property.value) view.setImageResource(property.activeIcon)
+                else                view.setImageResource(property.inactiveIcon)
             } else if (property is OptionProperty) {
                 view.setImageResource(property.type.drawable)
             }
@@ -70,11 +83,8 @@ class GeneralSettingsController(
                         openBottomContainer(property)
                     } else if (property is ToggleProperty) {
                         property.toggle()
-                        if (property.value) {
-                            view.setImageResource(property.type.drawable)
-                        } else {
-                            view.setImageResource(property.disabledIcon)
-                        }
+                        if (property.value) view.setImageResource(property.activeIcon)
+                        else                view.setImageResource(property.inactiveIcon)
                     }
                 }
             }

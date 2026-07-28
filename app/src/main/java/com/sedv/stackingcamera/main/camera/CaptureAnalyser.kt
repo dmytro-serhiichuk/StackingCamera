@@ -22,7 +22,7 @@ class CaptureAnalyser(
     val surface get() = _imageReader?.surface
 
     init {
-        val yuvFormat = cameraInfo.supportedFormats.find { it.format == ImageFormat.YUV_420_888 }
+        val yuvFormat = cameraInfo.tryGetSupportedFormat(ImageFormat.YUV_420_888)
         yuvFormat?.let { format ->
             if (format.supportedResolutions.isNotEmpty()) {
                 var size = format.supportedResolutions.find { it.width == 320 } ?: format.supportedResolutions.last()

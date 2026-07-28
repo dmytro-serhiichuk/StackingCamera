@@ -44,7 +44,7 @@ data class CameraSettings(
         }
 
     init {
-        properties = mutableSetOf<BaseSettingsProperty<*>>()
+        properties = mutableSetOf()
 
         format = if (cameraInfo.hasRawCapture) {
             val prop = FormatProperty(cameraInfo, onSettingsManuallyChanged)

@@ -152,7 +152,7 @@ class Camera(
         if (rawReader != null) imageReaders.add(rawReader)
     }
     private fun setupJpegReader(maxImages: Int): FormatImageReader? {
-        val cameraFormat = cameraInfo.supportedFormats.find { it.format == CameraOutputFormat.JPEG.value } ?: return null
+        val cameraFormat = cameraInfo.tryGetSupportedFormat(CameraOutputFormat.JPEG.value) ?: return null
 
         val ratio = if (GeneralSettings.frameSize.value == FrameSize.FRAME_SIZE_4_3.value) 4.0/3.0
             else 16.0/9.0
@@ -162,7 +162,7 @@ class Camera(
     }
     private fun setupRAWReader(maxImages: Int): FormatImageReader? {
         if (!cameraInfo.hasRawCapture) return null
-        val cameraFormat = cameraInfo.supportedFormats.find { it.format == CameraOutputFormat.RAW.value } ?: return null
+        val cameraFormat = cameraInfo.tryGetSupportedFormat(CameraOutputFormat.RAW.value) ?: return null
         val size = cameraFormat.supportedResolutions.getOrNull(0) ?: return null
         return FormatImageReader(CameraOutputFormat.RAW, size.width, size.height, maxImages)
     }
@@ -184,9 +184,14 @@ class Camera(
             captureSession?.close()
             captureSession = null
 
+            val surfaces = arrayListOf(surface, *imageReaders.map { it.surface }.toTypedArray())
+            if (captureAnalyser.surface != null) {
+                surfaces.add(captureAnalyser.surface)
+            }
+
             @Suppress("DEPRECATION")
             device.createCaptureSession(
-                listOf(surface, *imageReaders.map { it.surface }.toTypedArray(), captureAnalyser.surface),
+                surfaces,
                 object : CameraCaptureSession.StateCallback() {
                     override fun onConfigureFailed(session: CameraCaptureSession) {
                         Log.e(LOG_TAG, "Session configure failed;")

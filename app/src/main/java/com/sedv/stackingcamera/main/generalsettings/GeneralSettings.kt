@@ -1,7 +1,9 @@
 package com.sedv.stackingcamera.main.generalsettings
 
+import android.graphics.ImageFormat
 import com.sedv.stackingcamera.Event
 import com.sedv.stackingcamera.R
+import com.sedv.stackingcamera.main.camera.Camera
 import com.sedv.stackingcamera.main.generalsettings.property.BaseProperty
 import com.sedv.stackingcamera.main.generalsettings.property.OptionProperty
 import com.sedv.stackingcamera.main.generalsettings.property.ToggleProperty
@@ -13,10 +15,11 @@ object GeneralSettings {
     val histogram: ToggleProperty
     val frameSize: OptionProperty
     val timer: OptionProperty
+    val focusPeaking: ToggleProperty
     val ghostImage: ToggleProperty
 
     init {
-        properties = LinkedHashSet<BaseProperty<*>>()
+        properties = LinkedHashSet()
 
         histogram = ToggleProperty(
             GeneralPropertyType.HISTOGRAM,
@@ -46,14 +49,13 @@ object GeneralSettings {
             )
         )
         properties.add(timer)
-        properties.add(
-            ToggleProperty(
-                GeneralPropertyType.FOCUS_PEAKING,
-                ::onPropertyChanged,
-                false,
-                R.drawable.icons_focus_peaking_disabled
-            )
+        focusPeaking = ToggleProperty(
+            GeneralPropertyType.FOCUS_PEAKING,
+            ::onPropertyChanged,
+            false,
+            R.drawable.icons_focus_peaking_disabled
         )
+        properties.add(focusPeaking)
         properties.add(
             ToggleProperty(
                 GeneralPropertyType.ZEBRA_PATTERN,
@@ -81,6 +83,11 @@ object GeneralSettings {
             R.drawable.icons_ghost_disabled
         )
         properties.add(ghostImage)
+    }
+
+    fun handleCameraSwitched(activeCamera: Camera) {
+        histogram.isAvailable = activeCamera.cameraInfo.tryGetSupportedFormat(ImageFormat.YUV_420_888) != null
+        focusPeaking.isAvailable = activeCamera.cameraSettings.focusModes != null
     }
 
     private fun onPropertyChanged(prop: BaseProperty<*>) {
