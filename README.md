@@ -16,6 +16,7 @@ An Android application combining a manual-control camera (Camera2 API) with a na
 - [Device Requirements](#device-requirements)
 - [Known Limitations](#known-limitations)
 - [Research Note](#research-note)
+- [License](#license)
 
 ## Background
 
@@ -136,3 +137,7 @@ All precompiled for `arm64-v8a` and bundled under `app/src/main/libs/arm64-v8a` 
 ## Research Note
 
 As part of the thesis, the custom **M-BRISK** descriptor (a modification of the original BRISK algorithm) was empirically compared against ORB, BRISK, KAZE, AKAZE, SIFT, and SURF, evaluating speed, accuracy, and parameter stability. This evaluation is part of the written thesis rather than the codebase.
+
+## License
+ 
+This project is licensed under the terms described in [LICENSE](./LICENSE).
