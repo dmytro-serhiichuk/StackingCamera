@@ -2,6 +2,8 @@
 
 An Android application combining a manual-control camera (Camera2 API) with a native, GPU-accelerated multi-frame image stacking pipeline. Built as a Bachelor's thesis project in Software Engineering.
 
+![Application](./.github/images/image.png)
+
 ## Table of Contents
 
 - [Background](#background)
